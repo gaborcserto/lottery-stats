@@ -13,6 +13,8 @@ class DatabaseIsolationTest extends TestCase
 
         $this->assertSame('testing', app()->environment());
         $this->assertSame('sqlite', config('database.default'));
+        $this->assertSame('sqlite', config('database.connections.sqlite.driver'));
+        $this->assertSame('', config('database.connections.sqlite.url'));
         $this->assertSame(':memory:', $connection->getDatabaseName());
         $this->assertSame('sqlite', $connection->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME));
     }

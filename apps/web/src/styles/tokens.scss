@@ -1,0 +1,49 @@
+@mixin light {
+  --background: #f5f8f3;
+  --surface: #fff;
+  --text: #172c38;
+  --heading: #102b3e;
+  --muted: #455b64;
+  --border: #becdc3;
+  --link: #176039;
+  --focus: #155e38;
+}
+@mixin dark {
+  --background: #0e202c;
+  --surface: #172f3c;
+  --text: #ecf3ed;
+  --heading: #f3f8f4;
+  --muted: #baccc8;
+  --border: #557168;
+  --link: #c4e86b;
+  --focus: #c4e86b;
+}
+:root {
+  @include light;
+  --green: #176039;
+  --lime: #c4e86b;
+  --navy: #102b3e;
+  --button-text: #fff;
+  --home-background: transparent;
+  --statistics-background: transparent;
+  --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --text-large: 1.35rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --content-width: 70rem;
+  --radius: 0.35rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    @include dark;
+  }
+}
+:root[data-theme='dark'] {
+  @include dark;
+}
+:root[data-theme='light'] {
+  @include light;
+}

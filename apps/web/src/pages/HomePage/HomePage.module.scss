@@ -1,0 +1,8 @@
+.home {
+  --page-background: var(--home-background);
+  background: var(--page-background);
+  section {
+    border-top: 1px solid var(--border);
+    padding-block: var(--space-4);
+  }
+}

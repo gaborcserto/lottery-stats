@@ -19,7 +19,7 @@ Persistence success does not mean a remote source synchronized successfully. Upd
 ## Applications
 
 - `apps/api/` — Laravel 13.35.0 API using PHP 8.5.11, Composer 2.10.3, and SQLite
-- `apps/web/` — Node.js 24.13.0, npm 11.21.0, React 19.3.0, TypeScript 7.0.2, Vite 8.3.4, React Router 8.4.0, and Sass 1.105.1
+- `apps/web/` — Node.js 24.13.0, npm 11.21.0, React 19.3.0, TypeScript 6.0.3, ESLint 9.39.5 with typescript-eslint 8.71.1, jsdom 29.1.1, Vite 8.3.4, React Router 8.4.0, and Sass 1.105.1
 
 ## Local development
 
@@ -68,7 +68,15 @@ docker compose exec web npm run typecheck
 docker compose exec web npm run build
 ```
 
-Frontend quality commands run from `apps/web/` (or through the Compose `web` service): `npm run test` runs Vitest once, `npm run test:watch` starts its interactive watch mode, `npm run lint` checks ESLint, `npm run lint:fix` applies ESLint fixes, `npm run format` formats frontend files with Prettier, `npm run format:check` verifies formatting, and `npm run typecheck` runs the TypeScript compiler. The existing `npm run build` also performs TypeScript verification before building with Vite. The tests use jsdom and React Testing Library and do not require Laravel or the development database.
+Frontend quality commands run from `apps/web/` (or through the Compose `web` service): `npm run test` runs Vitest once, `npm run test:watch` starts its interactive watch mode, `npm run lint` checks ESLint, `npm run lint:fix` applies ESLint fixes, `npm run format` formats frontend files with Prettier, `npm run format:check` verifies formatting, and `npm run typecheck` generates React Router route types before running the strict TypeScript compiler. The tests use jsdom and React Testing Library and do not require Laravel or the development database.
+
+The frontend uses React Router Framework Mode with `ssr: false`, prerendering `/`, `/otoslotto`, `/hatoslotto`, and `/skandinav-lotto`. `npm run dev` runs its Vite development server. `npm run build` checks types and builds static HTML plus navigation data into `apps/web/build/client/`; no production Node rendering server is needed. Browser navigation reads same-origin `/api/v1` through the development proxy or the production host's Laravel forwarding.
+
+Builds require the server-only `PRERENDER_API_BASE_URL`, an HTTP(S) URL ending in `/api/v1`. Compose supplies `http://api:8000/api/v1`; deployment must supply its own trusted Laravel URL, never a `VITE_*` variable or frontend secret. A build acquires one validated snapshot (game list plus latest, summary and numeric frequencies for each game) shared by all four pages. Acquisition failure fails the build. Synchronization must finish before a release build; deploy only successful builds atomically. HTML shows the snapshot capture time and remains readable without JavaScript; browser navigation fetches current API data. Missing historical dates and prizes remain explicitly unknown.
+
+`docker compose exec web npm run build:fixture` exercises the same build with a temporary deterministic HTTP fixture server, without Laravel, a database or external feeds. It validates initial Hungarian HTML with scripts disabled in the parser. Its synthetic output must never be deployed; run the real `npm run build` afterward. `docker compose exec web node scripts/verify-build.mjs` validates an existing build's initial content and metadata.
+
+Production hosting is not configured. Serve the four explicit URLs from their generated documents, retain the `.data` files and hashed assets, and forward `/api/*` to Laravel. Unknown URLs and missing assets must receive actual HTTP 404 responses with an appropriate Hungarian error document; do not use a wildcard HTTP 200 homepage/SPA fallback. The client catch-all displays a noindex missing-page message but cannot change HTTP status. The generated `__spa-fallback.html` is not proof of production 404 behavior. Canonical URLs, robots.txt, sitemap.xml and Open Graph await a chosen public HTTPS origin and the later SEO phase; no production domain is assumed.
 
 ## Git pre-commit checks
 
@@ -76,7 +84,7 @@ Git hooks require Git, Node.js/npm on the host, Docker Compose, and the `web` an
 
 ## Continuous integration
 
-The GitHub Actions workflow runs independent backend and frontend jobs on pushes and pull requests targeting `main`, and on manual dispatch. The backend job installs the locked Composer dependencies and runs strict validation, Pint, Larastan, and PHPUnit with in-memory SQLite. The frontend job installs the locked npm dependencies and runs ESLint, Prettier, TypeScript, Vitest, and the production build. Run the same checks locally with the Composer and frontend commands above; CI does not require Docker or a production database.
+The GitHub Actions workflow runs independent backend and frontend jobs on pushes and pull requests targeting `main`, and on manual dispatch. The backend job installs the locked Composer dependencies and runs strict validation, Pint, Larastan, and PHPUnit with in-memory SQLite. The frontend job installs the locked npm dependencies and runs ESLint, Prettier, TypeScript, Vitest, and the fixture-backed prerender build. Run the same checks locally with the Composer and frontend commands above; CI does not require Docker, Laravel, external feeds or a production database.
 
 SQLite lives at `apps/api/database/database.sqlite` on the host and remains in place across container restarts and `docker compose down`. The local database, `.env`, Composer dependencies, and npm dependencies are excluded from Git. Run `docker compose exec api php artisan migrate` to apply Laravel migrations. Docker Compose is for local development; production deployment is not configured.
 

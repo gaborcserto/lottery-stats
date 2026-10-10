@@ -1,9 +1,10 @@
 import react from '@vitejs/plugin-react'
+import { reactRouter } from '@react-router/dev/vite'
 import { configDefaults, defineConfig } from 'vitest/config'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: process.env.VITEST ? [react()] : [reactRouter()],
   server: {
     host: '0.0.0.0',
     port: 5173,

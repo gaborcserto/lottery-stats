@@ -32,6 +32,8 @@ The ignored `.notes/` directory contains optional local engineering notes and ma
 
 ## React and TypeScript
 
+- Every reusable or substantial component, including page-specific components, has its own PascalCase directory with one primary named component and an `index.ts` public entry point. Import components through that directory; co-locate exclusive SCSS Modules, types, helpers and tests, keep private details private, and avoid circular or global component barrels. React Router convention route modules keep their required filenames.
+
 - Preserve strict TypeScript and the existing ESLint configuration. Define explicit domain types, reuse API models/validation, and narrow `unknown` at untrusted boundaries; avoid `any`, unsafe casts, unnecessary non-null assertions, and type-check suppression.
 - Use function components and idiomatic hooks. Separate API access, data transformation, and presentation; organize by feature when useful, following nearby patterns first.
 - Avoid excessive custom hooks/component fragmentation, unnecessary effects or memoization, and duplicated state. Derive values from existing state when possible.

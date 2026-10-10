@@ -1,0 +1,10 @@
+.footer {
+  padding: var(--space-5) var(--space-4);
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  p {
+    max-width: var(--content-width);
+    margin-inline: auto;
+  }
+}

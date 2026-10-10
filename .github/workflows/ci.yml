@@ -97,4 +97,4 @@ jobs:
         run: npm run test
 
       - name: Build frontend
-        run: npm run build
+        run: npm run build:fixture

@@ -1,0 +1,26 @@
+.game {
+  background: var(--statistics-background);
+  summary {
+    cursor: pointer;
+    padding-block: var(--space-3);
+    font-weight: 700;
+  }
+}
+.table {
+  overflow-x: auto;
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+  caption {
+    text-align: start;
+    padding-block: var(--space-3);
+  }
+  th,
+  td {
+    text-align: start;
+    padding: var(--space-2);
+    border-bottom: 1px solid var(--border);
+  }
+}

@@ -1,9 +1,134 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createApiClient } from './client'
-import { loadGame, loadGameWithFallback, rememberGamePage } from './page-data'
-import { fixtureResponses } from '../test/fixtures'
+import {
+  loadGame,
+  loadGameRoute,
+  loadGameWithFallback,
+  loadHome,
+  rememberGamePage,
+} from './page-data'
+import { deferred, fixturePageData, fixtureResponses } from '../test/fixtures'
+
+afterEach(() => vi.useRealTimers())
+
+function fixtureFetcher() {
+  return vi.fn<typeof fetch>(async (input) => {
+    const url = String(input)
+    const game = url.includes('/six/')
+      ? 'six'
+      : url.includes('/scandinavian/')
+        ? 'scandinavian'
+        : 'five'
+    const fixture = fixtureResponses(game)
+    return Response.json(
+      url.includes('/summary')
+        ? fixture.summary
+        : url.includes('/frequencies')
+          ? fixture.frequencies
+          : url.includes('/parity')
+            ? fixture.parity
+            : url.includes('/drawings?')
+              ? fixture.history
+              : fixture.drawing,
+    )
+  })
+}
 
 describe('game page data loading', () => {
+  it('renders native snapshot data on a first visit, then refreshes and caches live data', async () => {
+    const fetcher = fixtureFetcher()
+    const client = createApiClient('/api/v1', fetcher)
+    const snapshot = vi.fn(async () => fixturePageData('five'))
+    const signal = new AbortController().signal
+    expect(await loadGameRoute(client, 'five', snapshot, signal)).toEqual(
+      fixturePageData('five'),
+    )
+    expect(fetcher).not.toHaveBeenCalled()
+    const live = await loadGameRoute(client, 'five', snapshot, signal)
+    expect(fetcher).toHaveBeenCalledTimes(5)
+    expect(await loadGameRoute(client, 'five', snapshot, signal)).toBe(live)
+    expect(snapshot).toHaveBeenCalledTimes(1)
+    expect(fetcher).toHaveBeenCalledTimes(5)
+  })
+
+  it('reuses homepage latest results and skips their history detail requests', async () => {
+    const fetcher = fixtureFetcher()
+    const client = createApiClient('/api/v1', fetcher)
+    await loadHome(client)
+    const data = await loadGameWithFallback(client, 'five')
+    expect(data.history[0]).toEqual(data.latest)
+    expect(
+      fetcher.mock.calls.filter(([url]) =>
+        String(url).includes('/five/drawings/latest'),
+      ),
+    ).toHaveLength(1)
+    expect(
+      fetcher.mock.calls.filter(([url]) => String(url).includes('/drawings/7')),
+    ).toHaveLength(0)
+    await loadHome(client)
+    expect(fetcher).toHaveBeenCalledTimes(7)
+  })
+
+  it('starts history alongside statistics instead of waiting for a slow summary', async () => {
+    const fetcher = fixtureFetcher()
+    const response = deferred<Response>()
+    const client = createApiClient('/api/v1', (input, init) =>
+      String(input).includes('/summary')
+        ? response.promise
+        : fetcher(input, init),
+    )
+    const pending = loadGame(client, 'five')
+    expect(
+      fetcher.mock.calls.some(([url]) => String(url).includes('/drawings?')),
+    ).toBe(true)
+    response.resolve(Response.json(fixtureResponses('five').summary))
+    expect((await pending).history).toHaveLength(1)
+  })
+
+  it('expires live data after 30 seconds without sharing it between API clients', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-01T00:00:00Z'))
+    const fetcher = fixtureFetcher()
+    const client = createApiClient('/api/v1', fetcher)
+    const first = await loadGameWithFallback(client, 'five')
+    vi.setSystemTime(new Date('2026-11-01T00:00:29Z'))
+    expect(await loadGameWithFallback(client, 'five')).toBe(first)
+    expect(fetcher).toHaveBeenCalledTimes(5)
+    vi.setSystemTime(new Date('2026-11-01T00:00:30Z'))
+    expect(await loadGameWithFallback(client, 'five')).not.toBe(first)
+    expect(fetcher).toHaveBeenCalledTimes(10)
+    const otherFetcher = fixtureFetcher()
+    await loadGameWithFallback(createApiClient('/other', otherFetcher), 'five')
+    expect(otherFetcher).toHaveBeenCalledTimes(5)
+  })
+
+  it('retains history on a partial refresh failure and reports the error', async () => {
+    const fetcher = fixtureFetcher()
+    const client = createApiClient('/api/v1', (input, init) =>
+      String(input).includes('/drawings?')
+        ? Promise.resolve(Response.json({}, { status: 503 }))
+        : fetcher(input, init),
+    )
+    const snapshot = fixturePageData('five')
+    rememberGamePage('five', snapshot, client)
+    const data = await loadGameWithFallback(client, 'five')
+    expect(data.history).toEqual(snapshot.history)
+    expect(data.historyError).toBe('Az adatok átmenetileg nem érhetők el.')
+    expect(data.summary.data).toEqual(snapshot.summary.data)
+  })
+
+  it('does not use cached content to swallow cancellation', async () => {
+    const fetcher = fixtureFetcher()
+    const client = createApiClient('/api/v1', fetcher)
+    await loadGameWithFallback(client, 'five')
+    const controller = new AbortController()
+    controller.abort()
+    await expect(
+      loadGameWithFallback(client, 'five', controller.signal),
+    ).rejects.toMatchObject({ name: 'AbortError' })
+    expect(fetcher).toHaveBeenCalledTimes(5)
+  })
+
   it('derives frequency highlights from one full frequency request', async () => {
     const fixture = fixtureResponses('five')
     const fetcher = vi.fn<typeof fetch>((input) => {
@@ -32,7 +157,6 @@ describe('game page data loading', () => {
     expect(data.mostFrequent.meta.sort).toBe('most')
     expect(data.leastFrequent.meta.sort).toBe('least')
 
-    rememberGamePage('five', data)
     const failingClient = createApiClient(
       '/api/v1',
       vi
@@ -41,11 +165,19 @@ describe('game page data loading', () => {
           Response.json({}, { status: 429, headers: { 'Retry-After': '30' } }),
         ),
     )
+    rememberGamePage(
+      'five',
+      { ...data, capturedAt: '2026-01-01T00:00:00Z' },
+      failingClient,
+    )
     const fallback = await loadGameWithFallback(failingClient, 'five')
 
     expect(fallback.latest?.id).toBe(data.latest?.id)
     expect(fallback.refreshError).toBe(
       'Túl sok kérés. Kérjük, várjon az újrapróbálkozással.',
     )
+    const again = await loadGameWithFallback(failingClient, 'five')
+    expect(again.refreshError).toBe(fallback.refreshError)
+    expect(again.capturedAt).toBe('2026-01-01T00:00:00Z')
   })
 })

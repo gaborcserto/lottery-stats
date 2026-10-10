@@ -1,4 +1,39 @@
 import type { Drawing, GameCode } from '../api/contracts'
+import {
+  decodeFrequenciesResponse,
+  decodeParityResponse,
+  decodeSummaryResponse,
+} from '../api/contracts.ts'
+import type { GamePageData } from '../api/page-data'
+
+export function deferred<T>() {
+  let complete: ((value: T) => void) | undefined
+  const promise = new Promise<T>((resolve) => {
+    complete = resolve
+  })
+  return {
+    promise,
+    resolve(value: T) {
+      if (!complete) throw new Error('Deferred promise was not initialized')
+      complete(value)
+    },
+  }
+}
+
+export function fixturePageData(game: GameCode): GamePageData {
+  const fixture = fixtureResponses(game)
+  return {
+    latest: fixture.drawing.data,
+    summary: decodeSummaryResponse(fixture.summary),
+    frequencies: decodeFrequenciesResponse(fixture.frequencies),
+    mostFrequent: decodeFrequenciesResponse(fixture.mostFrequencies),
+    leastFrequent: decodeFrequenciesResponse(fixture.leastFrequencies),
+    parity: decodeParityResponse(fixture.parity),
+    history: [fixture.drawing.data],
+    historyError: null,
+    capturedAt: '2026-10-10T00:00:00.000Z',
+  }
+}
 
 // Deterministic test data only; production snapshot acquisition never imports this module.
 export const fixtureGames = {

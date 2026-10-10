@@ -48,7 +48,7 @@ describe('shared layout and navigation', () => {
       'page',
     )
   })
-  it('announces pending navigation', () => {
+  it('retains content and accessible busy state without a global loading message', () => {
     render(
       <MemoryRouter>
         <AppLayout pending>
@@ -56,7 +56,8 @@ describe('shared layout and navigation', () => {
         </AppLayout>
       </MemoryRouter>,
     )
-    expect(screen.getByRole('status')).toHaveTextContent('Az oldal betöltése')
+    expect(screen.getByRole('heading', { name: 'Adatok' })).toBeInTheDocument()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
     expect(screen.getByRole('main')).toHaveAttribute('aria-busy', 'true')
   })
 })

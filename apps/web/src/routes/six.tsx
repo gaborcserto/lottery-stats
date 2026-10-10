@@ -1,10 +1,10 @@
-﻿import type { Route } from './+types/six'
+import type { Route } from './+types/six'
 import { useLoaderData } from 'react-router'
 import { gameSnapshot } from '../api/snapshot.server'
 import { api } from '../api/client'
-import { loadGameWithFallback } from '../api/page-data'
+import { loadGameRoute } from '../api/page-data'
 import { gameMeta } from '../config/games'
-import { GamePage } from '../pages/GamePage'
+import { GameRoute } from '../components/GameRoute'
 export { RouteError as ErrorBoundary } from '../components/RouteError'
 
 export function meta() {
@@ -15,9 +15,10 @@ export async function loader() {
 }
 export async function clientLoader({
   request,
-}: Pick<Route.ClientLoaderArgs, 'request'>) {
-  return loadGameWithFallback(api, 'six', request.signal)
+  serverLoader,
+}: Pick<Route.ClientLoaderArgs, 'request' | 'serverLoader'>) {
+  return loadGameRoute(api, 'six', serverLoader, request.signal)
 }
 export default function Six() {
-  return <GamePage game="six" data={useLoaderData<typeof loader>()} />
+  return <GameRoute game="six" data={useLoaderData<typeof loader>()} />
 }

@@ -19,10 +19,59 @@ export interface HomePageData {
   capturedAt: string
 }
 
-const gamePageCache = new Map<GameCode, GamePageData>()
+const freshnessMs = 30_000
+const caches = new WeakMap<
+  ApiClient,
+  {
+    pages: Map<GameCode, GamePageData>
+    latest: Map<GameCode, { drawing: Drawing | null; capturedAt: string }>
+  }
+>()
 
-export function rememberGamePage(game: GameCode, data: GamePageData) {
-  gamePageCache.set(game, data)
+function cacheFor(client: ApiClient) {
+  let cache = caches.get(client)
+  if (!cache) {
+    cache = { pages: new Map(), latest: new Map() }
+    caches.set(client, cache)
+  }
+  return cache
+}
+
+function isFresh(capturedAt: string) {
+  const age = Date.now() - Date.parse(capturedAt)
+  return age >= 0 && age < freshnessMs
+}
+
+export function rememberGamePage(
+  game: GameCode,
+  data: GamePageData,
+  client: ApiClient = api,
+) {
+  const cache = cacheFor(client)
+  cache.pages.set(game, data)
+  // A failed refresh must not extend the freshness of earlier results.
+  if (!data.refreshError && !cache.latest.has(game))
+    cache.latest.set(game, {
+      drawing: data.latest,
+      capturedAt: data.capturedAt,
+    })
+}
+
+export async function loadGameRoute(
+  client: ApiClient,
+  game: GameCode,
+  snapshot: () => Promise<GamePageData>,
+  signal: AbortSignal,
+): Promise<GamePageData> {
+  signal.throwIfAborted()
+  if (!cacheFor(client).pages.has(game)) {
+    // Native prerender data gives a first visit content without waiting for live statistics.
+    const data = await snapshot()
+    signal.throwIfAborted()
+    rememberGamePage(game, data, client)
+    return data
+  }
+  return loadGameWithFallback(client, game, signal)
 }
 
 export async function loadGameWithFallback(
@@ -30,12 +79,18 @@ export async function loadGameWithFallback(
   game: GameCode,
   signal?: AbortSignal,
 ): Promise<GamePageData> {
+  signal?.throwIfAborted()
+  const cached = cacheFor(client).pages.get(game)
+  if (cached && !cached.refreshError && isFresh(cached.capturedAt))
+    return cached
   try {
     const data = await loadGame(client, game, signal)
-    rememberGamePage(game, data)
-    return data
+    const result =
+      data.historyError && cached ? { ...data, history: cached.history } : data
+    rememberGamePage(game, result, client)
+    return result
   } catch (error) {
-    const cached = gamePageCache.get(game)
+    signal?.throwIfAborted()
     if (cached && error instanceof ApiError) {
       return { ...cached, refreshError: error.message }
     }
@@ -48,8 +103,14 @@ export async function loadLatest(
   game: GameCode,
   signal?: AbortSignal,
 ): Promise<Drawing | null> {
+  signal?.throwIfAborted()
+  const cache = cacheFor(client)
+  const cached = cache.latest.get(game)
+  if (cached && isFresh(cached.capturedAt)) return cached.drawing
   try {
-    return (await client.latest(game, signal)).data
+    const drawing = (await client.latest(game, signal)).data
+    cache.latest.set(game, { drawing, capturedAt: new Date().toISOString() })
+    return drawing
   } catch (error) {
     if (error instanceof ApiError && error.kind === 'not-found') return null
     throw error
@@ -61,11 +122,13 @@ export async function loadGame(
   signal?: AbortSignal,
 ): Promise<GamePageData> {
   const set = game === 'scandinavian' ? 'machine' : 'main'
-  const [latest, summary, frequencies, parity] = await Promise.all([
-    loadLatest(client, game, signal),
+  const latestRequest = loadLatest(client, game, signal)
+  const [latest, summary, frequencies, parity, recent] = await Promise.all([
+    latestRequest,
     client.summary(game, { set }, signal),
     client.frequencies(game, { set, sort: 'number' }, signal),
     client.parity(game, { set }, signal),
+    loadHistory(client, game, latestRequest, signal),
   ])
   const mostFrequent = {
     data: frequencies.data
@@ -99,13 +162,33 @@ export async function loadGame(
     frequencies.meta.sort !== 'number' ||
     mostFrequent.meta.sort !== 'most' ||
     leastFrequent.meta.sort !== 'least' ||
-    parity.meta.set_scope !== set
+    parity.meta.set_scope !== set ||
+    parity.meta.game !== game
   )
     throw new ApiError('invalid-response')
-  let history: Drawing[] = []
-  let historyError: string | null = null
+  return {
+    latest,
+    summary,
+    frequencies,
+    mostFrequent,
+    leastFrequent,
+    parity,
+    ...recent,
+    capturedAt: new Date().toISOString(),
+  }
+}
+
+async function loadHistory(
+  client: ApiClient,
+  game: GameCode,
+  latestRequest: Promise<Drawing | null>,
+  signal?: AbortSignal,
+): Promise<Pick<GamePageData, 'history' | 'historyError'>> {
   try {
-    const page = await client.drawings(game, { per_page: 5 }, signal)
+    const [page, latest] = await Promise.all([
+      client.drawings(game, { per_page: 5 }, signal),
+      latestRequest,
+    ])
     const details = new Map(
       await Promise.all(
         page.data
@@ -119,24 +202,15 @@ export async function loadGame(
           ),
       ),
     )
-    history = page.data.flatMap((item) => {
+    const history = page.data.flatMap((item) => {
       const drawing = item.id === latest?.id ? latest : details.get(item.id)
       return drawing ? [drawing] : []
     })
+    return { history, historyError: null }
   } catch (error) {
+    signal?.throwIfAborted()
     if (!(error instanceof ApiError)) throw error
-    historyError = error.message
-  }
-  return {
-    latest,
-    summary,
-    frequencies,
-    mostFrequent,
-    leastFrequent,
-    parity,
-    history,
-    historyError,
-    capturedAt: new Date().toISOString(),
+    return { history: [], historyError: error.message }
   }
 }
 export async function loadHome(

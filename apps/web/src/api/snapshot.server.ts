@@ -5,6 +5,11 @@ import { gameCodes } from '../config/games'
 
 let snapshot: Promise<Record<GameCode, GamePageData>> | undefined
 
+declare global {
+  var lotteryDevelopmentSnapshot:
+    Promise<Record<GameCode, GamePageData>> | undefined
+}
+
 function serverClient() {
   const configured = process.env.PRERENDER_API_BASE_URL
   if (!configured)
@@ -52,6 +57,17 @@ async function acquireSnapshot(): Promise<Record<GameCode, GamePageData>> {
   }
 }
 function getSnapshot() {
+  // Vite reloads server modules during edits. Keep the shared acquisition across
+  // those reloads so a small UI change cannot trigger overlapping API batches.
+  if (import.meta.env.DEV) {
+    globalThis.lotteryDevelopmentSnapshot ??= acquireSnapshot().catch(
+      (error) => {
+        globalThis.lotteryDevelopmentSnapshot = undefined
+        throw error
+      },
+    )
+    return globalThis.lotteryDevelopmentSnapshot
+  }
   snapshot ??= acquireSnapshot().catch((error) => {
     snapshot = undefined
     throw error

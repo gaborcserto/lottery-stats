@@ -41,7 +41,7 @@ export default function Root() {
 export function HydrateFallback() {
   return (
     <AppLayout pending>
-      <p>Adatok betöltése…</p>
+      <p role="status">Adatok betöltése…</p>
     </AppLayout>
   )
 }

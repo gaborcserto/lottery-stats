@@ -26,10 +26,7 @@ export function RouteError() {
   const missing = isRouteErrorResponse(error) && error.status === 404
   return (
     <>
-      <title>
-        {missing ? 'Az oldal nem található' : 'Az adatok nem érhetők el'} |
-        Lottery Stats
-      </title>
+      <title>{`${missing ? 'Az oldal nem található' : 'Az adatok nem érhetők el'} | Lottery Stats`}</title>
       <meta name="robots" content="noindex" />
       <ErrorPage
         missing={missing}

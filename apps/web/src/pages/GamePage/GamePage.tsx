@@ -1,8 +1,6 @@
-import { useEffect } from 'react'
 import { Link } from 'react-router'
 import type { GameCode } from '../../api/contracts'
 import type { GamePageData } from '../../api/page-data'
-import { rememberGamePage } from '../../api/page-data'
 import { PrizeBreakdown } from '../../components/PrizeBreakdown'
 import { LotteryBall } from '../../components/LotteryBall'
 import { gamePages } from '../../config/games'
@@ -45,18 +43,15 @@ export function GamePage({
   const most = data.mostFrequent.data
   const least = data.leastFrequent.data
 
-  useEffect(() => {
-    rememberGamePage(game, data)
-  }, [game, data])
-
   return (
     <div className={styles.page}>
-      <Link className={styles.backLink} to="/">
+      <Link className={styles.backLink} to="/" prefetch="intent">
         ← Vissza a főoldalra
       </Link>
       {data.refreshError && (
         <p className={styles.refreshStatus} role="status">
-          A frissítés nem sikerült. A korábban elérhető adatokat látod.
+          A frissítés nem sikerült. A korábban elérhető adatokat látod.{' '}
+          {data.refreshError}
         </p>
       )}
       <header className={styles.hero}>
@@ -297,7 +292,8 @@ export function GamePage({
           <p role="alert">
             A sorsolási előzmények nem érhetők el: {data.historyError}
           </p>
-        ) : data.history.length ? (
+        ) : null}
+        {data.history.length ? (
           <ol className={styles.historyList}>
             {data.history.map((drawing) => (
               <li key={drawing.id}>
@@ -324,9 +320,9 @@ export function GamePage({
               </li>
             ))}
           </ol>
-        ) : (
+        ) : !data.historyError ? (
           <p>Még nincs megjeleníthető sorsolás.</p>
-        )}
+        ) : null}
       </section>
 
       {data.latest && (

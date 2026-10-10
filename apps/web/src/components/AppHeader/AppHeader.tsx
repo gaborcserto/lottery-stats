@@ -9,11 +9,11 @@ export function AppHeader() {
         Ugrás a tartalomra
       </a>
       <nav aria-label="Fő navigáció">
-        <NavLink to="/" end>
+        <NavLink to="/" end prefetch="intent">
           Lottery Stats – Kezdőlap
         </NavLink>
         {gameCodes.map((code) => (
-          <NavLink key={code} to={gamePages[code].path}>
+          <NavLink key={code} to={gamePages[code].path} prefetch="intent">
             {gamePages[code].name}
           </NavLink>
         ))}

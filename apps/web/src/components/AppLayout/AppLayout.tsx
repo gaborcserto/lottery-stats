@@ -14,7 +14,6 @@ export function AppLayout({
     <div className={styles.layout}>
       <AppHeader />
       <main id="main" tabIndex={-1} className={styles.main} aria-busy={pending}>
-        {pending && <p role="status">Az oldal betöltése…</p>}
         {children}
       </main>
       <AppFooter />

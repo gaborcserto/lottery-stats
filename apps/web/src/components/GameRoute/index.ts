@@ -1,0 +1,1 @@
+export { GameRoute } from './GameRoute'

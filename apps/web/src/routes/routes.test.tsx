@@ -1,15 +1,29 @@
-﻿import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import Root, { HydrateFallback } from '../root'
 import Home, * as home from './home'
 import Five, * as five from './five'
 import Six, * as six from './six'
 import Scandinavian, * as scandinavian from './scandinavian'
 import NotFound from './not-found'
-import { fixtureGames, fixtureResponses } from '../test/fixtures'
+import { ApiError } from '../api/client'
+import {
+  fixtureGames,
+  fixtureResponses,
+  fixturePageData,
+} from '../test/fixtures'
 
-afterEach(() => vi.unstubAllGlobals())
+let testTime = Date.parse('2026-11-01T00:00:00Z')
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  testTime += 60_000
+  vi.setSystemTime(testTime)
+})
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.useRealTimers()
+})
 function renderRoute(path: string) {
   vi.stubGlobal(
     'fetch',
@@ -72,19 +86,31 @@ function renderRoute(path: string) {
           {
             path: 'otoslotto',
             Component: Five,
-            loader: five.clientLoader,
+            loader: ({ request }) =>
+              five.clientLoader({
+                request,
+                serverLoader: async () => fixturePageData('five'),
+              }),
             ErrorBoundary: five.ErrorBoundary,
           },
           {
             path: 'hatoslotto',
             Component: Six,
-            loader: six.clientLoader,
+            loader: ({ request }) =>
+              six.clientLoader({
+                request,
+                serverLoader: async () => fixturePageData('six'),
+              }),
             ErrorBoundary: six.ErrorBoundary,
           },
           {
             path: 'skandinav-lotto',
             Component: Scandinavian,
-            loader: scandinavian.clientLoader,
+            loader: ({ request }) =>
+              scandinavian.clientLoader({
+                request,
+                serverLoader: async () => fixturePageData('scandinavian'),
+              }),
             ErrorBoundary: scandinavian.ErrorBoundary,
           },
           { path: '*', Component: NotFound },
@@ -96,6 +122,39 @@ function renderRoute(path: string) {
   return render(<RouterProvider router={router} />)
 }
 describe('explicit route modules', () => {
+  it('renders a genuine API failure with a deterministic Hungarian error title', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        Component: Root,
+        HydrateFallback,
+        children: [
+          {
+            index: true,
+            Component: Home,
+            loader: () => {
+              throw new ApiError('server')
+            },
+            ErrorBoundary: home.ErrorBoundary,
+          },
+        ],
+      },
+    ])
+    try {
+      render(<RouterProvider router={router} />)
+      expect(
+        await screen.findByRole('heading', {
+          name: 'Az oldal nem tölthető be',
+        }),
+      ).toBeInTheDocument()
+      expect(document.title).toBe('Az adatok nem érhetők el | Lottery Stats')
+      expect(consoleError).not.toHaveBeenCalled()
+    } finally {
+      consoleError.mockRestore()
+      router.dispose()
+    }
+  })
   it.each([
     ['/', 'Lottóeredmények, tisztán.'],
     ['/otoslotto', 'Ötöslottó'],
@@ -120,9 +179,11 @@ describe('explicit route modules', () => {
         name: 'Hatoslottó',
       }),
     ).toBeInTheDocument()
-    expect(fetch).toHaveBeenCalledWith(
-      '/api/v1/games/six/drawings/latest',
-      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/v1/games/six/drawings/latest',
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      ),
     )
   })
 })

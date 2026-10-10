@@ -81,7 +81,7 @@ export function LotteryCard({
           </section>
         </>
       )}
-      <Link className={styles.link} to={page.path}>
+      <Link className={styles.link} to={page.path} prefetch="intent">
         Részletes statisztikák
         <LuArrowUpRight className={styles.icon} aria-hidden="true" />
       </Link>

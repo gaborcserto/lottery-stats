@@ -20,6 +20,18 @@ export async function verifyBuild(fixture = false) {
     )
     assert.ok(document.querySelector('main h1')?.textContent.includes(heading))
     assert.equal(document.querySelectorAll('main h1').length, 1)
+    assert.ok(
+      !document
+        .querySelector('main')
+        ?.textContent.includes('Az oldal betöltése'),
+    )
+    assert.ok(
+      !document.querySelector('main')?.textContent.includes('Adatok betöltése'),
+    )
+    assert.equal(
+      document.querySelector('main')?.getAttribute('aria-busy'),
+      'false',
+    )
     if (path) assert.ok(document.querySelector('main time'))
     else {
       assert.equal(document.querySelectorAll('main article').length, 3)

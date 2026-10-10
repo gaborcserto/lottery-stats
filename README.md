@@ -58,6 +58,8 @@ docker compose exec api composer test     # Run PHPUnit unit and feature tests
 
 Pint uses its default Laravel preset. Larastan runs at level 6 over application code, bootstrap entry points, configuration, database code, and routes; dependencies and generated caches are outside the analysis paths. PHPUnit retains the existing in-memory SQLite test configuration. Composer scripts also work directly from `apps/api/` when PHP and dependencies are available.
 
+Backend tests live in `apps/api/tests/Unit` and `apps/api/tests/Feature`. Keep Unit tests focused on pure logic; use Feature tests for Laravel behavior and database access. Use Laravel's `RefreshDatabase` trait for tests that need migrated tables. Run tests with `docker compose exec api composer test`, which clears cached Laravel configuration before PHPUnit starts.
+
 Before completing backend changes, run validation, `lint`, `analyse`, `test`, and `git diff --check`. Use `lint:fix` when formatting needs correction.
 
 ## Status

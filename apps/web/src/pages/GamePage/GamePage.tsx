@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router'
 import type { GameCode } from '../../api/contracts'
 import type { GamePageData } from '../../api/page-data'
+import { rememberGamePage } from '../../api/page-data'
 import { PrizeBreakdown } from '../../components/PrizeBreakdown'
 import { LotteryBall } from '../../components/LotteryBall'
 import { gamePages } from '../../config/games'
@@ -20,7 +22,7 @@ function isRelevantSet(game: GameCode, type: keyof typeof setLabels) {
 }
 
 function count(value: number) {
-  return new Intl.NumberFormat('hu-HU').format(value)
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')
 }
 
 function dateLabel(value: string) {
@@ -43,11 +45,20 @@ export function GamePage({
   const most = data.mostFrequent.data
   const least = data.leastFrequent.data
 
+  useEffect(() => {
+    rememberGamePage(game, data)
+  }, [game, data])
+
   return (
     <div className={styles.page}>
       <Link className={styles.backLink} to="/">
         ← Vissza a főoldalra
       </Link>
+      {data.refreshError && (
+        <p className={styles.refreshStatus} role="status">
+          A frissítés nem sikerült. A korábban elérhető adatokat látod.
+        </p>
+      )}
       <header className={styles.hero}>
         <div className={styles.heroCopy}>
           <p className={styles.eyebrow}>Lottóstatisztikák</p>

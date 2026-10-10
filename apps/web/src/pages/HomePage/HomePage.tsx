@@ -11,26 +11,29 @@ export function HomePage({ data }: { data: HomePageData }) {
 
   useEffect(() => {
     const controller = new AbortController()
-    void loadHome(undefined, controller.signal)
-      .then((result) => {
-        setLatest((current) =>
-          result.latest.map((item) => ({
-            ...item,
-            drawing:
-              item.drawing ??
-              current.find((previous) => previous.game === item.game)
-                ?.drawing ??
-              null,
-          })),
-        )
-        setRefreshFailed(false)
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) {
-          setRefreshFailed(true)
-        }
-      })
-    return () => controller.abort()
+    const timeout = window.setTimeout(() => {
+      void loadHome(undefined, controller.signal)
+        .then((result) => {
+          setLatest((current) =>
+            result.latest.map((item) => ({
+              ...item,
+              drawing:
+                item.drawing ??
+                current.find((previous) => previous.game === item.game)
+                  ?.drawing ??
+                null,
+            })),
+          )
+          setRefreshFailed(false)
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setRefreshFailed(true)
+        })
+    }, 0)
+    return () => {
+      window.clearTimeout(timeout)
+      controller.abort()
+    }
   }, [])
 
   return (

@@ -7,6 +7,8 @@ services:
       dockerfile: docker/php/Dockerfile
     ports:
       - "127.0.0.1:8000:8000"
+    environment:
+      API_RATE_LIMIT_PER_MINUTE: ${API_RATE_LIMIT_PER_MINUTE:-180}
     volumes:
       - ./apps/api:/var/www/html
       - api_vendor:/var/www/html/vendor

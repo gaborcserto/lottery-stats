@@ -86,6 +86,7 @@ describe('game statistics pages', () => {
     const data = pageData('five')
     data.history = []
     data.historyError = 'Az adatok átmenetileg nem érhetők el.'
+    data.refreshError = 'Túl sok kérés.'
     render(
       <MemoryRouter>
         <GamePage game="five" data={data} />
@@ -95,6 +96,9 @@ describe('game statistics pages', () => {
       screen.getByRole('heading', { name: 'Számgyakoriság' }),
     ).toBeInTheDocument()
     expect(screen.getByRole('alert')).toHaveTextContent(data.historyError)
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'A korábban elérhető adatokat látod.',
+    )
   })
 
   it('shows Hatoslottó bonus only when the API provides a bonus set', () => {
@@ -144,6 +148,17 @@ describe('game statistics pages', () => {
     expect(
       screen.getByText(/1 250,00 \(a pénznem nem ismert\)/),
     ).toBeInTheDocument()
+  })
+
+  it('formats four-digit counts consistently with prerendered Hungarian text', () => {
+    const data = pageData('five')
+    data.summary.data = { ...data.summary.data, drawing_count: 3631 }
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <GamePage game="five" data={data} />
+      </MemoryRouter>,
+    )
+    expect(html).toContain('<strong>3\u00a0631</strong>')
   })
 
   it('labels no history and renders the real frequency percentage denominator', () => {

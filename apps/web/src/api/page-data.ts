@@ -11,11 +11,36 @@ export interface GamePageData {
   parity: Awaited<ReturnType<ApiClient['parity']>>
   history: Drawing[]
   historyError: string | null
+  refreshError?: string | null
   capturedAt: string
 }
 export interface HomePageData {
   latest: { game: GameCode; drawing: Drawing | null }[]
   capturedAt: string
+}
+
+const gamePageCache = new Map<GameCode, GamePageData>()
+
+export function rememberGamePage(game: GameCode, data: GamePageData) {
+  gamePageCache.set(game, data)
+}
+
+export async function loadGameWithFallback(
+  client: ApiClient,
+  game: GameCode,
+  signal?: AbortSignal,
+): Promise<GamePageData> {
+  try {
+    const data = await loadGame(client, game, signal)
+    rememberGamePage(game, data)
+    return data
+  } catch (error) {
+    const cached = gamePageCache.get(game)
+    if (cached && error instanceof ApiError) {
+      return { ...cached, refreshError: error.message }
+    }
+    throw error
+  }
 }
 
 export async function loadLatest(
@@ -36,15 +61,32 @@ export async function loadGame(
   signal?: AbortSignal,
 ): Promise<GamePageData> {
   const set = game === 'scandinavian' ? 'machine' : 'main'
-  const [latest, summary, frequencies, mostFrequent, leastFrequent, parity] =
-    await Promise.all([
-      loadLatest(client, game, signal),
-      client.summary(game, { set }, signal),
-      client.frequencies(game, { set, sort: 'number' }, signal),
-      client.frequencies(game, { set, sort: 'most', limit: 3 }, signal),
-      client.frequencies(game, { set, sort: 'least', limit: 3 }, signal),
-      client.parity(game, { set }, signal),
-    ])
+  const [latest, summary, frequencies, parity] = await Promise.all([
+    loadLatest(client, game, signal),
+    client.summary(game, { set }, signal),
+    client.frequencies(game, { set, sort: 'number' }, signal),
+    client.parity(game, { set }, signal),
+  ])
+  const mostFrequent = {
+    data: frequencies.data
+      .slice()
+      .sort(
+        (first, second) =>
+          second.count - first.count || first.number - second.number,
+      )
+      .slice(0, 3),
+    meta: { ...frequencies.meta, sort: 'most' as const, limit: 3 },
+  }
+  const leastFrequent = {
+    data: frequencies.data
+      .slice()
+      .sort(
+        (first, second) =>
+          first.count - second.count || first.number - second.number,
+      )
+      .slice(0, 3),
+    meta: { ...frequencies.meta, sort: 'least' as const, limit: 3 },
+  }
   if (
     summary.meta.game !== game ||
     frequencies.meta.game !== game ||

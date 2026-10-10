@@ -2,7 +2,7 @@
 import { useLoaderData } from 'react-router'
 import { gameSnapshot } from '../api/snapshot.server'
 import { api } from '../api/client'
-import { loadGame } from '../api/page-data'
+import { loadGameWithFallback } from '../api/page-data'
 import { gameMeta } from '../config/games'
 import { GamePage } from '../pages/GamePage'
 export { RouteError as ErrorBoundary } from '../components/RouteError'
@@ -16,7 +16,7 @@ export async function loader() {
 export async function clientLoader({
   request,
 }: Pick<Route.ClientLoaderArgs, 'request'>) {
-  return loadGame(api, 'scandinavian', request.signal)
+  return loadGameWithFallback(api, 'scandinavian', request.signal)
 }
 export default function Scandinavian() {
   return <GamePage game="scandinavian" data={useLoaderData<typeof loader>()} />

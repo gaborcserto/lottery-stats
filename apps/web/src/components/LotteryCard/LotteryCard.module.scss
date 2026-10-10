@@ -1,6 +1,7 @@
 .card {
   display: flex;
   min-width: 0;
+  height: 100%;
   flex-direction: column;
   padding: clamp(1.15rem, 2vw, 1.6rem);
   border: 1px solid rgba(231, 241, 231, 0.55);
@@ -10,23 +11,30 @@
   box-shadow: 0 1rem 2.6rem rgba(4, 18, 25, 0.18);
 }
 .heading {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 4.25rem;
   padding-bottom: 0.9rem;
   border-bottom: 1px solid var(--card-divider);
 }
 .logoFrame {
   display: flex;
   align-items: center;
-  height: 4.1rem;
-  min-width: 0;
+  justify-content: center;
+  width: 5rem;
+  height: 3.25rem;
+  flex: 0 0 5rem;
 }
 .logo {
   display: block;
   max-width: 100%;
-  max-height: 4.1rem;
+  max-height: 3.25rem;
   object-fit: contain;
 }
 .heading h3 {
-  margin: 0.15rem 0 0;
+  min-width: 0;
+  margin: 0;
   color: var(--heading);
   font-size: 1.45rem;
   line-height: 1.25;
@@ -35,7 +43,7 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  margin: 0.85rem 0 0.5rem;
+  margin: 0.8rem 0 0.65rem;
   color: var(--muted);
   font-size: 0.88rem;
 }
@@ -46,7 +54,7 @@
 }
 .sets {
   display: grid;
-  gap: 0.65rem;
+  gap: 0.75rem;
 }
 .numberSet h4,
 .prizeSection h4 {
@@ -59,13 +67,13 @@
 .numberSet ul {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.35rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 .prizeSection {
-  margin-top: 1rem;
+  margin-top: 0.85rem;
 }
 .empty {
   flex: 1;
@@ -77,7 +85,7 @@
   justify-content: space-between;
   align-items: center;
   min-height: 2.9rem;
-  margin-top: 1rem;
+  margin-top: auto;
   padding: 0.65rem 0.8rem;
   border-radius: 0.55rem;
   background: var(--navy);

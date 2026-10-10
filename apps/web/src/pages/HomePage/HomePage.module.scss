@@ -3,9 +3,13 @@
   color: #fff;
 }
 :global(body:has(.lottery-home)) {
-  background:
-    var(--home-overlay),
-    url('/images/lottery-balls-background.webp') center 45% / cover fixed;
+  background-image:
+    var(--home-overlay), url('/images/lottery-balls-background.webp');
+  background-repeat: no-repeat, no-repeat;
+  background-position:
+    center,
+    center 45%;
+  background-size: cover, cover;
 }
 .content {
   padding-block: clamp(2.5rem, 7vw, 6rem);

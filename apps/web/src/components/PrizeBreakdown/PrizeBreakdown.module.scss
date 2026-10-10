@@ -5,7 +5,7 @@
   display: flex;
   justify-content: space-between;
   gap: var(--space-3);
-  padding-block: 0.55rem;
+  padding-block: 0.4rem;
   border-bottom: 1px solid #dce5dc;
   font-size: 0.88rem;
 }
@@ -20,7 +20,8 @@
   font-variant-numeric: tabular-nums;
 }
 .prize span {
-  display: block;
+  display: inline;
+  margin-inline-start: 0.35rem;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 400;

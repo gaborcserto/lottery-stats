@@ -31,16 +31,46 @@ export async function verifyBuild(fixture = false) {
       assert.ok(
         document.querySelector('table caption')?.textContent.includes(title),
       )
-    if (fixture && path)
-      assert.ok(
-        document
-          .querySelector('main dl')
-          ?.textContent.includes(
-            path === 'skandinav-lotto/'
-              ? '1, 5, 12, 23, 30, 34, 35'
-              : '1, 12, 23, 34',
-          ),
+    if (fixture && path) {
+      const expectedLogo =
+        path === 'otoslotto/'
+          ? '/images/logos/otoslotto.png'
+          : path === 'hatoslotto/'
+            ? '/images/logos/hatoslotto.png'
+            : '/images/logos/skandinav-lotto.png'
+      assert.equal(
+        document.querySelector('main header img')?.getAttribute('src'),
+        expectedLogo,
       )
+      const results = [
+        ...(document
+          .querySelector('#history-heading')
+          ?.closest('section')
+          ?.querySelectorAll('ol li p') ?? []),
+      ]
+        .map((item) => item.textContent)
+        .join(' ')
+      assert.ok(
+        results.includes(
+          path === 'skandinav-lotto/'
+            ? '1, 5, 12, 23, 30, 34, 35'
+            : path === 'hatoslotto/'
+              ? '1, 12, 23, 34, 44, 45'
+              : '1, 12, 23, 34, 45',
+        ),
+      )
+      assert.ok(
+        document.querySelector('table caption')?.textContent.includes(title),
+      )
+      assert.ok(document.querySelector('#parity-heading'))
+      assert.ok(document.querySelector('#history-heading'))
+      assert.ok(document.querySelector('#prizes-heading'))
+      if (path === 'skandinav-lotto/') {
+        assert.ok(results.includes('2, 6, 13, 24, 29, 33, 35'))
+        assert.ok(results.includes('Gépi számsor'))
+        assert.ok(results.includes('Kézi számsor'))
+      }
+    }
     if (fixture && !path) {
       const cards = [...document.querySelectorAll('main article')]
       assert.deepEqual(

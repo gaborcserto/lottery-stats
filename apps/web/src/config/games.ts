@@ -3,6 +3,7 @@ import type { GameCode } from '../api/contracts'
 export const gamePages = {
   five: {
     path: '/otoslotto',
+    logo: '/images/logos/otoslotto.png',
     name: 'Ötöslottó',
     description:
       'Ötöslottó eredmények és alapvető statisztikák a rendelkezésre álló történelmi sorsolásokból.',
@@ -11,6 +12,7 @@ export const gamePages = {
   },
   six: {
     path: '/hatoslotto',
+    logo: '/images/logos/hatoslotto.png',
     name: 'Hatoslottó',
     description:
       'Hatoslottó eredmények és történelmi statisztikák. A korábbi pótszámokat külön mutatjuk.',
@@ -19,6 +21,7 @@ export const gamePages = {
   },
   scandinavian: {
     path: '/skandinav-lotto',
+    logo: '/images/logos/skandinav-lotto.png',
     name: 'Skandináv lottó',
     description:
       'Skandináv lottó eredmények külön gépi és kézi számsorral, valamint alapvető történelmi statisztikákkal.',
@@ -27,7 +30,13 @@ export const gamePages = {
   },
 } satisfies Record<
   GameCode,
-  { path: string; name: string; description: string; introduction: string }
+  {
+    path: string
+    logo: string
+    name: string
+    description: string
+    introduction: string
+  }
 >
 
 export const gameCodes = ['five', 'six', 'scandinavian'] as const

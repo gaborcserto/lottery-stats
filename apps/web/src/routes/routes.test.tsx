@@ -22,12 +22,21 @@ function renderRoute(path: string) {
           ? 'six'
           : 'five'
       const fixture = fixtureResponses(game)
+      const query = new URL(url, 'http://test').searchParams
       return Response.json(
         url.includes('/summary')
           ? fixture.summary
           : url.includes('/frequencies')
-            ? fixture.frequencies
-            : fixture.drawing,
+            ? query.get('sort') === 'most'
+              ? fixture.mostFrequencies
+              : query.get('sort') === 'least'
+                ? fixture.leastFrequencies
+                : fixture.frequencies
+            : url.includes('/parity')
+              ? fixture.parity
+              : url.includes('/drawings?')
+                ? fixture.history
+                : fixture.drawing,
       )
     }),
   )
@@ -89,9 +98,9 @@ function renderRoute(path: string) {
 describe('explicit route modules', () => {
   it.each([
     ['/', 'Lottóeredmények, tisztán.'],
-    ['/otoslotto', 'Ötöslottó eredmények és statisztikák'],
-    ['/hatoslotto', 'Hatoslottó eredmények és statisztikák'],
-    ['/skandinav-lotto', 'Skandináv lottó eredmények és statisztikák'],
+    ['/otoslotto', 'Ötöslottó'],
+    ['/hatoslotto', 'Hatoslottó'],
+    ['/skandinav-lotto', 'Skandináv lottó'],
   ])('renders direct navigation to %s', async (path, heading) => {
     renderRoute(path)
     expect(
@@ -108,7 +117,7 @@ describe('explicit route modules', () => {
     expect(
       await screen.findByRole('heading', {
         level: 1,
-        name: 'Hatoslottó eredmények és statisztikák',
+        name: 'Hatoslottó',
       }),
     ).toBeInTheDocument()
     expect(fetch).toHaveBeenCalledWith(

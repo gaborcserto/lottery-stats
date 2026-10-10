@@ -14,7 +14,7 @@ const labels = {
 function formatAmount(amount: string) {
   const [whole, fraction] = amount.split('.')
   const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')
-  return `${grouped},${fraction} Ft`
+  return `${grouped},${fraction}`
 }
 
 function formatCount(count: number) {
@@ -33,7 +33,9 @@ export function PrizeBreakdown({ prizes }: { prizes: Drawing['prizes'] }) {
           <dd>
             {prize.amount === null
               ? 'Az összeg nem ismert'
-              : formatAmount(prize.amount)}
+              : `${formatAmount(prize.amount)}${
+                  prize.currency === 'HUF' ? ' Ft' : ' (a pénznem nem ismert)'
+                }`}
             {prize.winner_count !== null && (
               <span>{formatCount(prize.winner_count)} nyertes</span>
             )}

@@ -6,6 +6,11 @@ export interface GamePageData {
   latest: Drawing | null
   summary: Awaited<ReturnType<ApiClient['summary']>>
   frequencies: Awaited<ReturnType<ApiClient['frequencies']>>
+  mostFrequent: Awaited<ReturnType<ApiClient['frequencies']>>
+  leastFrequent: Awaited<ReturnType<ApiClient['frequencies']>>
+  parity: Awaited<ReturnType<ApiClient['parity']>>
+  history: Drawing[]
+  historyError: string | null
   capturedAt: string
 }
 export interface HomePageData {
@@ -31,20 +36,66 @@ export async function loadGame(
   signal?: AbortSignal,
 ): Promise<GamePageData> {
   const set = game === 'scandinavian' ? 'machine' : 'main'
-  const [latest, summary, frequencies] = await Promise.all([
-    loadLatest(client, game, signal),
-    client.summary(game, { set }, signal),
-    client.frequencies(game, { set, sort: 'number' }, signal),
-  ])
+  const [latest, summary, frequencies, mostFrequent, leastFrequent, parity] =
+    await Promise.all([
+      loadLatest(client, game, signal),
+      client.summary(game, { set }, signal),
+      client.frequencies(game, { set, sort: 'number' }, signal),
+      client.frequencies(game, { set, sort: 'most', limit: 3 }, signal),
+      client.frequencies(game, { set, sort: 'least', limit: 3 }, signal),
+      client.parity(game, { set }, signal),
+    ])
   if (
     summary.meta.game !== game ||
     frequencies.meta.game !== game ||
+    mostFrequent.meta.game !== game ||
+    leastFrequent.meta.game !== game ||
     summary.meta.set_scope !== set ||
     frequencies.meta.set_scope !== set ||
-    (latest === null && summary.data.drawing_count > 0)
+    mostFrequent.meta.set_scope !== set ||
+    leastFrequent.meta.set_scope !== set ||
+    frequencies.meta.sort !== 'number' ||
+    mostFrequent.meta.sort !== 'most' ||
+    leastFrequent.meta.sort !== 'least' ||
+    parity.meta.set_scope !== set
   )
     throw new ApiError('invalid-response')
-  return { latest, summary, frequencies, capturedAt: new Date().toISOString() }
+  let history: Drawing[] = []
+  let historyError: string | null = null
+  try {
+    const page = await client.drawings(game, { per_page: 5 }, signal)
+    const details = new Map(
+      await Promise.all(
+        page.data
+          .filter((item) => item.id !== latest?.id)
+          .map(
+            async (item) =>
+              [
+                item.id,
+                (await client.drawing(game, item.id, signal)).data,
+              ] as const,
+          ),
+      ),
+    )
+    history = page.data.flatMap((item) => {
+      const drawing = item.id === latest?.id ? latest : details.get(item.id)
+      return drawing ? [drawing] : []
+    })
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error
+    historyError = error.message
+  }
+  return {
+    latest,
+    summary,
+    frequencies,
+    mostFrequent,
+    leastFrequent,
+    parity,
+    history,
+    historyError,
+    capturedAt: new Date().toISOString(),
+  }
 }
 export async function loadHome(
   client: ApiClient = api,

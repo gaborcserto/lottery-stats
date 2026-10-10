@@ -14,7 +14,18 @@ const server = createServer((request, response) => {
       '': fixtures.game,
       '/drawings/latest': fixtures.drawing,
       '/statistics/summary': fixtures.summary,
-      '/statistics/frequencies': fixtures.frequencies,
+      '/statistics/frequencies':
+        new URL(request.url, 'http://fixture.test').searchParams.get('sort') ===
+        'most'
+          ? fixtures.mostFrequencies
+          : new URL(request.url, 'http://fixture.test').searchParams.get(
+                'sort',
+              ) === 'least'
+            ? fixtures.leastFrequencies
+            : fixtures.frequencies,
+      '/statistics/parity': fixtures.parity,
+      '/drawings': fixtures.history,
+      '/drawings/7': fixtures.drawing,
     }
     body = endpoints[match[2]]
   }

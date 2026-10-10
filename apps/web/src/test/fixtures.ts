@@ -71,12 +71,35 @@ export function fixtureResponses(game: GameCode) {
       limit: maximum,
     },
   }
+  const ranked = frequencies.data.slice()
+  const mostFrequencies = {
+    data: ranked
+      .slice()
+      .sort(
+        (first, second) =>
+          second.count - first.count || first.number - second.number,
+      )
+      .slice(0, 3),
+    meta: { ...frequencies.meta, sort: 'most', limit: 3 },
+  }
+  const leastFrequencies = {
+    data: ranked
+      .slice()
+      .sort(
+        (first, second) =>
+          first.count - second.count || first.number - second.number,
+      )
+      .slice(0, 3),
+    meta: { ...frequencies.meta, sort: 'least', limit: 3 },
+  }
   const root = 'https://example.test/api/v1/games/' + game + '/drawings'
   return {
     game: { data: fixtureGames.data.find((item) => item.code === game) },
     drawing: { data: drawing },
     summary,
     frequencies,
+    mostFrequencies,
+    leastFrequencies,
     history: {
       data: [{ id: 7, year: 2026, week: 40, drawn_on: null }],
       links: {

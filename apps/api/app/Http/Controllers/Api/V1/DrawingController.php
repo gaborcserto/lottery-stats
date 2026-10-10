@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\DrawingResource;
 use App\Http\Resources\Api\V1\DrawingSummaryResource;
+use App\Lottery\DrawingFilters;
 use App\Models\Drawing;
 use App\Models\Game;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,10 +21,7 @@ class DrawingController extends Controller
         $validator = Validator::make($request->query(), [
             'page' => ['sometimes', 'integer', 'min:1'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
-            'year' => ['sometimes', 'integer', 'min:1', 'max:9999'],
-            'week' => ['sometimes', 'integer', 'min:1', 'max:53'],
-            'from_date' => ['sometimes', 'date_format:Y-m-d'],
-            'to_date' => ['sometimes', 'date_format:Y-m-d', 'after_or_equal:from_date'],
+            ...DrawingFilters::rules(),
         ])->after(function ($validator) use ($request): void {
             foreach (array_diff(array_keys($request->query()), [
                 'page', 'per_page', 'year', 'week', 'from_date', 'to_date',
@@ -34,18 +32,7 @@ class DrawingController extends Controller
         $validated = $validator->validate();
 
         $query = $this->orderedDrawings($gameModel);
-        if (isset($validated['year'])) {
-            $query->where('year', $validated['year']);
-        }
-        if (isset($validated['week'])) {
-            $query->where('week', $validated['week']);
-        }
-        if (isset($validated['from_date'])) {
-            $query->whereNotNull('drawn_on')->whereDate('drawn_on', '>=', $validated['from_date']);
-        }
-        if (isset($validated['to_date'])) {
-            $query->whereNotNull('drawn_on')->whereDate('drawn_on', '<=', $validated['to_date']);
-        }
+        DrawingFilters::apply($query, $validated);
 
         return DrawingSummaryResource::collection($query->paginate(
             (int) ($validated['per_page'] ?? 20),

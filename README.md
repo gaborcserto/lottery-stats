@@ -53,7 +53,7 @@ The command syncs all games by default, accepts `five`, `six`, or `scandinavian`
 - Laravel: <http://localhost:8000>
 - React/Vite: <http://localhost:5173>
 
-Use `docker compose logs -f` to follow service logs and `docker compose down` to stop the development environment. The frontend can call `/api`; Vite proxies those requests to the Laravel `api` service. No lottery API routes are implemented yet, so `/api` currently returns Laravel's 404 response.
+Use `docker compose logs -f` to follow service logs and `docker compose down` to stop the development environment. The frontend can call `/api`; Vite proxies those requests to the Laravel `api` service. Read-only results and statistics endpoints are available under `/api/v1`; see the [backend README](apps/api/README.md) for contracts, filters, and statistical definitions.
 
 Useful checks from the repository root:
 
@@ -94,7 +94,7 @@ CodeQL supports this public repository's JavaScript/TypeScript and React code, b
 
 Compose publishes development ports only on host loopback. Its root containers, bind mounts, development servers, and local `APP_DEBUG=true` template are not a production deployment. Production must set `APP_ENV=production`, `APP_DEBUG=false`, and a unique secret `APP_KEY`; serve only `apps/api/public/`, and keep the persistent SQLite database and journals outside public storage with access restricted to the application user. Windows bind-mount permissions require host access controls rather than relying on container `chmod`. The committed `.env.testing` key is only a test fixture. Never put secrets in `VITE_*` variables or logs.
 
-Laravel currently renders `/api/*` errors as JSON. Production debug must remain disabled to prevent internal details in those responses. Framework CORS defaults allow all origins without credentials, which is suitable for the planned public read-only API; review methods/origins if private or write endpoints are introduced. No lottery API routes are implemented yet.
+Laravel renders `/api/*` errors as JSON. Production debug must remain disabled to prevent internal details in those responses. Framework CORS defaults allow all origins without credentials, which is suitable for the public read-only API; review methods/origins if private or write endpoints are introduced.
 
 The importer reads environment-configured URLs through Laravel configuration and allows HTTPS on `bet.szerencsejatek.hu` only for `/cmsfiles/otos.json`, `/cmsfiles/hatos.json`, and `/cmsfiles/skandi.json`. Redirects are disabled. Connection/request timeouts, bounded retries, and a 16 MiB response limit protect retrieval before strict normalization and transactional persistence. Remote failures never delete historical data, and errors omit response bodies and configured URLs.
 
@@ -118,7 +118,7 @@ Before completing backend changes, run validation, `lint`, `analyse`, `test`, an
 
 ## Status
 
-The Laravel backend can normalize, persist, and synchronize official lottery drawings through the manual command and optional local startup process. Read-only lottery API routes, number analysis, historical trends, and chart or heatmap dashboards remain planned.
+The Laravel backend can normalize, persist, and synchronize official lottery drawings through the manual command and optional local startup process. Its read-only API provides results, number frequencies and rankings, parity distributions, number pairs, and yearly trends. Frontend charts and heatmap dashboards remain planned.
 
 ## Coding-agent guidance
 

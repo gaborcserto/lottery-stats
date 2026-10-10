@@ -1,6 +1,9 @@
 # Local reference material
 .references/
 
+# Optional internal engineering notes
+.notes/
+
 # Environment files and secrets
 .env
 .env.*

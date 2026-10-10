@@ -16,4 +16,4 @@ Verify migrations and rollback with `docker compose exec api composer test -- --
 
 Laravel will fetch and persist validated lottery data in SQLite, which remains the source of truth. React will consume the Laravel API and will not fetch lottery feeds directly. A failed fetch or invalid feed must preserve existing historical records. HTTP timeouts, retries, response-size limits, normalization, and validation are for later implementation phases.
 
-The current database-independent normalization contract and local source audit are documented in [lottery-source-normalization.md](docs/lottery-source-normalization.md).
+Essential source identity, historical-data, prize-precision, and import-safety decisions are summarized in the [project README](../../README.md#lottery-data-integrity). Optional detailed engineering notes may exist in the ignored root `.notes/` directory.

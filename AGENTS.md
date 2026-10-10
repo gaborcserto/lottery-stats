@@ -2,6 +2,8 @@
 
 This is the single source of truth for stable coding-agent instructions. [README.md](README.md) covers project setup and commands. Optional workflows and a project-specific testing skill are deferred until recurring procedures warrant separate resources; load any future resources only when relevant.
 
+The ignored `.notes/` directory contains optional local engineering notes and may be absent. Keep essential project decisions and instructions in tracked documentation; do not depend on `.notes/` files being present.
+
 ## Scope and workflow
 
 - Before editing, check `git status` and the relevant diff; preserve unrelated work and `.references/`.

@@ -8,6 +8,14 @@ Lottery Stats builds on my earlier [React Lottery project](https://github.com/ga
 
 The planned application will feature number frequency analysis, historical trends, and visual dashboards with charts and heatmaps, powered by a Laravel API and a React/TypeScript frontend.
 
+## Lottery data integrity
+
+Drawing identity uses `date:YYYY-MM-DD` when the source supplies a date. Undated drawings use source year/week plus a hash of their labeled normalized number sets; year/week alone is not unique. Corrected numbers on an undated drawing or a newly supplied date can change its identity. Without an authoritative source ID, the importer preserves the old row and does not guess a match. Missing historical dates stay null, and source year/week are retained without forcing ISO-week agreement.
+
+SQLite is the persistent source of truth. Import each game's validated batch in one transaction, update changed children under the existing drawing identity, and preserve historical rows missing from a later feed. Keep Hatos bonus numbers and Scandinavian machine/manual sets distinct. Store prize amounts as decimal strings without floating-point conversion; unknown values stay null. Complete historical all-zero Five and Six prize vectors remain unknown until their meaning is confirmed. Current normalized HUF amounts are whole units; review SQLite fixed-point storage before accepting fractional amounts.
+
+Persistence success does not mean a remote source synchronized successfully. Update import-state timestamps only after retrieval, validation, and persistence all succeed. SQLite serializes writers database-wide; persistence must acquire the write lock before comparison reads, and synchronization must separately prevent overlapping remote runs. The ignored `.notes/` directory may contain detailed working notes, but these tracked decisions stand on their own.
+
 ## Applications
 
 - `apps/api/` — Laravel 13.35.0 API using PHP 8.5.11, Composer 2.10.3, and SQLite

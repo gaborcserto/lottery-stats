@@ -1,26 +1,44 @@
 # Lottery Stats
 
-Lottery Stats is a full-stack application for exploring statistics from official Hungarian lottery drawings.
+Lottery Stats is an application for exploring statistics from official Hungarian lottery drawings.
 
 ## Project Background
 
-Lottery Stats is planned as a modernized full-stack successor to the original [React-based lottery statistics application](https://github.com/gaborcserto/lottery-react). The new project will introduce a Laravel REST API, SQLite-based data management, and a modern React/TypeScript frontend. These components are planned and have not been implemented yet.
+Lottery Stats builds on my earlier [React Lottery project](https://github.com/gaborcserto/lottery-react), with a stronger focus on exploring historical lottery results through statistics and interactive data visualizations.
 
-## Planned stack
+The planned application will feature number frequency analysis, historical trends, and visual dashboards with charts and heatmaps, powered by a Laravel API and a React/TypeScript frontend.
 
-- Laravel REST API with SQLite and Eloquent, documented with OpenAPI 3.1, Scramble, and Swagger UI
-- React, strict TypeScript, Vite, and SCSS frontend, with Recharts and custom heatmaps planned for dashboards
-- PHPUnit, Pint, PHPStan/Larastan, Vitest, React Testing Library, ESLint, and strict TypeScript
-- GitHub Actions CI; local development with WSL2 and Docker Compose
+## Applications
 
-## Repository layout
+- `apps/api/` — Laravel 13.35.0 API using PHP 8.5.11, Composer 2.10.3, and SQLite
+- `apps/web/` — Node.js 24.13.0, npm 11.21.0, React 19.3.0, TypeScript 7.0.2, Vite 8.3.4, React Router 8.4.0, and Sass 1.105.1
 
-- `apps/api/` — Laravel API
-- `apps/web/` — React frontend
-- `.references/` — local reference material; ignored by Git
+## Local development
 
-The lottery data source is Szerencsejáték Zrt. and its official lottery datasets.
+Requirements: Docker Desktop running Linux containers and Docker Compose. From the repository root, start both development services:
+
+```sh
+docker compose up -d --build
+```
+
+On first startup, Compose builds the PHP 8.5.11 and Node.js 24.13.0 images, installs Composer and npm dependencies into named volumes, creates an ignored local `.env` with an application key, and creates the SQLite file if needed.
+
+- Laravel: <http://localhost:8000>
+- React/Vite: <http://localhost:5173>
+
+Use `docker compose logs -f` to follow service logs and `docker compose down` to stop the development environment. The frontend can call `/api`; Vite proxies those requests to the Laravel `api` service. No lottery API routes are implemented yet, so `/api` currently returns Laravel's 404 response.
+
+Useful checks from the repository root:
+
+```sh
+docker compose exec api php artisan --version
+docker compose exec api php artisan migrate:status
+docker compose exec api php artisan test
+docker compose exec web npm run build
+```
+
+SQLite lives at `apps/api/database/database.sqlite` on the host and remains in place across container restarts and `docker compose down`. The local database, `.env`, Composer dependencies, and npm dependencies are excluded from Git. Run `docker compose exec api php artisan migrate` to apply Laravel migrations. Docker Compose is for local development; production deployment is not configured.
 
 ## Status
 
-Repository foundation is in progress. The applications have not been scaffolded yet; setup instructions will be added after scaffolding.
+The Laravel foundation and minimal React application shell are implemented. Lottery data, number analysis, historical trends, and chart or heatmap dashboards are planned and not implemented yet.

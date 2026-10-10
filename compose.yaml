@@ -1,0 +1,33 @@
+name: lottery-stats
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/api:/var/www/html
+      - api_vendor:/var/www/html/vendor
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+    depends_on:
+      - api
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./apps/web:/app
+      - web_node_modules:/app/node_modules
+    environment:
+      VITE_API_PROXY_TARGET: http://api:8000
+    command: >-
+      sh -c 'if [ ! -x node_modules/.bin/vite ]; then npm ci; fi;
+      exec npm run dev -- --host 0.0.0.0'
+
+volumes:
+  api_vendor:
+  web_node_modules:

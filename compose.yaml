@@ -10,6 +10,25 @@ services:
     volumes:
       - ./apps/api:/var/www/html
       - api_vendor:/var/www/html/vendor
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:8000/up') === false ? 1 : 0);"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  lottery-sync:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - ./apps/api:/var/www/html
+      - api_vendor:/var/www/html/vendor
+    entrypoint: ["php", "artisan"]
+    command: ["lottery:sync", "--startup"]
+    restart: "no"
 
   web:
     build:

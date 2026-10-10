@@ -31,6 +31,25 @@ docker compose up -d --build
 
 On first startup, Compose builds the PHP 8.5.11 and Node.js 24.13.0 images, installs Composer and npm dependencies into named volumes, creates an ignored local `.env` with an application key, and creates the SQLite file if needed.
 
+Initialize a new database with the non-destructive migrations and seed the stable game rows:
+
+```sh
+docker compose exec api php artisan migrate --seed
+```
+
+Lottery synchronization is manual by default. Set `LOTTERY_AUTO_SYNC=true` in `apps/api/.env` before starting Compose to enable the separate one-shot `lottery-sync` service in local development. It waits up to two minutes for the schema, then imports games with missing data or a last successful synchronization at least 24 hours old. The API and Vite remain available while it runs, and a network failure leaves cached SQLite drawings usable. The startup process exits immediately in tests and outside the `local` environment. Set the toggle to `false` to disable it; restart the one-shot service with `docker compose up -d lottery-sync` after changing the setting.
+
+Manual synchronization uses the same freshness and safety rules:
+
+```sh
+docker compose exec api php artisan lottery:sync
+docker compose exec api php artisan lottery:sync five
+docker compose exec api php artisan lottery:sync five --force
+docker compose exec api php artisan lottery:sync --status
+```
+
+The command syncs all games by default, accepts `five`, `six`, or `scandinavian`, skips fresh data without a request, and reports drawing counts per game. `--force` bypasses freshness. `--status` displays each game's last attempt, last success, and current state without fetching. Failed retrieval, validation, or persistence records a concise failure while preserving the prior success timestamp and all existing drawings.
+
 - Laravel: <http://localhost:8000>
 - React/Vite: <http://localhost:5173>
 
@@ -75,9 +94,9 @@ CodeQL supports this public repository's JavaScript/TypeScript and React code, b
 
 Compose publishes development ports only on host loopback. Its root containers, bind mounts, development servers, and local `APP_DEBUG=true` template are not a production deployment. Production must set `APP_ENV=production`, `APP_DEBUG=false`, and a unique secret `APP_KEY`; serve only `apps/api/public/`, and keep the persistent SQLite database and journals outside public storage with access restricted to the application user. Windows bind-mount permissions require host access controls rather than relying on container `chmod`. The committed `.env.testing` key is only a test fixture. Never put secrets in `VITE_*` variables or logs.
 
-Laravel currently renders `/api/*` errors as JSON. Production debug must remain disabled to prevent internal details in those responses. Framework CORS defaults allow all origins without credentials, which is suitable for the planned public read-only API; review methods/origins if private or write endpoints are introduced. No lottery routes or importer are implemented yet.
+Laravel currently renders `/api/*` errors as JSON. Production debug must remain disabled to prevent internal details in those responses. Framework CORS defaults allow all origins without credentials, which is suitable for the planned public read-only API; review methods/origins if private or write endpoints are introduced. No lottery API routes are implemented yet.
 
-The future importer must read environment-configured URLs through Laravel configuration and allowlist HTTPS on `bet.szerencsejatek.hu` with exactly `/cmsfiles/otos.json`, `/cmsfiles/hatos.json`, or `/cmsfiles/skandi.json`. Reject public URL input and disable redirects or validate each redirect destination. Enforce bounded connection/read timeouts, retries, and downloaded response bytes; validate JSON structure, numeric ranges, real dates, and historical drawing rules before transactional, idempotent SQLite writes. Remote failures must never delete historical data. Keep client errors and logs safe without raw payloads, secrets, or internal error details.
+The importer reads environment-configured URLs through Laravel configuration and allows HTTPS on `bet.szerencsejatek.hu` only for `/cmsfiles/otos.json`, `/cmsfiles/hatos.json`, and `/cmsfiles/skandi.json`. Redirects are disabled. Connection/request timeouts, bounded retries, and a 16 MiB response limit protect retrieval before strict normalization and transactional persistence. Remote failures never delete historical data, and errors omit response bodies and configured URLs.
 
 ## PHP quality checks
 
@@ -99,7 +118,7 @@ Before completing backend changes, run validation, `lint`, `analyse`, `test`, an
 
 ## Status
 
-The Laravel foundation and minimal React application shell are implemented. Phase 3.10 establishes shared coding-agent guidance and development conventions. Lottery data, number analysis, historical trends, and chart or heatmap dashboards are planned and not implemented yet.
+The Laravel backend can normalize, persist, and synchronize official lottery drawings through the manual command and optional local startup process. Read-only lottery API routes, number analysis, historical trends, and chart or heatmap dashboards remain planned.
 
 ## Coding-agent guidance
 

@@ -20,7 +20,7 @@ class LotteryConfigurationTest extends TestCase
 
     public function test_configuration_contains_only_the_expected_games_and_official_https_urls(): void
     {
-        $sources = config('lottery');
+        $sources = config('lottery.sources');
 
         $this->assertInstanceOf(Repository::class, app('config'));
         $this->assertSame(self::OFFICIAL_URLS, $sources);
@@ -67,13 +67,13 @@ class LotteryConfigurationTest extends TestCase
                 $_SERVER[$key] = $value;
             }
 
-            $sources = require config_path('lottery.php');
+            $configuration = require config_path('lottery.php');
 
             $this->assertSame([
                 'five' => $overrides['LOTTERY_FIVE_URL'],
                 'six' => $overrides['LOTTERY_SIX_URL'],
                 'scandinavian' => $overrides['LOTTERY_SCANDINAVIAN_URL'],
-            ], $sources);
+            ], $configuration['sources']);
         } finally {
             foreach ($previous as $key => $values) {
                 if ($values['process'] === false) {

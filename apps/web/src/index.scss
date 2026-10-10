@@ -8,7 +8,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   min-width: 320px;
@@ -16,7 +18,9 @@ body {
   margin: 0;
 }
 
-a { color: #23664e; }
+a {
+  color: #23664e;
+}
 
 .shell {
   width: min(100% - 3rem, 48rem);

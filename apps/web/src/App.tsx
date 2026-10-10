@@ -5,7 +5,10 @@ function Home() {
     <main className="shell">
       <p className="eyebrow">Lottery Stats</p>
       <h1>Hungarian lottery statistics</h1>
-      <p>The application foundation is ready. Lottery data and statistics are planned for a later phase.</p>
+      <p>
+        The application foundation is ready. Lottery data and statistics are
+        planned for a later phase.
+      </p>
       <Link to="/about">About this project</Link>
     </main>
   )
@@ -16,7 +19,10 @@ function About() {
     <main className="shell">
       <p className="eyebrow">Lottery Stats</p>
       <h1>About</h1>
-      <p>A future home for statistics based on official Hungarian lottery drawings.</p>
+      <p>
+        A future home for statistics based on official Hungarian lottery
+        drawings.
+      </p>
       <Link to="/">Home</Link>
     </main>
   )

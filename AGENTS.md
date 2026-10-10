@@ -21,6 +21,7 @@
 - Add meaningful tests for new functionality; prefer focused tests during development and run full verification at phase completion.
 - Avoid repetitive verification loops, arbitrary coverage targets, and tests written only to increase coverage.
 - For backend changes, run Composer's `validate --strict`, `lint`, `analyse`, and `test` commands with `docker compose exec api composer`, then `git diff --check`. Use `lint:fix` for Laravel Pint formatting; keep PHPUnit and the Larastan level 6 checks.
+- For frontend changes, run `lint`, `format:check`, `typecheck`, and `build` with `docker compose exec web npm run`; use `lint:fix` and `format` to apply fixes. Keep TypeScript strict and use Prettier for frontend files.
 - Make small, complete, reviewable changes. Avoid unrelated refactoring and placeholder implementations.
 - Preserve `.references/` and existing work. Do not edit generated files manually or install unnecessary dependencies.
 - Do not commit or push unless explicitly requested.

@@ -34,8 +34,13 @@ Useful checks from the repository root:
 docker compose exec api php artisan --version
 docker compose exec api php artisan migrate:status
 docker compose exec api composer test
+docker compose exec web npm run lint
+docker compose exec web npm run format:check
+docker compose exec web npm run typecheck
 docker compose exec web npm run build
 ```
+
+Frontend quality commands run from `apps/web/` (or through the Compose `web` service): `npm run lint` checks ESLint, `npm run lint:fix` applies ESLint fixes, `npm run format` formats frontend files with Prettier, `npm run format:check` verifies formatting, and `npm run typecheck` runs the TypeScript compiler. The existing `npm run build` also performs TypeScript verification before building with Vite.
 
 SQLite lives at `apps/api/database/database.sqlite` on the host and remains in place across container restarts and `docker compose down`. The local database, `.env`, Composer dependencies, and npm dependencies are excluded from Git. Run `docker compose exec api php artisan migrate` to apply Laravel migrations. Docker Compose is for local development; production deployment is not configured.
 

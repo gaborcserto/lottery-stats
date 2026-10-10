@@ -8,3 +8,8 @@
     margin-inline: auto;
   }
 }
+:global(body:has(.lottery-home)) .footer {
+  background: var(--home-footer);
+  border-top-color: var(--home-divider);
+  color: var(--home-soft-text);
+}

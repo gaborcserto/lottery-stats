@@ -4,6 +4,10 @@ import { gamePages } from '../../config/games'
 import { LatestDrawing } from '../../components/LatestDrawing'
 import styles from './GamePage.module.scss'
 
+function formatCount(count: number) {
+  return count.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')
+}
+
 export function GamePage({
   game,
   data,
@@ -25,8 +29,8 @@ export function GamePage({
       ) : (
         <>
           <p>
-            {summary.drawing_count.toLocaleString('hu-HU')} sorsolás,{' '}
-            {summary.eligible_set_count.toLocaleString('hu-HU')}{' '}
+            {formatCount(summary.drawing_count)} sorsolás,{' '}
+            {formatCount(summary.eligible_set_count)}{' '}
             {game === 'scandinavian' ? 'gépi számsor' : 'főszámsor'}. Évek:{' '}
             {summary.min_year}–{summary.max_year}.
           </p>

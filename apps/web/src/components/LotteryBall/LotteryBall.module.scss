@@ -1,0 +1,14 @@
+.ball {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: clamp(2.45rem, 4vw, 2.85rem);
+  aspect-ratio: 1;
+  border: 1px solid var(--ball-border);
+  border-radius: 50%;
+  background: var(--ball-background);
+  color: var(--ball-text);
+  font-size: 1rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}

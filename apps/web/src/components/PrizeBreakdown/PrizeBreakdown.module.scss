@@ -1,0 +1,32 @@
+.prizes {
+  margin: 0;
+}
+.prize {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: 0.55rem;
+  border-bottom: 1px solid #dce5dc;
+  font-size: 0.88rem;
+}
+.prize dt {
+  color: var(--muted);
+}
+.prize dd {
+  margin: 0;
+  color: var(--heading);
+  text-align: end;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.prize span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+.empty {
+  margin: 0.65rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}

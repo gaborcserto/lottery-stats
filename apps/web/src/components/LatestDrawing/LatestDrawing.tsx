@@ -19,7 +19,8 @@ const prizeLabels = {
 
 function formatAmount(amount: string) {
   const [whole, fraction] = amount.split('.')
-  return `${BigInt(whole).toLocaleString('hu-HU')},${fraction}`
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')
+  return `${grouped},${fraction}`
 }
 
 export function LatestDrawing({ drawing }: { drawing: Drawing | null }) {

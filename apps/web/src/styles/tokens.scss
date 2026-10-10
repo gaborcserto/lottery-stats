@@ -7,6 +7,21 @@
   --border: #becdc3;
   --link: #176039;
   --focus: #155e38;
+  --home-overlay: linear-gradient(
+    115deg,
+    rgba(7, 29, 39, 0.91),
+    rgba(10, 39, 47, 0.74) 58%,
+    rgba(8, 36, 37, 0.84)
+  );
+  --home-header: rgba(9, 31, 39, 0.78);
+  --home-footer: rgba(9, 31, 39, 0.82);
+  --home-divider: rgba(225, 239, 226, 0.2);
+  --home-soft-text: #e2eee7;
+  --card-background: #f8faf6;
+  --card-divider: #dce5dc;
+  --ball-background: #eff5e7;
+  --ball-border: #b8d77b;
+  --ball-text: #173c30;
 }
 @mixin dark {
   --background: #0e202c;
@@ -17,6 +32,21 @@
   --border: #557168;
   --link: #c4e86b;
   --focus: #c4e86b;
+  --home-overlay: linear-gradient(
+    115deg,
+    rgba(7, 29, 39, 0.91),
+    rgba(10, 39, 47, 0.74) 58%,
+    rgba(8, 36, 37, 0.84)
+  );
+  --home-header: rgba(9, 31, 39, 0.78);
+  --home-footer: rgba(9, 31, 39, 0.82);
+  --home-divider: rgba(225, 239, 226, 0.2);
+  --home-soft-text: #e2eee7;
+  --card-background: #f8faf6;
+  --card-divider: #dce5dc;
+  --ball-background: #eff5e7;
+  --ball-border: #b8d77b;
+  --ball-text: #173c30;
 }
 :root {
   @include light;

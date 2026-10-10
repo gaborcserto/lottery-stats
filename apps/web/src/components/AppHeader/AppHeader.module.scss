@@ -18,6 +18,17 @@
     text-decoration-thickness: 3px;
   }
 }
+:global(body:has(.lottery-home)) .header {
+  background: var(--home-header);
+  border-bottom-color: var(--home-divider);
+  backdrop-filter: blur(12px);
+  a {
+    color: #f6faf5;
+  }
+  a[aria-current='page'] {
+    color: var(--lime);
+  }
+}
 .skip {
   position: absolute;
   inset-inline-start: var(--space-4);

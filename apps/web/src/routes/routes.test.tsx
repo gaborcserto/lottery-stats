@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+﻿import { render, screen, fireEvent } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import Root, { HydrateFallback } from '../root'
@@ -41,7 +41,23 @@ function renderRoute(path: string) {
           {
             index: true,
             Component: Home,
-            loader: home.clientLoader,
+            loader: () => ({
+              latest: [
+                {
+                  game: 'five' as const,
+                  drawing: fixtureResponses('five').drawing.data,
+                },
+                {
+                  game: 'six' as const,
+                  drawing: fixtureResponses('six').drawing.data,
+                },
+                {
+                  game: 'scandinavian' as const,
+                  drawing: fixtureResponses('scandinavian').drawing.data,
+                },
+              ],
+              capturedAt: '2026-10-10T00:00:00.000Z',
+            }),
             ErrorBoundary: home.ErrorBoundary,
           },
           {
@@ -72,7 +88,7 @@ function renderRoute(path: string) {
 }
 describe('explicit route modules', () => {
   it.each([
-    ['/', 'Lottóeredmények és statisztikák'],
+    ['/', 'Lottóeredmények, tisztán.'],
     ['/otoslotto', 'Ötöslottó eredmények és statisztikák'],
     ['/hatoslotto', 'Hatoslottó eredmények és statisztikák'],
     ['/skandinav-lotto', 'Skandináv lottó eredmények és statisztikák'],

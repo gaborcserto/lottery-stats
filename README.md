@@ -34,13 +34,18 @@ Useful checks from the repository root:
 docker compose exec api php artisan --version
 docker compose exec api php artisan migrate:status
 docker compose exec api composer test
+docker compose exec web npm run test
 docker compose exec web npm run lint
 docker compose exec web npm run format:check
 docker compose exec web npm run typecheck
 docker compose exec web npm run build
 ```
 
-Frontend quality commands run from `apps/web/` (or through the Compose `web` service): `npm run lint` checks ESLint, `npm run lint:fix` applies ESLint fixes, `npm run format` formats frontend files with Prettier, `npm run format:check` verifies formatting, and `npm run typecheck` runs the TypeScript compiler. The existing `npm run build` also performs TypeScript verification before building with Vite.
+Frontend quality commands run from `apps/web/` (or through the Compose `web` service): `npm run test` runs Vitest once, `npm run test:watch` starts its interactive watch mode, `npm run lint` checks ESLint, `npm run lint:fix` applies ESLint fixes, `npm run format` formats frontend files with Prettier, `npm run format:check` verifies formatting, and `npm run typecheck` runs the TypeScript compiler. The existing `npm run build` also performs TypeScript verification before building with Vite. The tests use jsdom and React Testing Library and do not require Laravel or the development database.
+
+## Git pre-commit checks
+
+Git hooks require Git, Node.js/npm on the host, Docker Compose, and the `web` and `api` services running. From the repository root, run `npm install` once to install Husky and lint-staged and activate the hook. Each commit then checks only staged frontend files with ESLint and Prettier, and formats staged PHP files with Laravel Pint in the `api` container. Frontend dependencies can remain in the Compose `web` service; PHP dependencies are provided by the `api` service. Run the same frontend checks manually with `docker compose exec web npm run lint` and `docker compose exec web npm run format:check`, and format PHP manually with `docker compose exec api composer lint:fix` or check it with `docker compose exec api composer lint`.
 
 SQLite lives at `apps/api/database/database.sqlite` on the host and remains in place across container restarts and `docker compose down`. The local database, `.env`, Composer dependencies, and npm dependencies are excluded from Git. Run `docker compose exec api php artisan migrate` to apply Laravel migrations. Docker Compose is for local development; production deployment is not configured.
 

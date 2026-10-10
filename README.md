@@ -33,11 +33,27 @@ Useful checks from the repository root:
 ```sh
 docker compose exec api php artisan --version
 docker compose exec api php artisan migrate:status
-docker compose exec api php artisan test
+docker compose exec api composer test
 docker compose exec web npm run build
 ```
 
 SQLite lives at `apps/api/database/database.sqlite` on the host and remains in place across container restarts and `docker compose down`. The local database, `.env`, Composer dependencies, and npm dependencies are excluded from Git. Run `docker compose exec api php artisan migrate` to apply Laravel migrations. Docker Compose is for local development; production deployment is not configured.
+
+## PHP quality checks
+
+Run backend checks from the repository root with the `api` service running:
+
+```sh
+docker compose exec api composer validate --strict
+docker compose exec api composer lint     # Check Laravel Pint formatting
+docker compose exec api composer lint:fix # Apply Laravel Pint formatting
+docker compose exec api composer analyse  # Run Larastan / PHPStan
+docker compose exec api composer test     # Run PHPUnit unit and feature tests
+```
+
+Pint uses its default Laravel preset. Larastan runs at level 6 over application code, bootstrap entry points, configuration, database code, and routes; dependencies and generated caches are outside the analysis paths. PHPUnit retains the existing in-memory SQLite test configuration. Composer scripts also work directly from `apps/api/` when PHP and dependencies are available.
+
+Before completing backend changes, run validation, `lint`, `analyse`, `test`, and `git diff --check`. Use `lint:fix` when formatting needs correction.
 
 ## Status
 

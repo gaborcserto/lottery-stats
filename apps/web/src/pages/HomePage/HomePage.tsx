@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { HomePageData } from '../../api/page-data'
-import { loadHome } from '../../api/page-data'
+import { loadHome, rememberHomeData } from '../../api/page-data'
 import { gameCodes } from '../../config/games'
 import { LotteryCard } from '../../components/LotteryCard'
 import styles from './HomePage.module.scss'
@@ -10,6 +10,7 @@ export function HomePage({ data }: { data: HomePageData }) {
   const [refreshFailed, setRefreshFailed] = useState(false)
 
   useEffect(() => {
+    rememberHomeData(data)
     const controller = new AbortController()
     const timeout = window.setTimeout(() => {
       void loadHome(undefined, controller.signal)
@@ -34,7 +35,7 @@ export function HomePage({ data }: { data: HomePageData }) {
       window.clearTimeout(timeout)
       controller.abort()
     }
-  }, [])
+  }, [data])
 
   return (
     <div className={`${styles.home} lottery-home`}>

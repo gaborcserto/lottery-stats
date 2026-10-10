@@ -6,6 +6,7 @@ import {
   loadGameWithFallback,
   loadHome,
   rememberGamePage,
+  rememberHomeData,
 } from './page-data'
 import { deferred, fixturePageData, fixtureResponses } from '../test/fixtures'
 
@@ -49,6 +50,36 @@ describe('game page data loading', () => {
     expect(await loadGameRoute(client, 'five', snapshot, signal)).toBe(live)
     expect(snapshot).toHaveBeenCalledTimes(1)
     expect(fetcher).toHaveBeenCalledTimes(5)
+  })
+
+  it('uses prerendered homepage results for one cache lifetime before refreshing', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-10T12:00:00Z'))
+    const fetcher = fixtureFetcher()
+    const client = createApiClient('/api/v1', fetcher)
+    rememberHomeData(
+      {
+        latest: (['five', 'six', 'scandinavian'] as const).map((game) => ({
+          game,
+          drawing: fixtureResponses(game).drawing.data,
+        })),
+        capturedAt: '2026-10-10T11:00:00.000Z',
+      },
+      client,
+    )
+
+    await expect(loadHome(client)).resolves.toMatchObject({
+      latest: expect.arrayContaining([
+        expect.objectContaining({ game: 'five' }),
+        expect.objectContaining({ game: 'six' }),
+        expect.objectContaining({ game: 'scandinavian' }),
+      ]),
+    })
+    expect(fetcher).not.toHaveBeenCalled()
+
+    vi.advanceTimersByTime(30_000)
+    await loadHome(client)
+    expect(fetcher).toHaveBeenCalledTimes(3)
   })
 
   it('reuses homepage latest results and skips their history detail requests', async () => {

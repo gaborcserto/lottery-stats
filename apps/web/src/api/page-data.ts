@@ -57,6 +57,14 @@ export function rememberGamePage(
     })
 }
 
+export function rememberHomeData(data: HomePageData, client: ApiClient = api) {
+  const cache = cacheFor(client)
+  const capturedAt = new Date().toISOString()
+  for (const { game, drawing } of data.latest) {
+    if (!cache.latest.has(game)) cache.latest.set(game, { drawing, capturedAt })
+  }
+}
+
 export async function loadGameRoute(
   client: ApiClient,
   game: GameCode,

@@ -1,0 +1,2066 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Lottery Stats public API",
+    "version": "1.0.0",
+    "description": "Public read-only SQLite-backed lottery data. No login, tokens, API keys or cookies required. Default quota: 60 requests per minute per client IP shared across these routes; configurable in Laravel. Successful and error API responses use no-store, nosniff and no-referrer headers. CORS permits only configured browser origins and no credentials; prefer same-origin requests. HEAD is supported by Laravel for GET routes. Preflight OPTIONS is handled by built-in CORS and does not consume quota. No public import/sync/admin endpoints. Error schemas describe production responses with APP_DEBUG=false; development server and throttling failures can include Laravel debug diagnostics."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "security": [],
+  "tags": [
+    {
+      "name": "Results",
+      "description": "Game metadata and historical drawing results."
+    },
+    {
+      "name": "Statistics",
+      "description": "Statistics from normalized historical records."
+    }
+  ],
+  "paths": {
+    "/api/v1/games": {
+      "get": {
+        "operationId": "listGames",
+        "tags": [
+          "Results"
+        ],
+        "summary": "List supported games",
+        "description": "Configured games in Five, Six, Scandinavian order. No query parameters are consumed.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful read-only response.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Configured requests per minute (default 60).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in this client IP window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameList"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "code": "five",
+                      "name": "Ötöslottó"
+                    },
+                    {
+                      "code": "six",
+                      "name": "Hatoslottó"
+                    },
+                    {
+                      "code": "scandinavian",
+                      "name": "Skandináv lottó"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/v1/games/{game}": {
+      "get": {
+        "operationId": "showGame",
+        "tags": [
+          "Results"
+        ],
+        "summary": "Get game metadata",
+        "description": "No query parameters are consumed.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Game"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful read-only response.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Configured requests per minute (default 60).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in this client IP window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameResponse"
+                },
+                "example": {
+                  "data": {
+                    "code": "five",
+                    "name": "Ötöslottó"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/v1/games/{game}/drawings": {
+      "get": {
+        "operationId": "listDrawings",
+        "tags": [
+          "Results"
+        ],
+        "summary": "List historical drawing summaries",
+        "description": "Descending year, week, dated before undated, date descending, ID descending. Stable ties do not imply physical draw order. Unknown query parameters return 422. Pagination links follow Laravel behavior and do not retain filters; resend filters when changing page.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Game"
+          },
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Year"
+          },
+          {
+            "$ref": "#/components/parameters/Week"
+          },
+          {
+            "$ref": "#/components/parameters/FromDate"
+          },
+          {
+            "$ref": "#/components/parameters/ToDate"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful read-only response.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Configured requests per minute (default 60).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in this client IP window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DrawingPage"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/v1/games/{game}/drawings/latest": {
+      "get": {
+        "operationId": "latestDrawing",
+        "tags": [
+          "Results"
+        ],
+        "summary": "Get latest available drawing",
+        "description": "Uses list ordering; 404 when the game has no drawings. Five has five main numbers (1–90); Six has six main numbers (1–45) and optional historical bonus kept separate; Scandinavian has separate seven-number machine/manual sets (1–35). Numbers are ascending, sets ordered main/bonus/machine/manual, prizes by tier. Prize amounts are exact decimal strings per drawing; historical dates, counts, amounts and currencies may be missing. Historical Six match_5_plus_1 applies only when a bonus exists. Other tiers: Five match_2..match_5; Six match_3..match_6; Scandinavian match_4..match_7. No query parameters are consumed.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Game"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful read-only response.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Configured requests per minute (default 60).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in this client IP window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DrawingResponse"
+                },
+                "example": {
+                  "data": {
+                    "id": 123,
+                    "year": 2026,
+                    "week": 40,
+                    "drawn_on": null,
+                    "sets": [
+                      {
+                        "type": "main",
+                        "numbers": [
+                          1,
+                          2,
+                          3,
+                          4,
+                          5
+                        ]
+                      }
+                    ],
+                    "prizes": [
+                      {
+                        "tier": "match_5",
+                        "winner_count": null,
+                        "amount": "1250000.00",
+                        "currency": "HUF"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/v1/games/{game}/drawings/{drawing}": {
+      "get": {
+        "operationId": "showDrawing",
+        "tags": [
+          "Results"
+        ],
+        "summary": "Get a drawing by ID",
+        "description": "Five has five main numbers (1–90); Six has six main numbers (1–45) and optional historical bonus kept separate; Scandinavian has separate seven-number machine/manual sets (1–35). Numbers are ascending, sets ordered main/bonus/machine/manual, prizes by tier. Prize amounts are exact decimal strings per drawing; historical dates, counts, amounts and currencies may be missing. Historical Six match_5_plus_1 applies only when a bonus exists. Other tiers: Five match_2..match_5; Six match_3..match_6; Scandinavian match_4..match_7. No query parameters are consumed.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Game"
+          },
+          {
+            "$ref": "#/components/parameters/Drawing"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful read-only response.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Configured requests per minute (default 60).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in this client IP window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DrawingResponse"
+                },
+                "example": {
+                  "data": {
+                    "id": 123,
+                    "year": 2026,
+                    "week": 40,
+                    "drawn_on": null,
+                    "sets": [
+                      {
+                        "type": "main",
+                        "numbers": [
+                          1,
+                          2,
+                          3,
+                          4,
+                          5
+                        ]
+                      }
+                    ],
+                    "prizes": [
+                      {
+                        "tier": "match_5",
+                        "winner_count": null,
+                        "amount": "1250000.00",
+                        "currency": "HUF"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/v1/games/{game}/statistics/summary": {
+      "get": {
+        "operationId": "statisticsSummary",
+        "tags": [
+          "Statistics"
+        ],
+        "summary": "Summarize the filtered population",
+        "description": "Unknown query parameters return 422. Percentages round half-up to two decimal places and return 0 for an empty denominator. Statistics describe imported history, which may contain incomplete years or missing dates; they do not predict future results. Counts distinct drawings and actual eligible sets. Drawings lacking selected sets still contribute to drawing count and year/date coverage. Known date bounds exclude missing dates. Empty bounds are null.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Game"
+          },
+          {
+            "$ref": "#/components/parameters/Year"
+          },
+          {
+            "$ref": "#/components/parameters/Week"
+          },
+          {
+            "$ref": "#/components/parameters/FromDate"
+          },
+          {
+            "$ref": "#/components/parameters/ToDate"
+          },
+          {
+            "$ref": "#/components/parameters/Set"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful read-only response.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Configured requests per minute (default 60).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in this client IP window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResponse"
+                },
+                "example": {
+                  "data": {
+                    "drawing_count": 0,
+                    "eligible_set_count": 0,
+                    "min_year": null,
+                    "max_year": null,
+                    "from_date": null,
+                    "to_date": null,
+                    "undated_drawing_count": 0
+                  },
+                  "meta": {
+                    "game": "five",
+                    "filters": {},
+                    "set_scope": "main",
+                    "drawing_count": 0,
+                    "eligible_set_count": 0,
+                    "percentage_precision": 2
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/v1/games/{game}/statistics/frequencies": {
+      "get": {
+        "operationId": "statisticsFrequencies",
+        "tags": [
+          "Statistics"
+        ],
+        "summary": "Get number frequencies and rankings",
+        "description": "Unknown query parameters return 422. Percentages round half-up to two decimal places and return 0 for an empty denominator. Statistics describe imported history, which may contain incomplete years or missing dates; they do not predict future results. Each count is the number of eligible sets containing the number. occurrence_percentage = count / eligible_set_count * 100, not a share of all balls. Combined Scandinavian may count a number twice in one drawing. Full game range includes zero counts. Ties use number ascending.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Game"
+          },
+          {
+            "$ref": "#/components/parameters/Year"
+          },
+          {
+            "$ref": "#/components/parameters/Week"
+          },
+          {
+            "$ref": "#/components/parameters/FromDate"
+          },
+          {
+            "$ref": "#/components/parameters/ToDate"
+          },
+          {
+            "$ref": "#/components/parameters/Set"
+          },
+          {
+            "$ref": "#/components/parameters/Sort"
+          },
+          {
+            "$ref": "#/components/parameters/FrequencyLimit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful read-only response.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Configured requests per minute (default 60).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in this client IP window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrequenciesResponse"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "number": 1,
+                      "count": 3,
+                      "occurrence_percentage": 75
+                    }
+                  ],
+                  "meta": {
+                    "game": "scandinavian",
+                    "filters": {},
+                    "set_scope": "combined",
+                    "drawing_count": 2,
+                    "eligible_set_count": 4,
+                    "percentage_precision": 2,
+                    "occurrence_percentage_denominator": "eligible_set_count",
+                    "sort": "number",
+                    "limit": 1
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/v1/games/{game}/statistics/parity": {
+      "get": {
+        "operationId": "statisticsParity",
+        "tags": [
+          "Statistics"
+        ],
+        "summary": "Get odd/even occurrence shares and set distribution",
+        "description": "Unknown query parameters return 422. Percentages round half-up to two decimal places and return 0 for an empty denominator. Statistics describe imported history, which may contain incomplete years or missing dates; they do not predict future results. even/odd occurrence_share_percentage = count / number_occurrence_count * 100. Distribution set_percentage = group eligible_set_count / total eligible_set_count * 100. Distribution sorts even_count then odd_count ascending; empty population gives zero shares and empty distribution.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Game"
+          },
+          {
+            "$ref": "#/components/parameters/Year"
+          },
+          {
+            "$ref": "#/components/parameters/Week"
+          },
+          {
+            "$ref": "#/components/parameters/FromDate"
+          },
+          {
+            "$ref": "#/components/parameters/ToDate"
+          },
+          {
+            "$ref": "#/components/parameters/Set"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful read-only response.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Configured requests per minute (default 60).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in this client IP window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParityResponse"
+                },
+                "example": {
+                  "data": {
+                    "number_occurrence_count": 5,
+                    "occurrence_share_percentage_denominator": "number_occurrence_count",
+                    "set_percentage_denominator": "eligible_set_count",
+                    "even": {
+                      "count": 2,
+                      "occurrence_share_percentage": 40
+                    },
+                    "odd": {
+                      "count": 3,
+                      "occurrence_share_percentage": 60
+                    },
+                    "distribution": [
+                      {
+                        "even_count": 2,
+                        "odd_count": 3,
+                        "eligible_set_count": 1,
+                        "set_percentage": 100
+                      }
+                    ]
+                  },
+                  "meta": {
+                    "game": "five",
+                    "filters": {},
+                    "set_scope": "main",
+                    "drawing_count": 1,
+                    "eligible_set_count": 1,
+                    "percentage_precision": 2
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/v1/games/{game}/statistics/pairs": {
+      "get": {
+        "operationId": "statisticsPairs",
+        "tags": [
+          "Statistics"
+        ],
+        "summary": "Get most frequent unordered number pairs",
+        "description": "Unknown query parameters return 422. Percentages round half-up to two decimal places and return 0 for an empty denominator. Statistics describe imported history, which may contain incomplete years or missing dates; they do not predict future results. first_number < second_number. Count once per selected set containing both numbers; never pair across machine/manual sets. A k-number set contributes k*(k-1)/2 pairs. occurrence_percentage = count / eligible_set_count * 100. Only observed pairs, sorted count descending, first_number then second_number ascending. Empty population returns [].",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Game"
+          },
+          {
+            "$ref": "#/components/parameters/Year"
+          },
+          {
+            "$ref": "#/components/parameters/Week"
+          },
+          {
+            "$ref": "#/components/parameters/FromDate"
+          },
+          {
+            "$ref": "#/components/parameters/ToDate"
+          },
+          {
+            "$ref": "#/components/parameters/Set"
+          },
+          {
+            "$ref": "#/components/parameters/PairLimit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful read-only response.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Configured requests per minute (default 60).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in this client IP window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairsResponse"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "first_number": 1,
+                      "second_number": 2,
+                      "count": 1,
+                      "occurrence_percentage": 100
+                    }
+                  ],
+                  "meta": {
+                    "game": "five",
+                    "filters": {},
+                    "set_scope": "main",
+                    "drawing_count": 1,
+                    "eligible_set_count": 1,
+                    "percentage_precision": 2,
+                    "occurrence_percentage_denominator": "eligible_set_count",
+                    "sort": "most",
+                    "limit": 1
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/v1/games/{game}/statistics/trends/yearly": {
+      "get": {
+        "operationId": "statisticsYearly",
+        "tags": [
+          "Statistics"
+        ],
+        "summary": "Get yearly counts and optional number occurrence",
+        "description": "Unknown query parameters return 422. Percentages round half-up to two decimal places and return 0 for an empty denominator. Statistics describe imported history, which may contain incomplete years or missing dates; they do not predict future results. Source year ascending, including undated drawings; missing years are not fabricated. Without number, selected-number row fields are absent and meta.selected_number is null. With number, selected_number_occurrence_percentage = selected_number_count / that year eligible_set_count * 100. Empty population returns [].",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Game"
+          },
+          {
+            "$ref": "#/components/parameters/Year"
+          },
+          {
+            "$ref": "#/components/parameters/Week"
+          },
+          {
+            "$ref": "#/components/parameters/FromDate"
+          },
+          {
+            "$ref": "#/components/parameters/ToDate"
+          },
+          {
+            "$ref": "#/components/parameters/Set"
+          },
+          {
+            "$ref": "#/components/parameters/Number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful read-only response.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Configured requests per minute (default 60).",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in this client IP window.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YearlyResponse"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "year": 2000,
+                      "drawing_count": 1,
+                      "eligible_set_count": 1,
+                      "number_occurrence_count": 5,
+                      "selected_number_count": 1,
+                      "selected_number_occurrence_percentage": 100
+                    }
+                  ],
+                  "meta": {
+                    "game": "five",
+                    "filters": {},
+                    "set_scope": "main",
+                    "drawing_count": 1,
+                    "eligible_set_count": 1,
+                    "percentage_precision": 2,
+                    "selected_number": 1,
+                    "occurrence_percentage_denominator": "yearly_eligible_set_count"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Game": {
+        "type": "object",
+        "required": [
+          "code",
+          "name"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "five",
+              "six",
+              "scandinavian"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "example": "Ötöslottó"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DrawingSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "year",
+          "week",
+          "drawn_on"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "year": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9999
+          },
+          "week": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 53
+          },
+          "drawn_on": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "NumberSet": {
+        "type": "object",
+        "required": [
+          "type",
+          "numbers"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "main",
+              "bonus",
+              "machine",
+              "manual"
+            ]
+          },
+          "numbers": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 90
+            },
+            "uniqueItems": true,
+            "minItems": 1,
+            "maxItems": 7
+          }
+        },
+        "additionalProperties": false
+      },
+      "Prize": {
+        "type": "object",
+        "required": [
+          "tier",
+          "winner_count",
+          "amount",
+          "currency"
+        ],
+        "properties": {
+          "tier": {
+            "type": "string",
+            "enum": [
+              "match_2",
+              "match_3",
+              "match_4",
+              "match_5",
+              "match_5_plus_1",
+              "match_6",
+              "match_7"
+            ]
+          },
+          "winner_count": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "amount": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[0-9]+\\.[0-9]{2}$",
+            "example": "1250000.00"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "HUF",
+              null
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ValidationError": {
+        "type": "object",
+        "required": [
+          "message",
+          "errors"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "Summary": {
+        "type": "object",
+        "required": [
+          "drawing_count",
+          "eligible_set_count",
+          "min_year",
+          "max_year",
+          "from_date",
+          "to_date",
+          "undated_drawing_count"
+        ],
+        "properties": {
+          "drawing_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "eligible_set_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "min_year": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9999,
+            "nullable": true
+          },
+          "max_year": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9999,
+            "nullable": true
+          },
+          "from_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "to_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "undated_drawing_count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "Frequency": {
+        "type": "object",
+        "required": [
+          "number",
+          "count",
+          "occurrence_percentage"
+        ],
+        "properties": {
+          "number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 90
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "occurrence_percentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Rounded half-up to two decimal places; zero when denominator is zero."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Pair": {
+        "type": "object",
+        "required": [
+          "first_number",
+          "second_number",
+          "count",
+          "occurrence_percentage"
+        ],
+        "properties": {
+          "first_number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 90
+          },
+          "second_number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 90
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "occurrence_percentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Rounded half-up to two decimal places; zero when denominator is zero."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Parity": {
+        "type": "object",
+        "required": [
+          "number_occurrence_count",
+          "occurrence_share_percentage_denominator",
+          "set_percentage_denominator",
+          "even",
+          "odd",
+          "distribution"
+        ],
+        "properties": {
+          "number_occurrence_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "occurrence_share_percentage_denominator": {
+            "type": "string",
+            "enum": [
+              "number_occurrence_count"
+            ]
+          },
+          "set_percentage_denominator": {
+            "type": "string",
+            "enum": [
+              "eligible_set_count"
+            ]
+          },
+          "even": {
+            "$ref": "#/components/schemas/ParityShare"
+          },
+          "odd": {
+            "$ref": "#/components/schemas/ParityShare"
+          },
+          "distribution": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParityDistribution"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ParityShare": {
+        "type": "object",
+        "required": [
+          "count",
+          "occurrence_share_percentage"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "occurrence_share_percentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Rounded half-up to two decimal places; zero when denominator is zero."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ParityDistribution": {
+        "type": "object",
+        "required": [
+          "even_count",
+          "odd_count",
+          "eligible_set_count",
+          "set_percentage"
+        ],
+        "properties": {
+          "even_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "odd_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "eligible_set_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "set_percentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Rounded half-up to two decimal places; zero when denominator is zero."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Yearly": {
+        "type": "object",
+        "required": [
+          "year",
+          "drawing_count",
+          "eligible_set_count",
+          "number_occurrence_count"
+        ],
+        "properties": {
+          "year": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9999
+          },
+          "drawing_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "eligible_set_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "number_occurrence_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "selected_number_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "selected_number_occurrence_percentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Rounded half-up to two decimal places; zero when denominator is zero."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Drawing": {
+        "type": "object",
+        "required": [
+          "id",
+          "year",
+          "week",
+          "drawn_on",
+          "sets",
+          "prizes"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "year": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9999
+          },
+          "week": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 53
+          },
+          "drawn_on": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "sets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NumberSet"
+            }
+          },
+          "prizes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Prize"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "GameList": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Game"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "GameResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Game"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DrawingResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Drawing"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DrawingPage": {
+        "type": "object",
+        "required": [
+          "data",
+          "links",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DrawingSummary"
+            }
+          },
+          "links": {
+            "type": "object",
+            "required": [
+              "first",
+              "last",
+              "prev",
+              "next"
+            ],
+            "properties": {
+              "first": {
+                "type": "string",
+                "format": "uri"
+              },
+              "last": {
+                "type": "string",
+                "format": "uri"
+              },
+              "prev": {
+                "type": "string",
+                "nullable": true,
+                "format": "uri"
+              },
+              "next": {
+                "type": "string",
+                "nullable": true,
+                "format": "uri"
+              }
+            },
+            "additionalProperties": false
+          },
+          "meta": {
+            "type": "object",
+            "required": [
+              "current_page",
+              "from",
+              "last_page",
+              "links",
+              "path",
+              "per_page",
+              "to",
+              "total"
+            ],
+            "properties": {
+              "current_page": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "from": {
+                "type": "integer",
+                "minimum": 1,
+                "nullable": true
+              },
+              "last_page": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "links": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "url",
+                    "label",
+                    "active"
+                  ],
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "nullable": true,
+                      "format": "uri"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "nullable": true
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "path": {
+                "type": "string",
+                "format": "uri"
+              },
+              "per_page": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              },
+              "to": {
+                "type": "integer",
+                "minimum": 1,
+                "nullable": true
+              },
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "StatisticsMeta": {
+        "type": "object",
+        "required": [
+          "game",
+          "filters",
+          "set_scope",
+          "drawing_count",
+          "eligible_set_count",
+          "percentage_precision"
+        ],
+        "properties": {
+          "game": {
+            "type": "string",
+            "enum": [
+              "five",
+              "six",
+              "scandinavian"
+            ]
+          },
+          "filters": {
+            "$ref": "#/components/schemas/Filters"
+          },
+          "set_scope": {
+            "type": "string",
+            "enum": [
+              "main",
+              "machine",
+              "manual",
+              "combined"
+            ]
+          },
+          "drawing_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "eligible_set_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "percentage_precision": {
+            "type": "integer",
+            "enum": [
+              2
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "SummaryResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Summary"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/StatisticsMeta"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FrequenciesResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Frequency"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "required": [
+              "game",
+              "filters",
+              "set_scope",
+              "drawing_count",
+              "eligible_set_count",
+              "percentage_precision",
+              "occurrence_percentage_denominator",
+              "sort",
+              "limit"
+            ],
+            "properties": {
+              "game": {
+                "type": "string",
+                "enum": [
+                  "five",
+                  "six",
+                  "scandinavian"
+                ]
+              },
+              "filters": {
+                "$ref": "#/components/schemas/Filters"
+              },
+              "set_scope": {
+                "type": "string",
+                "enum": [
+                  "main",
+                  "machine",
+                  "manual",
+                  "combined"
+                ]
+              },
+              "drawing_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "eligible_set_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "percentage_precision": {
+                "type": "integer",
+                "enum": [
+                  2
+                ]
+              },
+              "occurrence_percentage_denominator": {
+                "type": "string",
+                "enum": [
+                  "eligible_set_count"
+                ]
+              },
+              "sort": {
+                "type": "string",
+                "enum": [
+                  "number",
+                  "most",
+                  "least"
+                ]
+              },
+              "limit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 90
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "ParityResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Parity"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/StatisticsMeta"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PairsResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Pair"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "required": [
+              "game",
+              "filters",
+              "set_scope",
+              "drawing_count",
+              "eligible_set_count",
+              "percentage_precision",
+              "occurrence_percentage_denominator",
+              "sort",
+              "limit"
+            ],
+            "properties": {
+              "game": {
+                "type": "string",
+                "enum": [
+                  "five",
+                  "six",
+                  "scandinavian"
+                ]
+              },
+              "filters": {
+                "$ref": "#/components/schemas/Filters"
+              },
+              "set_scope": {
+                "type": "string",
+                "enum": [
+                  "main",
+                  "machine",
+                  "manual",
+                  "combined"
+                ]
+              },
+              "drawing_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "eligible_set_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "percentage_precision": {
+                "type": "integer",
+                "enum": [
+                  2
+                ]
+              },
+              "occurrence_percentage_denominator": {
+                "type": "string",
+                "enum": [
+                  "eligible_set_count"
+                ]
+              },
+              "sort": {
+                "type": "string",
+                "enum": [
+                  "most"
+                ]
+              },
+              "limit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "YearlyResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Yearly"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "required": [
+              "game",
+              "filters",
+              "set_scope",
+              "drawing_count",
+              "eligible_set_count",
+              "percentage_precision",
+              "selected_number",
+              "occurrence_percentage_denominator"
+            ],
+            "properties": {
+              "game": {
+                "type": "string",
+                "enum": [
+                  "five",
+                  "six",
+                  "scandinavian"
+                ]
+              },
+              "filters": {
+                "$ref": "#/components/schemas/Filters"
+              },
+              "set_scope": {
+                "type": "string",
+                "enum": [
+                  "main",
+                  "machine",
+                  "manual",
+                  "combined"
+                ]
+              },
+              "drawing_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "eligible_set_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "percentage_precision": {
+                "type": "integer",
+                "enum": [
+                  2
+                ]
+              },
+              "selected_number": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 90,
+                "nullable": true
+              },
+              "occurrence_percentage_denominator": {
+                "type": "string",
+                "enum": [
+                  "yearly_eligible_set_count"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "Filters": {
+        "type": "object",
+        "required": [],
+        "properties": {
+          "year": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9999
+          },
+          "week": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 53
+          },
+          "from_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "to_date": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "parameters": {
+      "Game": {
+        "name": "game",
+        "in": "path",
+        "required": true,
+        "description": "Stable game code; a configured game missing from SQLite returns 404.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "five",
+            "six",
+            "scandinavian"
+          ]
+        }
+      },
+      "Drawing": {
+        "name": "drawing",
+        "in": "path",
+        "required": true,
+        "description": "Numeric database drawing ID scoped to the selected game; IDs do not imply draw order.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "Year": {
+        "name": "year",
+        "in": "query",
+        "required": false,
+        "description": "Source year, including undated records. All population filters are intersected.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9999
+        }
+      },
+      "Week": {
+        "name": "week",
+        "in": "query",
+        "required": false,
+        "description": "Source week, including undated records.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 53
+        }
+      },
+      "FromDate": {
+        "name": "from_date",
+        "in": "query",
+        "required": false,
+        "description": "Inclusive YYYY-MM-DD lower bound; excludes undated records.",
+        "schema": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "ToDate": {
+        "name": "to_date",
+        "in": "query",
+        "required": false,
+        "description": "Inclusive YYYY-MM-DD upper bound; must be on or after from_date when both are supplied. Excludes undated records.",
+        "schema": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "Set": {
+        "name": "set",
+        "in": "query",
+        "required": false,
+        "description": "Five/Six: main only (default), excludes Six bonus. Scandinavian: machine (default), manual or combined. Combined counts each actual set separately; a drawing without the selected set contributes no denominator unit.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "main",
+            "machine",
+            "manual",
+            "combined"
+          ]
+        }
+      },
+      "Sort": {
+        "name": "sort",
+        "in": "query",
+        "required": false,
+        "description": "number: ascending. most: count descending. least: count ascending including zeros. Count ties break by number ascending.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "number",
+            "most",
+            "least"
+          ],
+          "default": "number"
+        }
+      },
+      "FrequencyLimit": {
+        "name": "limit",
+        "in": "query",
+        "required": false,
+        "description": "Defaults to full game range for sort=number (90/45/35), otherwise 10. Cap; fewer rows can be returned.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 90
+        }
+      },
+      "PairLimit": {
+        "name": "limit",
+        "in": "query",
+        "required": false,
+        "description": "Maximum observed pairs returned.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      },
+      "Number": {
+        "name": "number",
+        "in": "query",
+        "required": false,
+        "description": "Optional selected number: Five 1–90, Six 1–45, Scandinavian 1–35. Adds selected-number fields; does not narrow the population.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 90
+        }
+      },
+      "Page": {
+        "name": "page",
+        "in": "query",
+        "required": false,
+        "description": "One-based page. Pages beyond the last return an empty data array.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        }
+      },
+      "PerPage": {
+        "name": "per_page",
+        "in": "query",
+        "required": false,
+        "description": "Number of summaries per page.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      }
+    },
+    "responses": {
+      "NotFound": {
+        "description": "Unknown game, absent drawing, drawing belonging to another game, or unmatched route.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "message": "Not Found"
+            }
+          }
+        }
+      },
+      "ValidationFailed": {
+        "description": "Invalid or unsupported query parameter. Error keys identify the rejected fields.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "example": {
+              "message": "The week field must not be greater than 53.",
+              "errors": {
+                "week": [
+                  "The week field must not be greater than 53."
+                ]
+              }
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Client IP quota exceeded. Wait Retry-After seconds before retrying.",
+        "headers": {
+          "X-RateLimit-Limit": {
+            "description": "Configured requests per minute (default 60).",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "X-RateLimit-Remaining": {
+            "description": "Requests remaining in this client IP window.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "Retry-After": {
+            "description": "Accurate remaining window time in seconds.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "X-RateLimit-Reset": {
+            "description": "Unix timestamp when the window resets.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "message": "Too Many Attempts."
+            }
+          }
+        }
+      },
+      "ServerError": {
+        "description": "Production-safe server error (APP_DEBUG=false). No internal diagnostics are returned.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "message": "Server Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

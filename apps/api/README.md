@@ -20,6 +20,54 @@ Local Docker startup synchronization is off by default. Set `LOTTERY_AUTO_SYNC=t
 
 Essential source identity, historical-data, prize-precision, and import-safety decisions are summarized in the [project README](../../README.md#lottery-data-integrity). Optional detailed engineering notes may exist in the ignored root `.notes/` directory.
 
+## API security and deployment
+
+The API is intentionally public and read-only: no login, API tokens, JWT, Sanctum, or credentialed browser requests. Its ten routes accept GET and Laravel's automatic HEAD; no import, synchronization, migration, or administration route exists. Import commands remain server-side Artisan operations. CORS is browser policy, not access control.
+
+Laravel's named `public-api` limiter shares a quota of **60 requests per minute per client IP** across the API routes. `API_RATE_LIMIT_PER_MINUTE` configures the quota (minimum effective value 1). Successful requests expose `X-RateLimit-Limit` and `X-RateLimit-Remaining`; exceeded quotas return JSON `429` with `Retry-After` in seconds and `X-RateLimit-Reset` as a Unix timestamp. Preflights, unmatched routes, health checks, and documentation do not consume this route-level quota. Tests use a forced array limiter store, rebuilt for each test application, independently of local counters.
+
+`API_RATE_LIMIT_STORE=file` is the default. Counters live in Laravel's existing private filesystem cache rather than the lottery SQLite database; no Redis, extra service, or migration is required. Ensure application-owned cache storage is writable and persistent. File counters are suitable for this single-instance setup; they do not coordinate multiple hosts and are not a hard concurrency guarantee. A deployment with multiple instances needs a shared supported cache store and/or an upstream request limit. All users behind one untrusted proxy or NAT share its visible IP quota.
+
+Prefer relative `/api/v1/...` requests through Vite's existing `/api` proxy at `http://localhost:5173`. `CORS_ALLOWED_ORIGINS` defaults to empty, which permits no cross-origin browser access. For direct calls to `http://localhost:8000`, set `CORS_ALLOWED_ORIGINS=http://localhost:5173`. Production can supply a comma-separated list of exact frontend origins, including schemes and ports and without trailing slashes. Do not use `*`. Laravel's built-in CORS middleware handles OPTIONS, permits GET/HEAD/OPTIONS and Accept/Content-Type, exposes quota headers, and disables credentials. With a single configured origin the CORS library can emit that fixed origin even to disallowed requests; the browser rejects the origin mismatch. With multiple origins it emits only a matching allowed origin.
+
+`TRUSTED_PROXIES` defaults to an explicit empty list. Forwarding headers from arbitrary peers do not change rate-limit identity. Behind a reverse proxy, configure only its known IPs or CIDRs, restrict direct access to the application, and have the proxy replace untrusted incoming forwarding headers. Never configure `*`, `**`, or `REMOTE_ADDR`. Only X-Forwarded-For and X-Forwarded-Proto are trusted for configured peers; forwarded host/port/prefix are not trusted. The development Vite proxy is not trusted automatically, so proxied clients share its IP quota.
+
+API responses, including preflights and JSON errors, receive `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and `Cache-Control: no-store, private`. No-store prevents stale statistics and reuse of another client's quota/error response. JSON endpoints do not need an HTML-oriented CSP. Configure TLS and HSTS at the production HTTPS edge; local HTTP does not enable HSTS.
+
+Production must use a unique secret `APP_KEY`, `APP_ENV=production`, and **`APP_DEBUG=false`**. Laravel retains its normal exception handling: validation gives JSON `422`, throttling gives JSON `429`, and production server failures return only `{"message":"Server Error"}`. A targeted API 404 renderer returns `{"message":"Not Found"}` so Eloquent model names do not leak. Development server failures retain debug diagnostics. Keep development servers off public networks and protect server logs, environment files, private cache storage, and SQLite files; serve only `public/`. Compose remains local development infrastructure. After changing deployment environment values, rebuild Laravel's configuration cache as appropriate; documentation routes check configuration at request time, including when routes are cached.
+
+## OpenAPI and Swagger UI
+
+- Swagger UI: [http://localhost:8000/api-docs](http://localhost:8000/api-docs)
+- Served specification: [http://localhost:8000/api-docs/openapi.json](http://localhost:8000/api-docs/openapi.json)
+- Single tracked specification: [resources/openapi.json](resources/openapi.json), OpenAPI 3.0.3.
+
+`API_DOCS_ENABLED` defaults to true only for `APP_ENV=local`; it is false by default in production and testing. PHPUnit explicitly enables it for availability tests. Set `API_DOCS_ENABLED=false` to disable both routes, or enable them explicitly in a restricted developer deployment. Routes bypass the session-bearing web middleware and perform no database queries, synchronization, or lottery data writes.
+
+Tooling comparison: [Scramble](https://github.com/dedoc/scramble/blob/main/composer.json) is maintained and its current requirements support PHP 8.5 and Laravel 13, with parser and package-tool dependencies. Generation would still need explicit descriptions/schemas for the dynamic statistics contracts. A manual OpenAPI YAML document with lightweight [Swagger UI](https://swagger.io/docs/open-source-tools/swagger-ui/usage/installation/) avoids those runtime dependencies but needs a YAML parser for PHP checks. This project chooses the same manual strategy in JSON, an equivalent OpenAPI serialization that PHP parses natively. There are **no added Composer or npm dependencies** and no generated specification or PHP annotations.
+
+The standard Swagger UI distribution is pinned to 5.33.1 on jsDelivr with SHA-384 integrity checks. It has no theme customization or authentication controls, permits GET execution against the same-origin API, does not enable cross-origin credentials, and disables the external Swagger validator. **The UI requires browser internet access to the CDN**; the local specification and API remain available without it. A deployment requiring offline documentation must serve reviewed Swagger distribution assets locally instead. UI asset requests contact the CDN; API/schema requests stay on the local origin.
+
+All five results and five statistics operations document actual query parameters, bounds, defaults, response schemas, nullable history, filters, pagination, number sets, prize tiers, examples, error responses, and quota headers. Statistics descriptions include eligible-set denominators, parity occurrence shares, combined Scandinavian scope, Six bonus exclusion, frequency and pair tie-breakers, yearly selected-number behavior, empty populations, and historical completeness. Unused query parameters on game/detail/latest endpoints are ignored by the existing implementation; lists and statistics reject unsupported parameters.
+
+Keep the specification aligned when changing API resources or request validation. `OpenApiTest` checks the complete route surface, query names/limits/enums/date formats against validation, and representative serialized response schemas across all games. `ApiSecurityTest` checks anonymous access, quota expiry and client isolation, proxy trust, CORS and preflight, headers, JSON errors, production error redaction, and read-only routes. The schema assertions cover the keywords used by representative responses; they are not a general OpenAPI validator. Full structural validation can be run with the pinned, ephemeral Redocly CLI below, without modifying lockfiles (requires Node/npm and registry access).
+
+Run from the repository root with the API service running:
+
+```sh
+docker compose config --quiet
+docker compose exec api composer validate --strict
+docker compose exec api composer lint
+docker compose exec api composer analyse
+docker compose exec api composer test
+# Narrow security/contract checks during implementation:
+docker compose exec api composer test -- --filter='ApiSecurityTest|OpenApiTest'
+npx --yes @redocly/cli@2.62.1 lint apps/api/resources/openapi.json --extends minimal
+git diff --check
+```
+
+For read-only local smoke checks, open Swagger and confirm its ten operations render; execute a representative GET, inspect the schema, quota/security headers, a missing drawing, and an invalid query. Do not intentionally exhaust shared local quotas or run synchronization. Production-safe 500 behavior belongs in isolated Feature tests, not a public diagnostic route.
+
 ## Results API (`/api/v1`)
 
 All endpoints return JSON. Game codes are `five`, `six`, and `scandinavian`; game resources expose only `code` and the stored Hungarian `name`. Drawing detail uses the numeric database drawing ID, scoped to its game.

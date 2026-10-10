@@ -17,6 +17,8 @@ return [
 
     'default' => env('CACHE_STORE', 'database'),
 
+    'limiter' => env('API_RATE_LIMIT_STORE', 'file'),
+
     /*
     |--------------------------------------------------------------------------
     | Cache Stores

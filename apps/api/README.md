@@ -15,3 +15,5 @@ Verify migrations and rollback with `docker compose exec api composer test -- --
 `config/lottery.php` maps the stable game codes `five`, `six`, and `scandinavian` to their official JSON source URLs. Set `LOTTERY_FIVE_URL`, `LOTTERY_SIX_URL`, or `LOTTERY_SCANDINAVIAN_URL` in the environment to override a game's source independently; application code reads these values through Laravel configuration.
 
 Laravel will fetch and persist validated lottery data in SQLite, which remains the source of truth. React will consume the Laravel API and will not fetch lottery feeds directly. A failed fetch or invalid feed must preserve existing historical records. HTTP timeouts, retries, response-size limits, normalization, and validation are for later implementation phases.
+
+The current database-independent normalization contract and local source audit are documented in [lottery-source-normalization.md](docs/lottery-source-normalization.md).

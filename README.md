@@ -91,4 +91,8 @@ Before completing backend changes, run validation, `lint`, `analyse`, `test`, an
 
 ## Status
 
-The Laravel foundation and minimal React application shell are implemented. Lottery data, number analysis, historical trends, and chart or heatmap dashboards are planned and not implemented yet.
+The Laravel foundation and minimal React application shell are implemented. Phase 3.10 establishes shared coding-agent guidance and development conventions. Lottery data, number analysis, historical trends, and chart or heatmap dashboards are planned and not implemented yet.
+
+## Coding-agent guidance
+
+[AGENTS.md](AGENTS.md) is the single source of truth for coding-agent instructions, including Laravel/React conventions, data integrity, security, and verification. Read it before changing files; this README remains the development setup reference. Optional workflows and a project-specific testing skill are deferred until recurring work needs more detailed procedures. The existing API Claude instruction file only references the shared guidance; no additional provider-specific setup is required.

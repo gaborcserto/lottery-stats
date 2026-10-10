@@ -47,6 +47,10 @@ Frontend quality commands run from `apps/web/` (or through the Compose `web` ser
 
 Git hooks require Git, Node.js/npm on the host, Docker Compose, and the `web` and `api` services running. From the repository root, run `npm install` once to install Husky and lint-staged and activate the hook. Each commit then checks only staged frontend files with ESLint and Prettier, and formats staged PHP files with Laravel Pint in the `api` container. Frontend dependencies can remain in the Compose `web` service; PHP dependencies are provided by the `api` service. Run the same frontend checks manually with `docker compose exec web npm run lint` and `docker compose exec web npm run format:check`, and format PHP manually with `docker compose exec api composer lint:fix` or check it with `docker compose exec api composer lint`.
 
+## Continuous integration
+
+The GitHub Actions workflow runs independent backend and frontend jobs on pushes and pull requests targeting `main`, and on manual dispatch. The backend job installs the locked Composer dependencies and runs strict validation, Pint, Larastan, and PHPUnit with in-memory SQLite. The frontend job installs the locked npm dependencies and runs ESLint, Prettier, TypeScript, Vitest, and the production build. Run the same checks locally with the Composer and frontend commands above; CI does not require Docker or a production database.
+
 SQLite lives at `apps/api/database/database.sqlite` on the host and remains in place across container restarts and `docker compose down`. The local database, `.env`, Composer dependencies, and npm dependencies are excluded from Git. Run `docker compose exec api php artisan migrate` to apply Laravel migrations. Docker Compose is for local development; production deployment is not configured.
 
 ## PHP quality checks

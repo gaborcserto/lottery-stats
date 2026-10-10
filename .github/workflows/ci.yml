@@ -29,7 +29,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2.40.0
         with:
           php-version: '8.5'
           extensions: mbstring, pdo_sqlite, sqlite3
@@ -37,7 +37,7 @@ jobs:
           coverage: none
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.0.0
         with:
           path: ~/.cache/composer/files
           key: ${{ runner.os }}-composer-${{ hashFiles('apps/api/composer.lock') }}

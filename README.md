@@ -53,6 +53,24 @@ The GitHub Actions workflow runs independent backend and frontend jobs on pushes
 
 SQLite lives at `apps/api/database/database.sqlite` on the host and remains in place across container restarts and `docker compose down`. The local database, `.env`, Composer dependencies, and npm dependencies are excluded from Git. Run `docker compose exec api php artisan migrate` to apply Laravel migrations. Docker Compose is for local development; production deployment is not configured.
 
+## Security baseline
+
+Dependency audits run in a separate GitHub Actions workflow on pushes and pull requests targeting `main`, weekly on Monday at 05:17 UTC, and on manual dispatch. They audit the root/frontend npm lockfiles and Composer lockfile, including development dependencies, without installing application dependencies. Any reported vulnerability fails the check; handle dependency updates separately rather than suppressing advisories.
+
+```sh
+npm audit --package-lock-only --include=dev
+docker compose exec web npm audit --package-lock-only --include=dev
+docker compose exec api composer audit --locked --no-interaction
+```
+
+CodeQL supports this public repository's JavaScript/TypeScript and React code, but not PHP. The prepared `.github/codeql.yml` configuration is intentionally outside the Actions workflow directory: GitHub returned HTTP 401 when checking default setup. Before moving it to `.github/workflows/codeql.yml`, confirm in Settings > Advanced Security > Code scanning that default setup is disabled and no other CodeQL scan exists. If default setup is already enabled, retain it instead. The prepared workflow uses pinned CodeQL v4 actions, no dependency installation or build, push/PR scans targeting `main`, a weekly Monday 03:43 UTC scan, and job-scoped `security-events: write`. Upload failures must be resolved in repository settings without granting broader permissions.
+
+Compose publishes development ports only on host loopback. Its root containers, bind mounts, development servers, and local `APP_DEBUG=true` template are not a production deployment. Production must set `APP_ENV=production`, `APP_DEBUG=false`, and a unique secret `APP_KEY`; serve only `apps/api/public/`, and keep the persistent SQLite database and journals outside public storage with access restricted to the application user. Windows bind-mount permissions require host access controls rather than relying on container `chmod`. The committed `.env.testing` key is only a test fixture. Never put secrets in `VITE_*` variables or logs.
+
+Laravel currently renders `/api/*` errors as JSON. Production debug must remain disabled to prevent internal details in those responses. Framework CORS defaults allow all origins without credentials, which is suitable for the planned public read-only API; review methods/origins if private or write endpoints are introduced. No lottery routes or importer are implemented yet.
+
+The future importer must read environment-configured URLs through Laravel configuration and allowlist HTTPS on `bet.szerencsejatek.hu` with exactly `/cmsfiles/otos.json`, `/cmsfiles/hatos.json`, or `/cmsfiles/skandi.json`. Reject public URL input and disable redirects or validate each redirect destination. Enforce bounded connection/read timeouts, retries, and downloaded response bytes; validate JSON structure, numeric ranges, real dates, and historical drawing rules before transactional, idempotent SQLite writes. Remote failures must never delete historical data. Keep client errors and logs safe without raw payloads, secrets, or internal error details.
+
 ## PHP quality checks
 
 Run backend checks from the repository root with the `api` service running:

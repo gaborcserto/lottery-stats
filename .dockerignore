@@ -1,0 +1,13 @@
+.git
+.references
+**/node_modules
+**/vendor
+**/.env
+**/.env.*
+**/*.sqlite*
+**/*.db
+**/*.db-*
+**/storage
+**/bootstrap/cache
+**/dist
+**/coverage

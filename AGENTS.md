@@ -1,0 +1,25 @@
+# Engineering guidance
+
+## Architecture
+
+- Keep `apps/api/` (Laravel) and `apps/web/` (React with TypeScript and Vite) as separate applications; follow each framework's idioms.
+- Keep controllers thin. Use Form Requests and API Resources where they clarify validation and response contracts.
+- Use direct Eloquent queries for straightforward reads. Extract services when business logic or testing warrants them.
+- Keep the REST API under `/api/v1` and keep OpenAPI documentation and frontend types aligned with actual API contracts.
+
+## Code and correctness
+
+- Write clear, natural code with concise names, focused functions, and straightforward control flow.
+- Avoid speculative abstractions, unnecessary design patterns, redundant comments or PHPDoc, excessive logging, and artificial fragmentation.
+- Validate remote JSON and external API input rigorously. Preserve historical drawing rules and data integrity.
+- Keep imports transactional and idempotent. Never automatically delete historical drawing records.
+- Use PHP types and strict TypeScript. Never fabricate data or expose secrets or internal errors.
+- Do not introduce code generation before its workflow is established.
+
+## Testing and workflow
+
+- Add meaningful tests for new functionality; prefer focused tests during development and run full verification at phase completion.
+- Avoid repetitive verification loops, arbitrary coverage targets, and tests written only to increase coverage.
+- Make small, complete, reviewable changes. Avoid unrelated refactoring and placeholder implementations.
+- Preserve `.references/` and existing work. Do not edit generated files manually or install unnecessary dependencies.
+- Do not commit or push unless explicitly requested.

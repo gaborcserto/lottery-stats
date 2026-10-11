@@ -1,61 +1,89 @@
 @mixin light {
   --background: #f5f8f3;
   --surface: #fff;
+  --elevated: #edf3eb;
   --text: #172c38;
   --heading: #102b3e;
   --muted: #455b64;
   --border: #becdc3;
-  --link: #176039;
-  --focus: #155e38;
-  --home-overlay: linear-gradient(
-    115deg,
-    rgba(7, 29, 39, 0.91),
-    rgba(10, 39, 47, 0.74) 58%,
-    rgba(8, 36, 37, 0.84)
-  );
-  --home-header: rgba(9, 31, 39, 0.78);
-  --home-footer: rgba(9, 31, 39, 0.82);
-  --home-divider: rgba(225, 239, 226, 0.2);
-  --home-soft-text: #e2eee7;
-  --card-background: #f8faf6;
-  --card-divider: #dce5dc;
-  --ball-background: #eff5e7;
-  --ball-border: #b8d77b;
-  --ball-text: #173c30;
-}
-@mixin dark {
-  --background: #0e202c;
-  --surface: #172f3c;
-  --text: #ecf3ed;
-  --heading: #f3f8f4;
-  --muted: #baccc8;
-  --border: #557168;
-  --link: #c4e86b;
-  --focus: #c4e86b;
-  --home-overlay: linear-gradient(
-    115deg,
-    rgba(7, 29, 39, 0.91),
-    rgba(10, 39, 47, 0.74) 58%,
-    rgba(8, 36, 37, 0.84)
-  );
-  --home-header: rgba(9, 31, 39, 0.78);
-  --home-footer: rgba(9, 31, 39, 0.82);
-  --home-divider: rgba(225, 239, 226, 0.2);
-  --home-soft-text: #e2eee7;
-  --card-background: #f8faf6;
-  --card-divider: #dce5dc;
-  --ball-background: #eff5e7;
-  --ball-border: #b8d77b;
-  --ball-text: #173c30;
-}
-:root {
-  @include light;
+  --divider: #dce5dc;
   --green: #176039;
   --lime: #c4e86b;
   --navy: #102b3e;
   --button-text: #fff;
-  --home-background: transparent;
-  --statistics-background: transparent;
+  --secondary-button: #e8f0e6;
+  --link: #176039;
+  --focus: #155e38;
+  --success: #176039;
+  --warning: #795600;
+  --error: #a32b2b;
+  --chart-grid: #becdc3;
+  --chart-label: #455b64;
+  --chart-tooltip: #fff;
+  --chart-primary: #176039;
+  --chart-secondary: #b0d65b;
+  --chart-muted: #97b5a4;
+  --home-overlay: linear-gradient(
+    115deg,
+    rgb(7 29 39 / 91%),
+    rgb(10 39 47 / 74%) 58%,
+    rgb(8 36 37 / 84%)
+  );
+  --home-header: rgb(9 31 39 / 78%);
+  --home-footer: rgb(9 31 39 / 82%);
+  --home-divider: rgb(225 239 226 / 20%);
+  --home-soft-text: #e2eee7;
+  --card-background: #f8faf6;
+  --card-divider: #dce5dc;
+  --ball-background: #eff5e7;
+  --ball-border: #b8d77b;
+  --ball-text: #173c30;
+}
+
+@mixin dark {
+  --background: #0e202c;
+  --surface: #172f3c;
+  --elevated: #203d49;
+  --text: #ecf3ed;
+  --heading: #f3f8f4;
+  --muted: #baccc8;
+  --border: #557168;
+  --divider: #36534f;
+  --green: #267a4d;
+  --lime: #c4e86b;
+  --navy: #102b3e;
+  --button-text: #fff;
+  --secondary-button: #29464d;
+  --link: #c4e86b;
+  --focus: #c4e86b;
+  --success: #82d39b;
+  --warning: #f2cb70;
+  --error: #ff9292;
+  --chart-grid: #557168;
+  --chart-label: #baccc8;
+  --chart-tooltip: #203d49;
+  --chart-primary: #83d39a;
+  --chart-secondary: #c4e86b;
+  --chart-muted: #52796b;
+  --home-overlay: linear-gradient(
+    115deg,
+    rgb(7 29 39 / 91%),
+    rgb(10 39 47 / 74%) 58%,
+    rgb(8 36 37 / 84%)
+  );
+  --home-header: rgb(9 31 39 / 78%);
+  --home-footer: rgb(9 31 39 / 82%);
+  --home-divider: rgb(225 239 226 / 20%);
+  --home-soft-text: #e2eee7;
+  --card-background: #203d49;
+  --card-divider: #557168;
+  --ball-background: #29464d;
+  --ball-border: #c4e86b;
+  --ball-text: #f3f8f4;
+}
+
+:root {
+  @include light;
   --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
   --text-large: 1.35rem;
   --space-2: 0.5rem;
@@ -66,9 +94,7 @@
   --content-width: 70rem;
   --radius: 0.35rem;
 }
+
 :root[data-theme='dark'] {
   @include dark;
-}
-:root[data-theme='light'] {
-  @include light;
 }

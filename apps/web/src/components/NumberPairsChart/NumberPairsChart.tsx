@@ -1,7 +1,8 @@
-import { chartTheme } from '../../config/charts'
 import { ResponsiveBar } from '@nivo/bar'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { GamePageData } from '../../api/page-data'
+import { getChartTheme } from '../../config/charts'
+import { useTheme } from '../ThemeProvider'
 import styles from './NumberPairsChart.module.scss'
 
 export function NumberPairsChart({
@@ -9,12 +10,18 @@ export function NumberPairsChart({
 }: {
   data: NonNullable<GamePageData['pairs']>['data']
 }) {
+  const { resolvedTheme } = useTheme()
+  const chartTheme = getChartTheme(resolvedTheme)
   const [selected, setSelected] = useState<string | null>(null)
   const [hovered, setHovered] = useState<string | null>(null)
-  const rows = data.map((row) => ({
-    ...row,
-    pair: `${row.first_number} + ${row.second_number}`,
-  }))
+  const rows = useMemo(
+    () =>
+      data.map((row) => ({
+        ...row,
+        pair: `${row.first_number} + ${row.second_number}`,
+      })),
+    [data],
+  )
   const selectedPair = rows.some((row) => row.pair === selected)
     ? selected
     : null
@@ -52,7 +59,9 @@ export function NumberPairsChart({
           margin={{ top: 8, right: 20, bottom: 38, left: 70 }}
           padding={0.25}
           colors={(bar) =>
-            active === null || active === bar.data.pair ? '#176039' : '#97b5a4'
+            active === null || active === bar.data.pair
+              ? 'var(--chart-primary)'
+              : 'var(--chart-muted)'
           }
           borderRadius={3}
           enableLabel={false}

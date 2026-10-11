@@ -32,7 +32,7 @@
   border-radius: 0.5rem;
   color: var(--text);
   background: var(--surface);
-  box-shadow: 0 0.4rem 1rem #102b3e22;
+  box-shadow: 0 0.4rem 1rem rgb(0 0 0 / 18%);
 }
 .canvas rect {
   transition:
@@ -43,7 +43,7 @@
 .canvas rect:hover,
 .canvas rect:focus {
   filter: brightness(1.25);
-  stroke: #102b3e;
+  stroke: var(--heading);
   stroke-width: 3;
 }
 @media (prefers-reduced-motion: reduce) {

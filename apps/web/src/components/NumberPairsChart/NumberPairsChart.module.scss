@@ -10,7 +10,7 @@
   rect:hover,
   rect:focus {
     filter: brightness(1.25);
-    stroke: #102b3e;
+    stroke: var(--heading);
     stroke-width: 3;
   }
 }

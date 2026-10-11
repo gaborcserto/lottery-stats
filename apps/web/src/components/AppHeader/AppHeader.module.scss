@@ -1,4 +1,9 @@
 .header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   padding: var(--space-4);
@@ -7,8 +12,9 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-3) var(--space-5);
+    flex: 1 1 35rem;
     max-width: var(--content-width);
-    margin: auto;
+    margin-inline: auto;
   }
   a {
     padding-block: var(--space-2);

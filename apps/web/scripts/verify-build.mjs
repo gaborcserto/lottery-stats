@@ -14,6 +14,21 @@ export async function verifyBuild(fixture = false) {
     // Scripts are never executed: assertions inspect the actual initial HTML.
     const { document } = new JSDOM(html).window
     assert.equal(document.documentElement.lang, 'hu')
+    assert.equal(document.documentElement.dataset.theme, 'light')
+    assert.equal(
+      document.querySelector('head script[src="/theme-bootstrap.js"]') !== null,
+      true,
+    )
+    assert.equal(
+      document.querySelector(
+        'header [role="group"] button[aria-pressed="true"]',
+      )?.textContent,
+      'Világos',
+    )
+    assert.equal(
+      document.querySelectorAll('header [role="group"] button').length,
+      2,
+    )
     assert.ok(document.title.includes(title))
     assert.ok(
       document.querySelector('meta[name="description"]')?.content.length > 30,
@@ -130,6 +145,7 @@ export async function verifyBuild(fixture = false) {
     assert.ok(!html.includes(process.env.PRERENDER_API_BASE_URL ?? '\u0000'))
     console.log(`Verified initial Hungarian HTML without JavaScript: /${path}`)
   }
+  await readFile('build/client/theme-bootstrap.js', 'utf8')
   const fallback = await readFile('build/client/__spa-fallback.html', 'utf8')
   assert.ok(!fallback.includes('Legutóbbi elérhető sorsolás'))
 }

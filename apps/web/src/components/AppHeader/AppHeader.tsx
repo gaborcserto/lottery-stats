@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router'
 import { gameCodes, gamePages } from '../../config/games'
+import { ThemeSwitcher } from '../ThemeSwitcher'
 import styles from './AppHeader.module.scss'
 
 export function AppHeader() {
@@ -18,6 +19,7 @@ export function AppHeader() {
           </NavLink>
         ))}
       </nav>
+      <ThemeSwitcher />
     </header>
   )
 }

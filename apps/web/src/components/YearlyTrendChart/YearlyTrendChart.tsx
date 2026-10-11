@@ -1,6 +1,8 @@
-import { chartTheme } from '../../config/charts'
 import { ResponsiveLine, type LineCustomSvgLayerProps } from '@nivo/line'
+import { useMemo } from 'react'
 import type { GamePageData } from '../../api/page-data'
+import { getChartTheme } from '../../config/charts'
+import { useTheme } from '../ThemeProvider'
 import styles from './YearlyTrendChart.module.scss'
 import { mapYearlyTrend } from './mapping'
 
@@ -12,8 +14,8 @@ function ActivePoint({ currentPoint }: LineCustomSvgLayerProps<TrendSeries>) {
       cx={currentPoint.x}
       cy={currentPoint.y}
       r={7}
-      fill="#c4e86b"
-      stroke="#102b3e"
+      fill="var(--chart-secondary)"
+      stroke="var(--heading)"
       strokeWidth={2}
       pointerEvents="none"
     />
@@ -27,11 +29,17 @@ export function YearlyTrendChart({
   data: NonNullable<GamePageData['yearly']>['data']
   number: number
 }) {
+  const { resolvedTheme } = useTheme()
+  const chartTheme = getChartTheme(resolvedTheme)
+  const series = useMemo(
+    () => [{ id: `${number}. szám`, data: mapYearlyTrend(data) }],
+    [data, number],
+  )
   return (
     <div className={styles.chart}>
       <ResponsiveLine<TrendSeries>
         theme={chartTheme}
-        data={[{ id: `${number}. szám`, data: mapYearlyTrend(data) }]}
+        data={series}
         layers={[
           'grid',
           'axes',
@@ -49,11 +57,11 @@ export function YearlyTrendChart({
           format: (value) => String(Math.round(Number(value))),
           tickRotation: -25,
         }}
-        colors={['#176039']}
+        colors={['var(--chart-primary)']}
         lineWidth={3}
         pointSize={8}
         pointBorderWidth={2}
-        pointBorderColor="#102b3e"
+        pointBorderColor="var(--heading)"
         enableArea={false}
         useMesh
         enableTouchCrosshair

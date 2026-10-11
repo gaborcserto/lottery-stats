@@ -12,7 +12,7 @@
   path:hover,
   path:focus {
     filter: brightness(1.15);
-    stroke: #102b3e;
+    stroke: var(--heading);
     stroke-width: 3;
   }
 }

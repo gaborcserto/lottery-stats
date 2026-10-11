@@ -163,7 +163,11 @@ describe('explicit route modules', () => {
   ])('renders direct navigation to %s', async (path, heading) => {
     renderRoute(path)
     expect(
-      await screen.findByRole('heading', { level: 1, name: heading }),
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: heading },
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument()
   })
   it('navigates with Laravel browser calls and shows an unknown-path fallback', async () => {

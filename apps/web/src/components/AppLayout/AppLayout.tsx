@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { AppHeader } from '../AppHeader'
 import { AppFooter } from '../AppFooter'
+import { ThemeProvider } from '../ThemeProvider'
 import styles from './AppLayout.module.scss'
 
 export function AppLayout({
@@ -11,12 +12,19 @@ export function AppLayout({
   pending?: boolean
 }) {
   return (
-    <div className={styles.layout}>
-      <AppHeader />
-      <main id="main" tabIndex={-1} className={styles.main} aria-busy={pending}>
-        {children}
-      </main>
-      <AppFooter />
-    </div>
+    <ThemeProvider>
+      <div className={styles.layout}>
+        <AppHeader />
+        <main
+          id="main"
+          tabIndex={-1}
+          className={styles.main}
+          aria-busy={pending}
+        >
+          {children}
+        </main>
+        <AppFooter />
+      </div>
+    </ThemeProvider>
   )
 }

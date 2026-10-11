@@ -1,7 +1,8 @@
-import { chartTheme } from '../../config/charts'
 import { useState } from 'react'
 import { ResponsiveBar } from '@nivo/bar'
 import type { GamePageData } from '../../api/page-data'
+import { getChartTheme } from '../../config/charts'
+import { useTheme } from '../ThemeProvider'
 import styles from './FrequencyChart.module.scss'
 
 export function FrequencyChart({
@@ -9,6 +10,8 @@ export function FrequencyChart({
 }: {
   data: GamePageData['frequencies']['data']
 }) {
+  const { resolvedTheme } = useTheme()
+  const chartTheme = getChartTheme(resolvedTheme)
   const [selected, setSelected] = useState<number | null>(null)
   const [hovered, setHovered] = useState<number | null>(null)
   const active = hovered ?? selected
@@ -53,12 +56,12 @@ export function FrequencyChart({
             padding={0.28}
             colors={(bar) =>
               active === null || active === bar.data.number
-                ? '#176039'
-                : '#97b5a4'
+                ? 'var(--chart-primary)'
+                : 'var(--chart-muted)'
             }
             borderRadius={3}
             borderWidth={active === null ? 0 : 2}
-            borderColor="#102b3e"
+            borderColor="var(--heading)"
             enableLabel={false}
             axisLeft={{ tickSize: 0, tickPadding: 8 }}
             axisBottom={{ tickSize: 0, tickPadding: 10 }}

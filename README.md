@@ -82,7 +82,7 @@ Production hosting is not configured. Serve the four explicit URLs from their ge
 
 ## Git pre-commit checks
 
-Git hooks require Git, Node.js/npm on the host, Docker Compose, and the `web` and `api` services running. From the repository root, run `npm install` once to install Husky and lint-staged and activate the hook. Each commit then checks only staged frontend files with ESLint and Prettier, and formats staged PHP files with Laravel Pint in the `api` container. Frontend dependencies can remain in the Compose `web` service; PHP dependencies are provided by the `api` service. Run the same frontend checks manually with `docker compose exec web npm run lint` and `docker compose exec web npm run format:check`, and format PHP manually with `docker compose exec api composer lint:fix` or check it with `docker compose exec api composer lint`.
+Git hooks require Git and Node.js/npm on the host. From the repository root, run `npm install` once to install Husky and lint-staged and activate the hook; install frontend dependencies with `npm ci` from `apps/web/`. Each commit checks only staged frontend files with the installed host ESLint and Prettier configuration, so frontend-only commits do not require Docker. Staged PHP files use local PHP 8.3–8.x and `apps/api/vendor/` Pint when available, otherwise Pint runs in the Compose `api` service, which must be running. Run the same frontend checks manually from `apps/web/` with `npm run lint` and `npm run format:check`, and format PHP manually with `docker compose exec api composer lint:fix` or check it with `docker compose exec api composer lint`.
 
 ## Continuous integration
 

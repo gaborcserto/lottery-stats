@@ -1,0 +1,1 @@
+export { YearlyTrendChart } from './YearlyTrendChart'

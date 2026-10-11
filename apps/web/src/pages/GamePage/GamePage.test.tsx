@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
@@ -95,7 +95,13 @@ describe('game statistics pages', () => {
     expect(
       screen.getByRole('heading', { name: 'Számgyakoriság' }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('alert')).toHaveTextContent(data.historyError)
+    const historySection = screen
+      .getByRole('heading', { name: 'Legutóbbi sorsolások' })
+      .closest('section')
+    if (!historySection) throw new Error('Missing history section')
+    expect(within(historySection).getByRole('alert')).toHaveTextContent(
+      data.historyError,
+    )
     expect(screen.getByRole('status')).toHaveTextContent(
       'A korábban elérhető adatokat látod.',
     )
@@ -113,7 +119,9 @@ describe('game statistics pages', () => {
       </MemoryRouter>,
     )
     expect(screen.getByText('Pótszámok')).toBeInTheDocument()
-    expect(screen.getAllByText('9')).toHaveLength(2)
+    expect(screen.getByRole('list', { name: 'Pótszámok' })).toHaveTextContent(
+      '9',
+    )
   })
 
   it('keeps exact HUF decimal strings and unknown amounts in prize presentation', () => {

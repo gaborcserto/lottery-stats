@@ -6,9 +6,12 @@
   box-sizing: border-box;
 }
 html {
-  color-scheme: light dark;
+  color-scheme: light;
   font-family: var(--font-body);
   line-height: 1.6;
+}
+html[data-theme='dark'] {
+  color-scheme: dark;
 }
 body {
   margin: 0;

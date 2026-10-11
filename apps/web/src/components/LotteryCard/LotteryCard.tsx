@@ -47,7 +47,7 @@ export function LotteryCard({
             alt={`${page.name} logó`}
           />
         </div>
-        <h3>{page.name}</h3>
+        <h3 className={styles.accessibleTitle}>{page.name}</h3>
       </header>
       {drawing === null ? (
         <p className={styles.empty}>Még nincs elérhető sorsolási adat.</p>

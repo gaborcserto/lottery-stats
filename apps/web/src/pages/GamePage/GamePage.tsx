@@ -1,10 +1,52 @@
-import { Link } from 'react-router'
+import { lazy } from 'react'
+import { Link, useSearchParams } from 'react-router'
 import type { GameCode } from '../../api/contracts'
 import type { GamePageData } from '../../api/page-data'
 import { PrizeBreakdown } from '../../components/PrizeBreakdown'
 import { LotteryBall } from '../../components/LotteryBall'
 import { gamePages } from '../../config/games'
 import styles from './GamePage.module.scss'
+import { StatisticsFilters } from '../../components/StatisticsFilters'
+import { StatisticsDetails } from '../../components/StatisticsDetails'
+import { ChartSlot } from '../../components/ChartSlot'
+import { parseFilters } from '../../api/filters'
+import { cachedResource } from '../../api/resource'
+import { useResource } from '../../api/use-resource'
+import { api } from '../../api/client'
+import { loadGame, loadHistory } from '../../api/page-data'
+import { useHydrated } from '../../api/use-hydrated'
+
+const FrequencyChart = lazy(() =>
+  import('../../components/FrequencyChart').then((module) => ({
+    default: module.FrequencyChart,
+  })),
+)
+const ParityChart = lazy(() =>
+  import('../../components/ParityChart').then((module) => ({
+    default: module.ParityChart,
+  })),
+)
+const loadFiltered = cachedResource((key, signal) => {
+  const [game, query] = key.split('?')
+  if (game !== 'five' && game !== 'six' && game !== 'scandinavian')
+    throw new Error('Invalid game')
+  const filters = parseFilters(new URLSearchParams(query), game)
+  return loadGame(api, game, signal, filters.population, filters.statistics.set)
+})
+const loadHistoryPage = cachedResource((key, signal) => {
+  const [game, query] = key.split('?')
+  if (game !== 'five' && game !== 'six' && game !== 'scandinavian')
+    throw new Error('Invalid game')
+  const filters = parseFilters(new URLSearchParams(query), game)
+  return loadHistory(
+    api,
+    game,
+    Promise.resolve(null),
+    signal,
+    filters.population,
+    filters.page,
+  )
+})
 
 const setLabels = {
   main: 'Főszámok',
@@ -32,11 +74,51 @@ function dateLabel(value: string) {
 
 export function GamePage({
   game,
-  data,
+  data: initialData,
 }: {
   game: GameCode
   data: GamePageData
 }) {
+  const [params, setParams] = useSearchParams()
+  const hydrated = useHydrated()
+  const filters = parseFilters(hydrated ? params : new URLSearchParams(), game)
+  const query = new URLSearchParams()
+  for (const [key, value] of Object.entries(filters.statistics))
+    if (value !== undefined) query.set(key, String(value))
+  const isFiltered =
+    Object.keys(filters.population).length > 0 ||
+    filters.statistics.set === 'manual' ||
+    filters.statistics.set === 'combined'
+  const filtered = useResource(
+    hydrated && isFiltered ? `${game}?${query}` : null,
+    loadFiltered,
+  )
+  const data = filtered.data ?? initialData
+  const historyQuery = new URLSearchParams()
+  for (const [key, value] of Object.entries(filters.population))
+    if (value !== undefined) historyQuery.set(key, String(value))
+  historyQuery.set('page', String(filters.page))
+  const historyResult = useResource(
+    hydrated && filters.page > 1 ? `${game}?${historyQuery}` : null,
+    loadHistoryPage,
+  )
+  const history =
+    filters.page > 1 ? (historyResult.data?.history ?? []) : data.history
+  const historyError =
+    filters.page > 1
+      ? (historyResult.error ?? historyResult.data?.historyError)
+      : data.historyError
+  const pagination =
+    filters.page > 1 ? historyResult.data?.historyPage : data.historyPage
+  const frequencies = data.frequencies.data
+    .slice()
+    .sort((a, b) =>
+      filters.sort === 'most'
+        ? b.count - a.count || a.number - b.number
+        : filters.sort === 'least'
+          ? a.count - b.count || a.number - b.number
+          : a.number - b.number,
+    )
   const page = gamePages[game]
   const summary = data.summary.data
   const parity = data.parity.data
@@ -71,6 +153,31 @@ export function GamePage({
           height="90"
         />
       </header>
+
+      <StatisticsFilters game={game} filters={filters} />
+      {filtered.loading && (
+        <p aria-live="polite">
+          A szűrt adatok betöltése… Addig a korábbi adatpillanatkép látható.
+        </p>
+      )}
+      {filtered.error && (
+        <p role="alert">
+          A szűrés nem sikerült; a korábbi adatpillanatkép látható.{' '}
+          {filtered.error}{' '}
+          <button onClick={filtered.retry}>Újrapróbálkozás</button>
+        </p>
+      )}
+      <p className={styles.caption}>
+        Megjelenített statisztikai számsor:{' '}
+        {data.summary.meta.set_scope === 'combined'
+          ? 'gépi és kézi együtt'
+          : data.summary.meta.set_scope === 'manual'
+            ? 'kézi'
+            : data.summary.meta.set_scope === 'machine'
+              ? 'gépi'
+              : 'főszámok'}
+        .
+      </p>
 
       <section className={styles.latest} aria-labelledby="latest-heading">
         <div className={styles.sectionHeading}>
@@ -186,7 +293,18 @@ export function GamePage({
               </p>
             </div>
           </div>
-          <div className={styles.tableWrap}>
+          {data.frequencies.meta.eligible_set_count > 0 ? (
+            <ChartSlot label="Számgyakorisági oszlopdiagram">
+              <FrequencyChart data={frequencies} />
+            </ChartSlot>
+          ) : (
+            <p>Nincs vizsgált számsor a kiválasztott időszakban.</p>
+          )}
+          <div
+            className={styles.tableWrap}
+            tabIndex={0}
+            aria-label="Számgyakorisági táblázat"
+          >
             <table>
               <caption>
                 {page.name}: előfordulások és a vizsgált számsorok aránya
@@ -199,7 +317,7 @@ export function GamePage({
                 </tr>
               </thead>
               <tbody>
-                {data.frequencies.data.map((row) => (
+                {frequencies.map((row) => (
                   <tr key={row.number}>
                     <th scope="row">{row.number}</th>
                     <td>{count(row.count)}</td>
@@ -224,6 +342,9 @@ export function GamePage({
             Az előfordulási arány nevezője az összes vizsgált számelőfordulás (
             {count(parity.number_occurrence_count)}).
           </p>
+          <ChartSlot label="Páros és páratlan előfordulások">
+            <ParityChart data={parity} />
+          </ChartSlot>
           <dl className={styles.parityCounts}>
             <div>
               <dt>Páros előfordulás</dt>
@@ -281,21 +402,46 @@ export function GamePage({
         </section>
       </div>
 
+      <StatisticsDetails
+        game={game}
+        data={data}
+        filters={
+          filtered.loading || filtered.error
+            ? parseFilters(new URLSearchParams(), game)
+            : filters
+        }
+        hydrated={hydrated && !filtered.loading && !filtered.error}
+      />
+
       <section className={styles.card} aria-labelledby="history-heading">
         <p className={styles.eyebrow}>Korábbi eredmények</p>
         <h2 id="history-heading">Legutóbbi sorsolások</h2>
         <p className={styles.caption}>
-          Az első {data.history.length} elérhető sorsolás. Részletes időszak- és
-          számkeresés a következő fejlesztési ütemben.
+          Oldalanként legfeljebb öt sorsolás, év és hét szerint csökkenő, stabil
+          sorrendben.
         </p>
-        {data.historyError ? (
+        {historyError ? (
           <p role="alert">
-            A sorsolási előzmények nem érhetők el: {data.historyError}
+            A sorsolási előzmények nem érhetők el: {historyError}{' '}
+            <button
+              onClick={
+                filters.page > 1
+                  ? historyResult.retry
+                  : isFiltered
+                    ? filtered.retry
+                    : () => window.location.reload()
+              }
+            >
+              Újrapróbálkozás
+            </button>
           </p>
         ) : null}
-        {data.history.length ? (
+        {historyResult.loading && (
+          <p aria-live="polite">A sorsolások betöltése…</p>
+        )}
+        {history.length ? (
           <ol className={styles.historyList}>
-            {data.history.map((drawing) => (
+            {history.map((drawing) => (
               <li key={drawing.id}>
                 <div className={styles.historyMeta}>
                   <strong>
@@ -320,9 +466,43 @@ export function GamePage({
               </li>
             ))}
           </ol>
-        ) : !data.historyError ? (
+        ) : !historyError && !historyResult.loading ? (
           <p>Még nincs megjeleníthető sorsolás.</p>
         ) : null}
+        {pagination && (pagination.last > 1 || pagination.current > 1) && (
+          <nav
+            className={styles.pagination}
+            aria-label="Sorsolási előzmények lapozása"
+          >
+            <button
+              disabled={pagination.current <= 1}
+              onClick={() => {
+                const next = new URLSearchParams(params)
+                next.set(
+                  'page',
+                  String(Math.min(pagination.current - 1, pagination.last)),
+                )
+                setParams(next, { preventScrollReset: true })
+              }}
+            >
+              Előző
+            </button>
+            <span>
+              {pagination.current}. / {pagination.last}. oldal ·{' '}
+              {pagination.total} sorsolás
+            </span>
+            <button
+              disabled={pagination.current >= pagination.last}
+              onClick={() => {
+                const next = new URLSearchParams(params)
+                next.set('page', String(pagination.current + 1))
+                setParams(next, { preventScrollReset: true })
+              }}
+            >
+              Következő
+            </button>
+          </nav>
+        )}
       </section>
 
       {data.latest && (

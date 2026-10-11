@@ -1,0 +1,60 @@
+.sections {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+.card {
+  min-width: 0;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  h2 {
+    margin-top: 0;
+  }
+  p {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+}
+.select {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 650;
+  select {
+    padding: 0.45rem;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.4rem;
+  }
+}
+.tableWrap {
+  overflow: auto;
+  max-height: 20rem;
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+  th,
+  td {
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    text-align: end;
+  }
+  th:first-child {
+    text-align: start;
+  }
+  caption {
+    text-align: start;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+}
+@media (min-width: 1000px) {
+  .sections {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -24,6 +24,16 @@ const server = createServer((request, response) => {
             ? fixtures.leastFrequencies
             : fixtures.frequencies,
       '/statistics/parity': fixtures.parity,
+      '/statistics/pairs': fixtures.pairs,
+      '/statistics/trends/yearly': {
+        ...fixtures.yearly,
+        data: fixtures.yearly.data.map((row) => ({
+          ...row,
+          selected_number_count: 1,
+          selected_number_occurrence_percentage: 100,
+        })),
+        meta: { ...fixtures.yearly.meta, selected_number: 1 },
+      },
       '/drawings': fixtures.history,
       '/drawings/7': fixtures.drawing,
     }

@@ -66,11 +66,6 @@
   --content-width: 70rem;
   --radius: 0.35rem;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    @include dark;
-  }
-}
 :root[data-theme='dark'] {
   @include dark;
 }

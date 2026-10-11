@@ -1,0 +1,43 @@
+.chart {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  rect {
+    transition:
+      fill 150ms,
+      filter 150ms;
+  }
+  rect:hover,
+  rect:focus {
+    filter: brightness(1.25);
+    stroke: #102b3e;
+    stroke-width: 3;
+  }
+}
+.canvas {
+  flex: 1;
+  min-height: 0;
+}
+.selection {
+  min-height: 3rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  select {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 0.3rem;
+  }
+}
+.tooltip {
+  padding: 0.75rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chart rect {
+    transition: none;
+  }
+}

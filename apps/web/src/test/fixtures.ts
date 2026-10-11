@@ -3,6 +3,8 @@ import {
   decodeFrequenciesResponse,
   decodeParityResponse,
   decodeSummaryResponse,
+  decodePairsResponse,
+  decodeYearlyResponse,
 } from '../api/contracts.ts'
 import type { GamePageData } from '../api/page-data'
 
@@ -29,6 +31,16 @@ export function fixturePageData(game: GameCode): GamePageData {
     mostFrequent: decodeFrequenciesResponse(fixture.mostFrequencies),
     leastFrequent: decodeFrequenciesResponse(fixture.leastFrequencies),
     parity: decodeParityResponse(fixture.parity),
+    pairs: decodePairsResponse(fixture.pairs),
+    yearly: decodeYearlyResponse({
+      ...fixture.yearly,
+      data: fixture.yearly.data.map((row) => ({
+        ...row,
+        selected_number_count: 1,
+        selected_number_occurrence_percentage: 100,
+      })),
+      meta: { ...fixture.yearly.meta, selected_number: 1 },
+    }),
     history: [fixture.drawing.data],
     historyError: null,
     capturedAt: '2026-10-10T00:00:00.000Z',

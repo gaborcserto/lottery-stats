@@ -75,6 +75,20 @@ export async function verifyBuild(fixture = false) {
         document.querySelector('table caption')?.textContent.includes(title),
       )
       assert.ok(document.querySelector('#parity-heading'))
+      assert.ok(
+        document
+          .querySelector('#trends-heading')
+          ?.closest('section')
+          ?.querySelector('table'),
+      )
+      assert.ok(
+        document
+          .querySelector('#pairs-heading')
+          ?.closest('section')
+          ?.querySelector('table'),
+      )
+      assert.ok(document.querySelector('form input[name="year"]'))
+      assert.equal(document.querySelectorAll('main svg[tabindex]').length, 0)
       assert.ok(document.querySelector('#history-heading'))
       assert.ok(document.querySelector('#prizes-heading'))
       if (path === 'skandinav-lotto/') {

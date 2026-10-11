@@ -1,0 +1,26 @@
+.chart {
+  height: 100%;
+  circle {
+    transition: r 150ms;
+  }
+  circle:hover,
+  circle:focus {
+    r: 7;
+    stroke-width: 3;
+  }
+}
+.tooltip {
+  padding: 0.75rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+.active {
+  filter: drop-shadow(0 1px 2px #102b3e33);
+}
+@media (prefers-reduced-motion: reduce) {
+  .chart circle {
+    transition: none;
+  }
+}

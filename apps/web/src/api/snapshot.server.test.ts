@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fixtureGames, fixtureResponses } from '../test/fixtures'
+import {
+  fixtureGames,
+  fixturePageData,
+  fixtureResponses,
+} from '../test/fixtures'
 
 beforeEach(() => {
   delete globalThis.lotteryDevelopmentSnapshot
@@ -28,11 +32,15 @@ function snapshotFetcher() {
         ? fixture.summary
         : url.includes('/frequencies')
           ? fixture.frequencies
-          : url.includes('/parity')
-            ? fixture.parity
-            : url.includes('/drawings?')
-              ? fixture.history
-              : fixture.drawing,
+          : url.includes('/pairs')
+            ? fixture.pairs
+            : url.includes('/trends/yearly')
+              ? fixturePageData(game).yearly
+              : url.includes('/parity')
+                ? fixture.parity
+                : url.includes('/drawings?')
+                  ? fixture.history
+                  : fixture.drawing,
     )
   })
 }
@@ -48,11 +56,13 @@ describe('development snapshot acquisition', () => {
     const second = secondModule.gameSnapshot('six')
     const [home, game] = await Promise.all([first, second])
     expect(home.capturedAt).toBe(game.capturedAt)
-    expect(fetcher).toHaveBeenCalledTimes(16)
+    expect(game.yearly?.meta.selected_number).toBe(1)
+    expect(game.pairs?.data).toEqual(fixtureResponses('six').pairs.data)
+    expect(fetcher).toHaveBeenCalledTimes(22)
     vi.resetModules()
     const thirdModule = await import('./snapshot.server')
     expect(await thirdModule.homeSnapshot()).toEqual(home)
-    expect(fetcher).toHaveBeenCalledTimes(16)
+    expect(fetcher).toHaveBeenCalledTimes(22)
   })
 
   it('allows a later acquisition after failure without exposing internal details', async () => {
@@ -65,6 +75,6 @@ describe('development snapshot acquisition', () => {
     )
     expect(globalThis.lotteryDevelopmentSnapshot).toBeUndefined()
     expect((await snapshot.homeSnapshot()).latest).toHaveLength(3)
-    expect(fetcher).toHaveBeenCalledTimes(17)
+    expect(fetcher).toHaveBeenCalledTimes(23)
   })
 })

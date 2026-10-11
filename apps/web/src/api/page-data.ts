@@ -1,5 +1,10 @@
 import { ApiError, api, type ApiClient } from './client'
-import type { Drawing, GameCode } from './contracts'
+import type {
+  Drawing,
+  GameCode,
+  PopulationFilters,
+  SetScope,
+} from './contracts'
 import { gameCodes } from '../config/games'
 
 export interface GamePageData {
@@ -13,6 +18,11 @@ export interface GamePageData {
   historyError: string | null
   refreshError?: string | null
   capturedAt: string
+  historyPage?: { current: number; last: number; total: number }
+  pairs?: Awaited<ReturnType<ApiClient['pairs']>>
+  yearly?: Awaited<ReturnType<ApiClient['yearly']>>
+  pairsError?: string
+  yearlyError?: string
 }
 export interface HomePageData {
   latest: { game: GameCode; drawing: Drawing | null }[]
@@ -93,8 +103,16 @@ export async function loadGameWithFallback(
     return cached
   try {
     const data = await loadGame(client, game, signal)
-    const result =
-      data.historyError && cached ? { ...data, history: cached.history } : data
+    const result = cached
+      ? {
+          ...data,
+          ...(data.historyError
+            ? { history: cached.history, historyPage: cached.historyPage }
+            : {}),
+          ...(data.pairsError ? { pairs: cached.pairs } : {}),
+          ...(data.yearlyError ? { yearly: cached.yearly } : {}),
+        }
+      : data
     rememberGamePage(game, result, client)
     return result
   } catch (error) {
@@ -128,16 +146,41 @@ export async function loadGame(
   client: ApiClient,
   game: GameCode,
   signal?: AbortSignal,
+  filters: PopulationFilters = {},
+  scope?: SetScope,
+  historyPage = 1,
 ): Promise<GamePageData> {
-  const set = game === 'scandinavian' ? 'machine' : 'main'
+  const set = scope ?? (game === 'scandinavian' ? 'machine' : 'main')
   const latestRequest = loadLatest(client, game, signal)
+  const chartRequests = Promise.allSettled([
+    client
+      .pairs(game, { ...filters, set, limit: 10 }, signal)
+      .then((result) => {
+        if (result.meta.game !== game || result.meta.set_scope !== set)
+          throw new ApiError('invalid-response')
+        return result
+      }),
+    client
+      .yearly(game, { ...filters, set, number: 1 }, signal)
+      .then((result) => {
+        if (
+          result.meta.game !== game ||
+          result.meta.set_scope !== set ||
+          result.meta.selected_number !== 1
+        )
+          throw new ApiError('invalid-response')
+        return result
+      }),
+  ])
   const [latest, summary, frequencies, parity, recent] = await Promise.all([
     latestRequest,
-    client.summary(game, { set }, signal),
-    client.frequencies(game, { set, sort: 'number' }, signal),
-    client.parity(game, { set }, signal),
-    loadHistory(client, game, latestRequest, signal),
+    client.summary(game, { ...filters, set }, signal),
+    client.frequencies(game, { ...filters, set, sort: 'number' }, signal),
+    client.parity(game, { ...filters, set }, signal),
+    loadHistory(client, game, latestRequest, signal, filters, historyPage),
   ])
+  const [pairs, yearly] = await chartRequests
+  signal?.throwIfAborted()
   const mostFrequent = {
     data: frequencies.data
       .slice()
@@ -181,20 +224,46 @@ export async function loadGame(
     mostFrequent,
     leastFrequent,
     parity,
+    ...(pairs.status === 'fulfilled'
+      ? { pairs: pairs.value }
+      : {
+          pairsError:
+            pairs.reason instanceof ApiError
+              ? pairs.reason.message
+              : 'A számpárok nem érhetők el.',
+        }),
+    ...(yearly.status === 'fulfilled'
+      ? { yearly: yearly.value }
+      : {
+          yearlyError:
+            yearly.reason instanceof ApiError
+              ? yearly.reason.message
+              : 'Az éves adatok nem érhetők el.',
+        }),
     ...recent,
     capturedAt: new Date().toISOString(),
   }
 }
 
-async function loadHistory(
+export async function loadHistory(
   client: ApiClient,
   game: GameCode,
   latestRequest: Promise<Drawing | null>,
   signal?: AbortSignal,
-): Promise<Pick<GamePageData, 'history' | 'historyError'>> {
+  filters: PopulationFilters = {},
+  historyPage = 1,
+): Promise<Pick<GamePageData, 'history' | 'historyError' | 'historyPage'>> {
   try {
     const [page, latest] = await Promise.all([
-      client.drawings(game, { per_page: 5 }, signal),
+      client.drawings(
+        game,
+        {
+          ...filters,
+          per_page: 5,
+          ...(historyPage === 1 ? {} : { page: historyPage }),
+        },
+        signal,
+      ),
       latestRequest,
     ])
     const details = new Map(
@@ -214,7 +283,15 @@ async function loadHistory(
       const drawing = item.id === latest?.id ? latest : details.get(item.id)
       return drawing ? [drawing] : []
     })
-    return { history, historyError: null }
+    return {
+      history,
+      historyError: null,
+      historyPage: {
+        current: page.meta.current_page,
+        last: page.meta.last_page,
+        total: page.meta.total,
+      },
+    }
   } catch (error) {
     signal?.throwIfAborted()
     if (!(error instanceof ApiError)) throw error

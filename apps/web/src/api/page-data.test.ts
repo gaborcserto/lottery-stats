@@ -26,16 +26,103 @@ function fixtureFetcher() {
         ? fixture.summary
         : url.includes('/frequencies')
           ? fixture.frequencies
-          : url.includes('/parity')
-            ? fixture.parity
-            : url.includes('/drawings?')
-              ? fixture.history
-              : fixture.drawing,
+          : url.includes('/pairs')
+            ? fixture.pairs
+            : url.includes('/trends/yearly')
+              ? fixturePageData(game).yearly
+              : url.includes('/parity')
+                ? fixture.parity
+                : url.includes('/drawings?')
+                  ? fixture.history
+                  : fixture.drawing,
     )
   })
 }
 
 describe('game page data loading', () => {
+  it('sends intersected filters and Scandinavian combined scope only to supported endpoints', async () => {
+    const fixture = fixtureResponses('scandinavian')
+    const population = {
+      year: 2024,
+      week: 53,
+      from_date: '2024-01-01',
+      to_date: '2024-12-31',
+    }
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input)
+      if (url.includes('/latest')) return Response.json(fixture.drawing)
+      if (url.includes('/drawings?')) return Response.json(fixture.history)
+      const body = url.includes('/summary')
+        ? fixture.summary
+        : url.includes('/frequencies')
+          ? fixture.frequencies
+          : url.includes('/pairs')
+            ? fixture.pairs
+            : url.includes('/yearly')
+              ? {
+                  ...fixture.yearly,
+                  data: fixture.yearly.data.map((row) => ({
+                    ...row,
+                    selected_number_count: 1,
+                    selected_number_occurrence_percentage: 100,
+                  })),
+                  meta: { ...fixture.yearly.meta, selected_number: 1 },
+                }
+              : fixture.parity
+      return Response.json({
+        ...body,
+        meta: { ...body.meta, set_scope: 'combined', filters: population },
+      })
+    })
+    const data = await loadGame(
+      createApiClient('https://fixture.test/api/v1', fetcher),
+      'scandinavian',
+      new AbortController().signal,
+      population,
+      'combined',
+    )
+    expect(data.summary.meta.set_scope).toBe('combined')
+    expect(data.pairs?.meta.set_scope).toBe('combined')
+    expect(data.history[0].sets.map((set) => set.type)).toEqual([
+      'machine',
+      'manual',
+    ])
+    for (const [input] of fetcher.mock.calls) {
+      const url = new URL(String(input))
+      if (url.pathname.includes('/statistics/')) {
+        expect(Object.fromEntries(url.searchParams)).toMatchObject({
+          year: '2024',
+          week: '53',
+          from_date: '2024-01-01',
+          to_date: '2024-12-31',
+          set: 'combined',
+        })
+      } else if (url.pathname.endsWith('/drawings')) {
+        expect(Object.fromEntries(url.searchParams)).toEqual({
+          year: '2024',
+          week: '53',
+          from_date: '2024-01-01',
+          to_date: '2024-12-31',
+          per_page: '5',
+        })
+      }
+    }
+  })
+  it('preserves chart tables when a background chart refresh fails', async () => {
+    const cached = fixturePageData('six')
+    const base = fixtureFetcher()
+    const client = createApiClient('/api/v1', (input, init) =>
+      String(input).includes('/pairs') || String(input).includes('/yearly')
+        ? Promise.resolve(Response.json({}, { status: 503 }))
+        : base(input, init),
+    )
+    rememberGamePage('six', cached, client)
+    const refreshed = await loadGameWithFallback(client, 'six')
+    expect(refreshed.pairs).toEqual(cached.pairs)
+    expect(refreshed.yearly).toEqual(cached.yearly)
+    expect(refreshed.pairsError).toBe('Az adatok átmenetileg nem érhetők el.')
+    expect(refreshed.yearlyError).toBe('Az adatok átmenetileg nem érhetők el.')
+  })
   it('renders native snapshot data on a first visit, then refreshes and caches live data', async () => {
     const fetcher = fixtureFetcher()
     const client = createApiClient('/api/v1', fetcher)
@@ -46,10 +133,12 @@ describe('game page data loading', () => {
     )
     expect(fetcher).not.toHaveBeenCalled()
     const live = await loadGameRoute(client, 'five', snapshot, signal)
-    expect(fetcher).toHaveBeenCalledTimes(5)
+    expect(live.pairs?.data).toEqual(fixtureResponses('five').pairs.data)
+    expect(live.yearly?.meta.selected_number).toBe(1)
+    expect(fetcher).toHaveBeenCalledTimes(7)
     expect(await loadGameRoute(client, 'five', snapshot, signal)).toBe(live)
     expect(snapshot).toHaveBeenCalledTimes(1)
-    expect(fetcher).toHaveBeenCalledTimes(5)
+    expect(fetcher).toHaveBeenCalledTimes(7)
   })
 
   it('uses prerendered homepage results for one cache lifetime before refreshing', async () => {
@@ -97,7 +186,7 @@ describe('game page data loading', () => {
       fetcher.mock.calls.filter(([url]) => String(url).includes('/drawings/7')),
     ).toHaveLength(0)
     await loadHome(client)
-    expect(fetcher).toHaveBeenCalledTimes(7)
+    expect(fetcher).toHaveBeenCalledTimes(9)
   })
 
   it('starts history alongside statistics instead of waiting for a slow summary', async () => {
@@ -124,13 +213,13 @@ describe('game page data loading', () => {
     const first = await loadGameWithFallback(client, 'five')
     vi.setSystemTime(new Date('2026-11-01T00:00:29Z'))
     expect(await loadGameWithFallback(client, 'five')).toBe(first)
-    expect(fetcher).toHaveBeenCalledTimes(5)
+    expect(fetcher).toHaveBeenCalledTimes(7)
     vi.setSystemTime(new Date('2026-11-01T00:00:30Z'))
     expect(await loadGameWithFallback(client, 'five')).not.toBe(first)
-    expect(fetcher).toHaveBeenCalledTimes(10)
+    expect(fetcher).toHaveBeenCalledTimes(14)
     const otherFetcher = fixtureFetcher()
     await loadGameWithFallback(createApiClient('/other', otherFetcher), 'five')
-    expect(otherFetcher).toHaveBeenCalledTimes(5)
+    expect(otherFetcher).toHaveBeenCalledTimes(7)
   })
 
   it('retains history on a partial refresh failure and reports the error', async () => {
@@ -157,7 +246,7 @@ describe('game page data loading', () => {
     await expect(
       loadGameWithFallback(client, 'five', controller.signal),
     ).rejects.toMatchObject({ name: 'AbortError' })
-    expect(fetcher).toHaveBeenCalledTimes(5)
+    expect(fetcher).toHaveBeenCalledTimes(7)
   })
 
   it('derives frequency highlights from one full frequency request', async () => {

@@ -1,5 +1,5 @@
 import type { Route } from './+types/six'
-import { useLoaderData } from 'react-router'
+import { useLoaderData, type ShouldRevalidateFunctionArgs } from 'react-router'
 import { gameSnapshot } from '../api/snapshot.server'
 import { api } from '../api/client'
 import { loadGameRoute } from '../api/page-data'
@@ -9,6 +9,16 @@ export { RouteError as ErrorBoundary } from '../components/RouteError'
 
 export function meta() {
   return gameMeta('six')
+}
+export function shouldRevalidate({
+  currentUrl,
+  nextUrl,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) {
+  return currentUrl.pathname === nextUrl.pathname &&
+    currentUrl.search !== nextUrl.search
+    ? false
+    : defaultShouldRevalidate
 }
 export async function loader() {
   return gameSnapshot('six')

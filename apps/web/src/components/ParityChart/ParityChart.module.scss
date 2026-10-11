@@ -1,0 +1,43 @@
+.chart {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.canvas {
+  flex: 1;
+  min-height: 0;
+  path {
+    transition: filter 150ms;
+  }
+  path:hover,
+  path:focus {
+    filter: brightness(1.15);
+    stroke: #102b3e;
+    stroke-width: 3;
+  }
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  button {
+    font-size: 0.8rem;
+    background: var(--surface);
+    color: var(--text);
+  }
+  button[aria-pressed='true'] {
+    border: 2px solid var(--green);
+  }
+}
+.tooltip {
+  padding: 0.75rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .canvas path {
+    transition: none;
+  }
+}

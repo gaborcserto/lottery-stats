@@ -43,11 +43,31 @@ input,
 select {
   font: inherit;
 }
+select {
+  min-height: 2.75rem;
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  color: var(--text);
+  background-color: var(--select-background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+select:hover:not(:disabled) {
+  border-color: var(--accent-lime);
+}
+select:focus-visible {
+  border-color: var(--accent-lime);
+}
+option {
+  color: var(--text);
+  background: var(--select-option-background);
+}
 button {
   cursor: pointer;
+  min-height: 2.75rem;
+  font-weight: 650;
   padding: var(--space-2) var(--space-4);
-  color: var(--button-text);
-  background: var(--green);
+  color: var(--action-text);
+  background: var(--action-background);
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }

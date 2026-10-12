@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { AppLayout } from '.'
@@ -13,9 +13,17 @@ describe('shared layout and navigation', () => {
       </MemoryRouter>,
     )
     expect(screen.getByRole('banner')).toBeInTheDocument()
-    expect(screen.getByRole('contentinfo')).toHaveTextContent(
-      'A múltbeli gyakoriságok nem jelzik előre',
-    )
+    expect(
+      screen.getByRole('link', { name: 'Lottery Stats – Kezdőlap' }),
+    ).toHaveAttribute('href', '/')
+    expect(
+      screen.getAllByRole('img', { name: 'Lottery Stats' })[0],
+    ).toHaveAttribute('src', '/images/logo.png')
+    expect(
+      within(screen.getByRole('contentinfo')).getByRole('link', {
+        name: 'Lottery Stats – Kezdőlap (lábléc)',
+      }),
+    ).toHaveAttribute('href', '/')
     expect(
       screen.getByRole('navigation', { name: 'Fő navigáció' }),
     ).toBeInTheDocument()
@@ -47,6 +55,12 @@ describe('shared layout and navigation', () => {
       'aria-current',
       'page',
     )
+    fireEvent.click(
+      screen.getByRole('link', { name: 'Lottery Stats – Kezdőlap' }),
+    )
+    expect(
+      screen.getByRole('heading', { name: 'Kezdőlap' }),
+    ).toBeInTheDocument()
   })
   it('retains content and accessible busy state without a global loading message', () => {
     render(

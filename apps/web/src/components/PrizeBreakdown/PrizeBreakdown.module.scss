@@ -11,6 +11,7 @@
 }
 .prize dt {
   color: var(--muted);
+  flex-shrink: 0;
 }
 .prize dd {
   margin: 0;
@@ -21,7 +22,7 @@
   overflow-wrap: anywhere;
 }
 .prize span {
-  display: inline;
+  display: block;
   margin-inline-start: 0.35rem;
   color: var(--muted);
   font-size: 0.78rem;
@@ -31,4 +32,12 @@
   margin: 0.65rem 0 0;
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.prize:first-child dd {
+  color: var(--accent-lime);
+  text-shadow: var(--highlight-text-shadow);
+}
+.prize:first-child dd span {
+  text-shadow: none;
 }

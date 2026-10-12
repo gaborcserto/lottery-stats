@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react'
 import { useSearchParams } from 'react-router'
+import { FaFilter } from 'react-icons/fa6'
 import type { GameCode } from '../../api/contracts'
 import { parseFilters, type PageFilters } from '../../api/filters'
 import styles from './StatisticsFilters.module.scss'
@@ -35,7 +36,9 @@ export function StatisticsFilters({
   }
   return (
     <section className={styles.panel} aria-label="Statisztikai szűrők">
-      <h2>Időszak és számsor</h2>
+      <h2>
+        <FaFilter aria-hidden="true" /> Időszak és számsor
+      </h2>
       <form
         key={JSON.stringify({ ...filters.statistics, sort: filters.sort })}
         onSubmit={submit}

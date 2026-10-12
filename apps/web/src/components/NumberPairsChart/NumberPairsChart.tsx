@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import type { GamePageData } from '../../api/page-data'
 import { getChartTheme } from '../../config/charts'
 import { useTheme } from '../ThemeProvider'
+import { useChartMotion } from '../ChartSlot'
 import styles from './NumberPairsChart.module.scss'
 
 export function NumberPairsChart({
@@ -12,6 +13,7 @@ export function NumberPairsChart({
 }) {
   const { resolvedTheme } = useTheme()
   const chartTheme = getChartTheme(resolvedTheme)
+  const animate = useChartMotion(resolvedTheme)
   const [selected, setSelected] = useState<string | null>(null)
   const [hovered, setHovered] = useState<string | null>(null)
   const rows = useMemo(
@@ -65,7 +67,8 @@ export function NumberPairsChart({
           }
           borderRadius={3}
           enableLabel={false}
-          animate={false}
+          animate={animate}
+          motionConfig={{ duration: 350 }}
           isFocusable
           barAriaLabel={(bar) =>
             `${bar.data.pair}: ${bar.data.count} előfordulás, ${bar.data.occurrence_percentage}%`

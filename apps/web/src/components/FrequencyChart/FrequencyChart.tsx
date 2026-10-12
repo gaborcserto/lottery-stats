@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { ResponsiveBar } from '@nivo/bar'
 import type { GamePageData } from '../../api/page-data'
 import { getChartTheme } from '../../config/charts'
 import { useTheme } from '../ThemeProvider'
+import { useChartMotion } from '../ChartSlot'
 import styles from './FrequencyChart.module.scss'
 
 export function FrequencyChart({
@@ -12,6 +13,7 @@ export function FrequencyChart({
 }) {
   const { resolvedTheme } = useTheme()
   const chartTheme = getChartTheme(resolvedTheme)
+  const animate = useChartMotion(resolvedTheme)
   const [selected, setSelected] = useState<number | null>(null)
   const [hovered, setHovered] = useState<number | null>(null)
   const active = hovered ?? selected
@@ -36,16 +38,23 @@ export function FrequencyChart({
             </option>
           ))}
         </select>{' '}
-        · Az ábra oldalra görgethető.
+        <span className={styles.mobileHint}>
+          {' '}
+          · Mobilon az ábra oldalra görgethető.
+        </span>
       </label>
       <div
         className={styles.scroll}
         tabIndex={0}
-        aria-label="Görgethető számgyakorisági ábra"
+        aria-label="Számgyakorisági ábra"
       >
         <div
           className={styles.canvas}
-          style={{ minWidth: Math.max(480, data.length * 30) }}
+          style={
+            {
+              '--mobile-chart-width': `${Math.max(480, data.length * 24)}px`,
+            } as CSSProperties
+          }
         >
           <ResponsiveBar
             theme={chartTheme}
@@ -64,8 +73,20 @@ export function FrequencyChart({
             borderColor="var(--heading)"
             enableLabel={false}
             axisLeft={{ tickSize: 0, tickPadding: 8 }}
-            axisBottom={{ tickSize: 0, tickPadding: 10 }}
-            animate={false}
+            axisBottom={{
+              tickSize: 0,
+              tickPadding: 10,
+              tickValues: data
+                .filter(
+                  (_, index) =>
+                    data.length <= 45 ||
+                    index % 5 === 0 ||
+                    index === data.length - 1,
+                )
+                .map((row) => row.number),
+            }}
+            animate={animate}
+            motionConfig={{ duration: 350 }}
             isFocusable
             barAriaLabel={(bar) =>
               `${bar.data.number}. szám: ${bar.data.count} előfordulás, ${bar.data.occurrence_percentage}%`

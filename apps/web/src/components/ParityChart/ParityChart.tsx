@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import type { GamePageData } from '../../api/page-data'
 import { getChartTheme } from '../../config/charts'
 import { useTheme } from '../ThemeProvider'
+import { useChartMotion } from '../ChartSlot'
 import styles from './ParityChart.module.scss'
 
 export function ParityChart({
@@ -12,6 +13,7 @@ export function ParityChart({
 }) {
   const { resolvedTheme } = useTheme()
   const chartTheme = getChartTheme(resolvedTheme)
+  const animate = useChartMotion(resolvedTheme)
   const [selected, setSelected] = useState<string | null>(null)
   const [hovered, setHovered] = useState<string | null>(null)
   const rows = useMemo(
@@ -37,16 +39,43 @@ export function ParityChart({
         <ResponsivePie
           theme={chartTheme}
           data={rows}
-          margin={{ top: 24, bottom: 24, left: 24, right: 24 }}
+          margin={{ top: 12, bottom: 12, left: 12, right: 12 }}
           innerRadius={0.64}
-          padAngle={2}
+          layers={[
+            'arcs',
+            ({ centerX, centerY }) => (
+              <g
+                transform={`translate(${centerX}, ${centerY})`}
+                aria-hidden="true"
+              >
+                <text
+                  textAnchor="middle"
+                  fill="var(--heading)"
+                  fontSize="20"
+                  fontWeight="750"
+                >
+                  {data.number_occurrence_count.toLocaleString('hu-HU')}
+                </text>
+                <text
+                  y="20"
+                  textAnchor="middle"
+                  fill="var(--muted)"
+                  fontSize="11"
+                >
+                  számelőfordulás
+                </text>
+              </g>
+            ),
+          ]}
+          padAngle={0}
           cornerRadius={4}
           activeOuterRadiusOffset={6}
           colors={['var(--chart-primary)', 'var(--chart-secondary)']}
           enableArcLinkLabels={false}
           arcLabel={(row) => `${row.id}`}
           enableArcLabels={false}
-          animate={false}
+          animate={animate}
+          motionConfig={{ duration: 350 }}
           activeId={hovered ?? selected}
           onActiveIdChange={(id) => setHovered(id === null ? null : String(id))}
           onClick={(row) => setSelected(String(row.id))}

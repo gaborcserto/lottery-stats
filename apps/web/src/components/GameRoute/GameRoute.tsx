@@ -11,7 +11,7 @@ export function GameRoute({
   game: GameCode
   data: GamePageData
 }) {
-  const { revalidate } = useRevalidator()
+  const { revalidate, state } = useRevalidator()
   const refreshed = useRef(false)
   const { search } = useLocation()
 
@@ -24,5 +24,5 @@ export function GameRoute({
     void revalidate()
   }, [game, data, revalidate, search])
 
-  return <GamePage game={game} data={data} />
+  return <GamePage game={game} data={data} refreshing={state === 'loading'} />
 }

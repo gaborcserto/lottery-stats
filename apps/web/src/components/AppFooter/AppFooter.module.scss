@@ -1,15 +1,35 @@
 .footer {
-  padding: var(--space-5) var(--space-4);
+  padding: var(--space-2) var(--space-4);
   border-top: 1px solid var(--border);
   background: var(--surface);
   color: var(--muted);
-  p {
-    max-width: var(--content-width);
-    margin-inline: auto;
+  font-size: 0.75rem;
+  text-align: center;
+  a {
+    display: inline-block;
+    vertical-align: middle;
+  }
+  img {
+    width: 7.5rem;
+    height: auto;
   }
 }
 :global(body:has(.lottery-home)) .footer {
-  background: var(--home-footer);
-  border-top-color: var(--home-divider);
-  color: var(--home-soft-text);
+  width: 100%;
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--glass-border);
+  border-radius: 0;
+  background: var(--card-background);
+  box-shadow: var(--glass-shadow);
+  color: var(--text);
+}
+@supports (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  :global(body:has(.lottery-home)) .footer {
+    background: var(--glass-background);
+    -webkit-backdrop-filter: blur(11.5px);
+    backdrop-filter: blur(11.5px);
+  }
 }

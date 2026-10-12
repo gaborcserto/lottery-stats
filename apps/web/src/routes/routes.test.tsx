@@ -156,7 +156,7 @@ describe('explicit route modules', () => {
     }
   })
   it.each([
-    ['/', 'Lottóeredmények, tisztán.'],
+    ['/', 'A számok mögött.'],
     ['/otoslotto', 'Ötöslottó'],
     ['/hatoslotto', 'Hatoslottó'],
     ['/skandinav-lotto', 'Skandináv lottó'],

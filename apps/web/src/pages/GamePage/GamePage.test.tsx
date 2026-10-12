@@ -62,9 +62,7 @@ describe('game statistics pages', () => {
         title,
       )
       expect(document.querySelectorAll('ol li')).toHaveLength(1)
-      expect(document.querySelector('a[href="/"]')?.textContent).toContain(
-        'Vissza a főoldalra',
-      )
+      expect(document.querySelector('a[href="/"]')).toBeNull()
     },
   )
 
@@ -82,6 +80,34 @@ describe('game statistics pages', () => {
     ).toBeInTheDocument()
   })
 
+  it('keeps frequency badge counts beside their shared number-ball variants', () => {
+    const data = pageData('five')
+    render(
+      <MemoryRouter>
+        <GamePage game="five" data={data} />
+      </MemoryRouter>,
+    )
+
+    const mostSection = screen.getByRole('heading', {
+      name: 'Leggyakoribbak',
+    }).parentElement
+    const leastSection = screen.getByRole('heading', {
+      name: 'Legritkábbak',
+    }).parentElement
+    if (!mostSection || !leastSection) throw new Error('Missing frequency list')
+    const most = within(mostSection).getAllByRole('listitem')[0]
+    const least = within(leastSection).getAllByRole('listitem')[0]
+    if (!most || !least) throw new Error('Missing frequency badge')
+
+    expect(most).toHaveTextContent(String(data.mostFrequent.data[0].number))
+    expect(most).toHaveTextContent(String(data.mostFrequent.data[0].count))
+    expect(least).toHaveTextContent(String(data.leastFrequent.data[0].number))
+    expect(least).toHaveTextContent(String(data.leastFrequent.data[0].count))
+    expect(most.querySelector('span')?.className).not.toBe(
+      least.querySelector('span')?.className,
+    )
+  })
+
   it('keeps the statistics page visible when recent history is unavailable', () => {
     const data = pageData('five')
     data.history = []
@@ -96,16 +122,55 @@ describe('game statistics pages', () => {
       screen.getByRole('heading', { name: 'Számgyakoriság' }),
     ).toBeInTheDocument()
     const historySection = screen
-      .getByRole('heading', { name: 'Legutóbbi sorsolások' })
+      .getByRole('heading', { name: 'Korábbi eredmények' })
       .closest('section')
     if (!historySection) throw new Error('Missing history section')
+    expect(
+      within(historySection).getAllByText('Korábbi eredmények', {
+        exact: true,
+      }),
+    ).toHaveLength(1)
+    expect(
+      within(historySection)
+        .getByRole('heading', { name: 'Korábbi eredmények' })
+        .querySelector('svg'),
+    ).toBeInTheDocument()
     expect(within(historySection).getByRole('alert')).toHaveTextContent(
       data.historyError,
     )
-    expect(screen.getByRole('status')).toHaveTextContent(
+    const refreshStatus = screen.getByText(/A frissítés nem sikerült/)
+    expect(refreshStatus).toHaveAttribute('role', 'status')
+    expect(refreshStatus).toHaveTextContent(
       'A korábban elérhető adatokat látod.',
     )
   })
+
+  it.each(['five', 'six', 'scandinavian'] as const)(
+    'gives every %s section heading one decorative icon and keeps prize context below its heading',
+    (game) => {
+      const html = renderToStaticMarkup(
+        <MemoryRouter>
+          <GamePage game={game} data={pageData(game)} />
+        </MemoryRouter>,
+      )
+      const document = new DOMParser().parseFromString(html, 'text/html')
+      const headings = Array.from(document.querySelectorAll('h2'))
+      expect(headings.length).toBeGreaterThan(0)
+      for (const heading of headings) {
+        expect(heading.querySelectorAll('svg')).toHaveLength(1)
+        expect(heading.querySelector('svg')?.getAttribute('aria-hidden')).toBe(
+          'true',
+        )
+      }
+      expect(document.querySelectorAll('#history-heading').length).toBe(1)
+      const prizesHeading = document.querySelector('#prizes-heading')
+      expect(prizesHeading?.textContent).toContain('Nyeremények')
+      expect(prizesHeading?.nextElementSibling?.textContent).toBe(
+        'Legutóbbi sorsolás',
+      )
+      expect(prizesHeading?.nextElementSibling?.tagName).toBe('P')
+    },
+  )
 
   it('shows Hatoslottó bonus only when the API provides a bonus set', () => {
     const data = pageData('six')

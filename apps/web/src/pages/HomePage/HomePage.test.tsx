@@ -33,7 +33,7 @@ describe('HomePage', () => {
       </MemoryRouter>,
     )
     expect(
-      screen.getByRole('heading', { name: 'Lottóeredmények, tisztán.' }),
+      screen.getByRole('heading', { name: 'A számok mögött.' }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Ötöslottó' }),

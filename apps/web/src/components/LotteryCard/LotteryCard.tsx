@@ -54,6 +54,7 @@ export function LotteryCard({
       ) : (
         <>
           <p className={styles.date}>
+            <span className={styles.dateLabel}>Legutóbbi sorsolás</span>
             <LuCalendarDays className={styles.icon} aria-hidden="true" />
             {drawing.drawn_on ? (
               <time dateTime={drawing.drawn_on}>
@@ -66,7 +67,13 @@ export function LotteryCard({
           <div className={styles.sets}>
             {drawing.sets.map((set) => (
               <section className={styles.numberSet} key={set.type}>
-                <h4>{setLabels[set.type]}</h4>
+                <h4
+                  className={
+                    set.type === 'main' ? styles.accessibleTitle : undefined
+                  }
+                >
+                  {setLabels[set.type]}
+                </h4>
                 <ul aria-label={`${page.name}: ${setLabels[set.type]}`}>
                   {set.numbers.map((number) => (
                     <LotteryBall key={number} value={number} />

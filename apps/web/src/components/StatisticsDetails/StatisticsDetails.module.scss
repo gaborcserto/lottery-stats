@@ -1,20 +1,21 @@
 .sections {
   display: grid;
-  gap: 1.5rem;
-  margin-top: 1.5rem;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
 }
 .card {
   min-width: 0;
-  padding: clamp(1rem, 3vw, 1.75rem);
+  padding: var(--space-3);
   border: 1px solid var(--border);
-  border-radius: 1rem;
+  border-radius: var(--radius);
   background: var(--surface);
+  box-shadow: var(--card-shadow);
   h2 {
     margin-top: 0;
   }
   p {
     color: var(--muted);
-    font-size: 0.9rem;
+    font-size: 0.8rem;
   }
 }
 .select {
@@ -23,11 +24,26 @@
   gap: 0.75rem;
   font-weight: 650;
   select {
-    padding: 0.45rem;
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
     color: var(--text);
-    background: var(--surface);
+    background: var(--select-background);
     border: 1px solid var(--border);
-    border-radius: 0.4rem;
+    border-radius: var(--radius);
+  }
+}
+.selectedNumbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  margin: var(--space-2) 0;
+  button {
+    background: var(--elevated);
+    color: var(--text);
+    border-color: var(--accent-lime);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
   }
 }
 .tableWrap {
@@ -53,8 +69,49 @@
     color: var(--muted);
   }
 }
+.pairsTable {
+  max-height: none;
+  overflow: visible;
+  font-size: 0.85rem;
+}
+.yearlyChartSlot,
+.pairsChartSlot {
+  margin-block: 0.75rem;
+}
 @media (min-width: 1000px) {
   .sections {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.select select {
+  min-height: 2.75rem;
+}
+@media (min-width: 64rem) {
+  .sections {
+    display: contents;
+  }
+  .select {
+    align-items: flex-start;
+    flex-direction: column;
+    select {
+      min-width: 8rem;
+      max-height: 8rem;
+    }
+  }
+  .card .yearlyChartSlot {
+    height: clamp(320px, 11vw, 400px);
+    flex-grow: 1;
+  }
+  .card .pairsChartSlot {
+    height: clamp(340px, 12vw, 460px);
+    flex-grow: 1;
+  }
+  .card:first-child .tableWrap {
+    max-height: 18rem;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
   }
 }

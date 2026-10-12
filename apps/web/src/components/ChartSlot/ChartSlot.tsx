@@ -31,9 +31,13 @@ class ChartError extends Component<
 export function ChartSlot({
   children,
   label,
+  busy = false,
+  className = '',
 }: {
   children: ReactNode
   label: string
+  busy?: boolean
+  className?: string
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
@@ -54,10 +58,17 @@ export function ChartSlot({
     return () => observer.disconnect()
   }, [])
   const placeholder = (
-    <p className={styles.placeholder}>Az interaktív ábra betöltése…</p>
+    <p className={`${styles.placeholder} ${styles.loading}`} role="status">
+      Az interaktív ábra betöltése…
+    </p>
   )
   return (
-    <div ref={ref} className={styles.slot} aria-label={label}>
+    <div
+      ref={ref}
+      className={`${styles.slot} ${className}`.trim()}
+      aria-label={label}
+      aria-busy={busy}
+    >
       {visible || (hydrated && !('IntersectionObserver' in window)) ? (
         <ChartError>
           <Suspense fallback={placeholder}>{children}</Suspense>

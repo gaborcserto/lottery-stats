@@ -3,6 +3,9 @@
   display: flex;
   flex-direction: column;
   rect {
+    transform-box: fill-box;
+    transform-origin: left center;
+
     transition:
       fill 150ms,
       filter 150ms;
@@ -23,18 +26,19 @@
   color: var(--muted);
   font-size: 0.8rem;
   select {
-    background: var(--surface);
+    min-height: 2.75rem;
+    background: var(--select-background);
     color: var(--text);
     border: 1px solid var(--border);
-    border-radius: 0.3rem;
+    border-radius: var(--radius);
   }
 }
 .tooltip {
   padding: 0.75rem;
-  background: var(--surface);
+  background: var(--chart-tooltip);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
 }
 @media (prefers-reduced-motion: reduce) {
   .chart rect {

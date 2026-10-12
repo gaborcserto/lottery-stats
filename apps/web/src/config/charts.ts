@@ -16,7 +16,7 @@ function createChartTheme(colors: {
       },
       domain: { line: { stroke: border } },
     },
-    grid: { line: { stroke: border, strokeOpacity: 0.55 } },
+    grid: { line: { stroke: border, strokeOpacity: 0.4 } },
     legends: { text: { fill: muted } },
     tooltip: {
       container: {
@@ -24,6 +24,8 @@ function createChartTheme(colors: {
         background: tooltipBackground,
         fontFamily: 'var(--font-body)',
         border: `1px solid ${border}`,
+        borderRadius: 8,
+        boxShadow: '0 4px 12px rgb(4 18 25 / 12%)',
       },
     },
   }
@@ -31,16 +33,16 @@ function createChartTheme(colors: {
 
 const chartThemes = {
   light: createChartTheme({
-    text: '#172c38',
-    muted: '#455b64',
-    border: '#becdc3',
+    text: '#182938',
+    muted: '#4c6078',
+    border: '#dce5ef',
     tooltipBackground: '#ffffff',
   }),
   dark: createChartTheme({
-    text: '#ecf3ed',
-    muted: '#baccc8',
-    border: '#557168',
-    tooltipBackground: '#203d49',
+    text: '#edf3f8',
+    muted: '#bac9d3',
+    border: '#2a414d',
+    tooltipBackground: '#172d38',
   }),
 }
 

@@ -25,9 +25,14 @@ export function PrizeBreakdown({ prizes }: { prizes: Drawing['prizes'] }) {
   if (prizes.length === 0)
     return <p className={styles.empty}>Nincs elérhető nyereményadat.</p>
 
+  const tiers = Object.keys(labels)
+  const orderedPrizes = prizes
+    .slice()
+    .sort((a, b) => tiers.indexOf(b.tier) - tiers.indexOf(a.tier))
+
   return (
     <dl className={styles.prizes}>
-      {prizes.map((prize) => (
+      {orderedPrizes.map((prize) => (
         <div className={styles.prize} key={prize.tier}>
           <dt>{labels[prize.tier]}</dt>
           <dd>

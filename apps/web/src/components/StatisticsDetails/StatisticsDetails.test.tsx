@@ -23,7 +23,7 @@ describe('accessible chart alternatives', () => {
     expect(document.querySelectorAll('table')).toHaveLength(2)
     expect(document.body.textContent).toContain('1. szám éves előfordulásai')
     expect(document.body.textContent).toContain('1 + 12')
-    expect(document.querySelectorAll('svg')).toHaveLength(0)
+    expect(document.querySelectorAll('div[aria-label] svg')).toHaveLength(0)
   })
   it('keeps other chart data visible on an independent API failure', () => {
     const data = fixturePageData('six')

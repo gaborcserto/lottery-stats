@@ -2,13 +2,24 @@
   display: grid;
   flex: 0 0 auto;
   place-items: center;
-  width: clamp(2.45rem, 4vw, 2.85rem);
+  width: var(--ball-size, clamp(2rem, 3vw, 2.5rem));
   aspect-ratio: 1;
   border: 1px solid var(--ball-border);
   border-radius: 50%;
   background: var(--ball-background);
+  box-shadow: 0 1px 3px rgb(4 18 25 / 12%);
   color: var(--ball-text);
   font-size: 1rem;
   font-weight: 750;
   font-variant-numeric: tabular-nums;
+}
+.most {
+  background: var(--ball-most-background);
+  border-color: var(--ball-most-border);
+  color: var(--ball-most-text);
+}
+.least {
+  background: var(--ball-least-background);
+  border-color: var(--ball-least-border);
+  color: var(--ball-least-text);
 }

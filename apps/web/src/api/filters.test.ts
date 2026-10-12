@@ -32,6 +32,17 @@ describe('URL statistics filters', () => {
       parseFilters(new URLSearchParams(`number=${maximum + 1}`), game).number,
     ).toBe(1)
   })
+  it('deduplicates yearly numbers and rejects values outside the game range', () => {
+    expect(
+      parseFilters(
+        new URLSearchParams('number=1&number=90&number=91&number=90'),
+        'five',
+      ).numbers,
+    ).toEqual([1, 90])
+    expect(
+      parseFilters(new URLSearchParams('number=91&number=-1'), 'five').numbers,
+    ).toEqual([1])
+  })
   it('validates real dates and ordered bounds without fabricating dates', () => {
     expect(
       parseFilters(

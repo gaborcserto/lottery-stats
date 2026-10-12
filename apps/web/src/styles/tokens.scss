@@ -1,15 +1,17 @@
 @mixin light {
-  --background: #f5f8f3;
+  --background: #f5f8fc;
+  --hero-accent: var(--brand-lime);
+  --accent-lime: var(--brand-lime);
   --surface: #fff;
-  --elevated: #edf3eb;
-  --text: #172c38;
-  --heading: #102b3e;
-  --muted: #455b64;
-  --border: #becdc3;
-  --divider: #dce5dc;
+  --elevated: #eef3f8;
+  --text: #182938;
+  --heading: #102330;
+  --muted: #4c6078;
+  --border: #dce5ef;
+  --divider: #e7edf4;
   --green: #176039;
-  --lime: #c4e86b;
-  --navy: #102b3e;
+  --lime: var(--brand-lime);
+  --navy: #102330;
   --button-text: #fff;
   --secondary-button: #e8f0e6;
   --link: #176039;
@@ -17,72 +19,110 @@
   --success: #176039;
   --warning: #795600;
   --error: #a32b2b;
-  --chart-grid: #becdc3;
-  --chart-label: #455b64;
+  --chart-grid: #dce5ef;
+  --chart-label: #4c6078;
   --chart-tooltip: #fff;
-  --chart-primary: #176039;
-  --chart-secondary: #b0d65b;
-  --chart-muted: #97b5a4;
+  --chart-primary: var(--brand-lime);
+  --chart-secondary: #4b87ff;
+  --chart-muted: #9cbb72;
   --home-overlay: linear-gradient(
-    115deg,
-    rgb(7 29 39 / 91%),
-    rgb(10 39 47 / 74%) 58%,
-    rgb(8 36 37 / 84%)
+    180deg,
+    rgb(236 242 247 / 55%),
+    rgb(233 239 245 / 82%)
   );
-  --home-header: rgb(9 31 39 / 78%);
-  --home-footer: rgb(9 31 39 / 82%);
-  --home-divider: rgb(225 239 226 / 20%);
-  --home-soft-text: #e2eee7;
-  --card-background: #f8faf6;
-  --card-divider: #dce5dc;
-  --ball-background: #eff5e7;
-  --ball-border: #b8d77b;
-  --ball-text: #173c30;
+  --home-header: rgb(249 252 255 / 62%);
+  --home-divider: #dce5ef;
+  --card-background: #ffffff;
+  --glass-background: rgb(242 245 247 / 68%);
+  --header-scrolled-background: rgb(242 245 247 / 88%);
+  --glass-border: rgb(255 255 255 / 58%);
+  --glass-shadow: 0 4px 30px rgb(0 0 0 / 10%);
+  --navigation-background: rgb(242 245 247 / 68%);
+  --navigation-border: rgb(255 255 255 / 70%);
+  --navigation-hover: rgb(16 35 48 / 8%);
+  --navigation-hover-text: #102330;
+  --navigation-active: var(--brand-lime);
+  --navigation-active-text: #102330;
+  --highlight-text-shadow: none;
+  --select-background: #fff;
+  --select-option-background: #fff;
+  --card-divider: #e7edf4;
+  --ball-background: #ffffff;
+  --ball-shade: #e5eaf0;
+  --ball-border: #cbd5df;
+  --ball-text: #102330;
+  --ball-most-background: var(--brand-lime);
+  --ball-most-border: var(--brand-lime);
+  --ball-most-text: #102330;
+  --ball-least-background: var(--ball-least-blue);
+  --ball-least-border: var(--ball-least-blue);
+  --ball-least-text: #fff;
 }
 
 @mixin dark {
-  --background: #0e202c;
-  --surface: #172f3c;
-  --elevated: #203d49;
-  --text: #ecf3ed;
-  --heading: #f3f8f4;
-  --muted: #baccc8;
-  --border: #557168;
-  --divider: #36534f;
+  --background: #071820;
+  --hero-accent: var(--brand-lime);
+  --accent-lime: var(--brand-lime);
+  --surface: #11252f;
+  --elevated: #172d38;
+  --text: #edf3f8;
+  --heading: #f6f9fc;
+  --muted: #bac9d3;
+  --border: #2a414d;
+  --divider: #243b47;
   --green: #267a4d;
-  --lime: #c4e86b;
-  --navy: #102b3e;
+  --lime: var(--brand-lime);
+  --navy: #102330;
   --button-text: #fff;
-  --secondary-button: #29464d;
-  --link: #c4e86b;
-  --focus: #c4e86b;
+  --secondary-button: #213845;
+  --link: var(--brand-lime);
+  --focus: var(--brand-lime);
   --success: #82d39b;
   --warning: #f2cb70;
   --error: #ff9292;
-  --chart-grid: #557168;
-  --chart-label: #baccc8;
-  --chart-tooltip: #203d49;
-  --chart-primary: #83d39a;
-  --chart-secondary: #c4e86b;
-  --chart-muted: #52796b;
+  --chart-grid: #2a414d;
+  --chart-label: #bac9d3;
+  --chart-tooltip: #172d38;
+  --chart-primary: var(--brand-lime);
+  --chart-secondary: #4b87ff;
+  --chart-muted: #567640;
   --home-overlay: linear-gradient(
-    115deg,
-    rgb(7 29 39 / 91%),
-    rgb(10 39 47 / 74%) 58%,
-    rgb(8 36 37 / 84%)
+    180deg,
+    rgb(3 16 23 / 52%),
+    rgb(3 16 23 / 82%)
   );
   --home-header: rgb(9 31 39 / 78%);
-  --home-footer: rgb(9 31 39 / 82%);
   --home-divider: rgb(225 239 226 / 20%);
-  --home-soft-text: #e2eee7;
-  --card-background: #203d49;
-  --card-divider: #557168;
-  --ball-background: #29464d;
-  --ball-border: #c4e86b;
-  --ball-text: #f3f8f4;
+  --card-background: #172d38;
+  --glass-background: rgb(17 37 47 / 68%);
+  --header-scrolled-background: rgb(17 37 47 / 90%);
+  --glass-border: rgb(17 37 47 / 53%);
+  --glass-shadow: 0 4px 30px rgb(0 0 0 / 10%);
+  --navigation-background: rgb(17 37 47 / 70%);
+  --navigation-border: transparent;
+  --navigation-active: #102330;
+  --navigation-hover: rgb(7 24 32 / 60%);
+  --navigation-hover-text: var(--brand-lime);
+  --navigation-active-text: var(--brand-lime);
+  --highlight-text-shadow: none;
+  --select-background: #172d38;
+  --select-option-background: #11252f;
+  --card-divider: #2a414d;
+  --ball-background: #ffffff;
+  --ball-shade: #e5eaf0;
+  --ball-border: #cbd5df;
+  --ball-text: #102330;
+  --ball-most-background: var(--brand-lime);
+  --ball-most-border: var(--brand-lime);
+  --ball-most-text: #102330;
+  --ball-least-background: var(--ball-least-blue);
+  --ball-least-border: var(--ball-least-blue);
+  --ball-least-text: #fff;
 }
 
 :root {
+  --brand-lime: #74bf1e;
+  --ball-least-blue: #2b62b8;
   @include light;
   --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
   --text-large: 1.35rem;
@@ -91,10 +131,25 @@
   --space-4: 1rem;
   --space-5: 1.5rem;
   --space-6: 2rem;
-  --content-width: 70rem;
-  --radius: 0.35rem;
+  --content-width: 90rem;
+  --radius: 0.55rem;
+  --card-shadow: 0 0.35rem 1rem rgb(4 18 25 / 6%);
+  --action-background: var(--brand-lime);
+  --action-text: #102330;
 }
 
 :root[data-theme='dark'] {
   @include dark;
+}
+
+@media (min-width: 100rem) {
+  :root {
+    --content-width: min(94vw, 210rem);
+  }
+}
+
+@media (min-width: 140rem) {
+  :root {
+    font-size: clamp(1rem, 0.625vw, 1.5rem);
+  }
 }

@@ -1,11 +1,13 @@
 .layout {
-  min-height: 100svh;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
 .main {
   width: min(100%, var(--content-width));
-  padding: var(--space-6) var(--space-4);
+  min-width: 0;
+  padding: var(--space-4);
   margin-inline: auto;
-  flex: 1;
+  flex: 1 0 auto;
 }

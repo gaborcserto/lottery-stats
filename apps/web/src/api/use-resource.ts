@@ -10,7 +10,9 @@ export function useResource<T>(
   const [result, setResult] = useState<{
     key: string
     data?: T
+    previousData?: T
     error?: string
+    pending?: boolean
   }>()
   const [attempt, setAttempt] = useState(0)
   useEffect(() => {
@@ -25,6 +27,10 @@ export function useResource<T>(
           setResult((previous) => ({
             key,
             data: previous?.key === key ? previous.data : undefined,
+            previousData:
+              previous?.key === key
+                ? previous.previousData
+                : (previous?.data ?? previous?.previousData),
             error:
               error instanceof ApiError
                 ? error.message
@@ -37,14 +43,32 @@ export function useResource<T>(
   const current = result?.key === key ? result : undefined
   return {
     data: current?.data,
+    previousData:
+      current?.previousData ??
+      (result?.key !== key
+        ? (result?.data ?? result?.previousData)
+        : undefined),
     error: current?.error,
-    loading: key !== null && !current,
+    loading: key !== null && (!current || current.pending === true),
     retry: () => {
-      if (key !== null) load.invalidate?.(key)
+      if (key === null) return
+      const retryKey = key
+      load.invalidate?.(retryKey)
       setResult((previous) =>
-        previous?.key === key && previous.data
-          ? { key, data: previous.data }
-          : undefined,
+        previous?.key === retryKey
+          ? {
+              key: retryKey,
+              data: previous.data,
+              previousData: previous.previousData,
+              pending: true,
+            }
+          : previous
+            ? {
+                key: retryKey,
+                previousData: previous.data ?? previous.previousData,
+                pending: true,
+              }
+            : undefined,
       )
       setAttempt((value) => value + 1)
     },

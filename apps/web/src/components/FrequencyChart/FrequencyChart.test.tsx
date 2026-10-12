@@ -70,7 +70,7 @@ describe('frequency chart selection', () => {
         screen.getByRole('group', { name: 'Téma választása' }),
       ).getAllByRole('button')[1],
     )
-    expect(screen.getByTestId('chart-theme')).toHaveTextContent('#ecf3ed')
+    expect(screen.getByTestId('chart-theme')).toHaveTextContent('#edf3f8')
     expect(
       screen.getByRole('button', { name: '90. oszlop' }),
     ).toBeInTheDocument()

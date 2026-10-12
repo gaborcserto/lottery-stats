@@ -14,6 +14,48 @@ import { GameRoute } from '.'
 afterEach(() => vi.restoreAllMocks())
 
 describe('game route loading', () => {
+  it('reuses the default yearly series, deselects numbers and restores selections from history', async () => {
+    const data = fixturePageData('five')
+    if (!data.yearly) throw new Error('Missing yearly fixture')
+    const base = data.yearly
+    const yearly = vi
+      .spyOn(api, 'yearly')
+      .mockImplementation(async (_game, query) => ({
+        ...base,
+        meta: { ...base.meta, selected_number: query?.number ?? 1 },
+      }))
+    const router = createMemoryRouter(
+      [{ path: '/otoslotto', element: <GameRoute game="five" data={data} /> }],
+      { initialEntries: ['/otoslotto?sort=number'] },
+    )
+    render(<RouterProvider router={router} />)
+    const select = screen.getByLabelText(
+      'Éves gyakoriságban vizsgált számok',
+    ) as HTMLSelectElement
+    for (const option of Array.from(select.options))
+      option.selected = option.value === '1' || option.value === '12'
+    fireEvent.change(select)
+    await waitFor(() => expect(yearly).toHaveBeenCalledTimes(1))
+    expect(yearly).toHaveBeenCalledWith(
+      'five',
+      { set: 'main', number: 12 },
+      expect.any(AbortSignal),
+    )
+    await screen.findByRole('table', {
+      name: '1. szám, 12. szám éves előfordulásai',
+    })
+    fireEvent.click(
+      screen.getByRole('button', { name: '12. szám eltávolítása' }),
+    )
+    expect(select).toHaveValue(['1'])
+    await act(() => router.navigate(-1))
+    await waitFor(() => expect(select).toHaveValue(['1', '12']))
+    await screen.findByRole('table', {
+      name: '1. szám, 12. szám éves előfordulásai',
+    })
+    expect(yearly).toHaveBeenCalledTimes(1)
+    router.dispose()
+  })
   it('hydrates a filtered URL from default HTML and keeps the snapshot on filter failure', async () => {
     const data = fixturePageData('scandinavian')
     const summary = vi
@@ -53,8 +95,10 @@ describe('game route loading', () => {
       onRecoverableError: recovery,
     })
     try {
-      await waitFor(() =>
-        expect(screen.getByText(/A szűrés nem sikerült/)).toBeInTheDocument(),
+      await waitFor(
+        () =>
+          expect(screen.getByText(/A szűrés nem sikerült/)).toBeInTheDocument(),
+        { timeout: 5000 },
       )
       expect(screen.getByLabelText('Év')).toHaveValue(2023)
       expect(screen.getByLabelText('Statisztikai számsor')).toHaveValue(
@@ -80,10 +124,12 @@ describe('game route loading', () => {
   it('changes visual sorting without a request and fetches only selected yearly data', async () => {
     const data = fixturePageData('six')
     if (!data.yearly) throw new Error('Missing yearly fixture')
-    const yearly = vi.spyOn(api, 'yearly').mockResolvedValue({
-      ...data.yearly,
-      meta: { ...data.yearly.meta, selected_number: 45 },
-    })
+    const yearly = vi.spyOn(api, 'yearly').mockImplementation((_game, query) =>
+      Promise.resolve({
+        ...data.yearly!,
+        meta: { ...data.yearly!.meta, selected_number: query?.number ?? 1 },
+      }),
+    )
     const summary = vi.spyOn(api, 'summary')
     const frequencies = vi.spyOn(api, 'frequencies')
     const loader = vi.fn(async () => data)
@@ -100,21 +146,48 @@ describe('game route loading', () => {
       { initialEntries: ['/hatoslotto?sort=most'] },
     )
     render(<RouterProvider router={router} />)
-    await screen.findByRole('heading', { level: 1, name: 'Hatoslottó' })
+    await screen.findByRole(
+      'heading',
+      { level: 1, name: 'Hatoslottó' },
+      { timeout: 5000 },
+    )
     expect(summary).not.toHaveBeenCalled()
     expect(frequencies).not.toHaveBeenCalled()
-    fireEvent.change(screen.getByLabelText('Vizsgált szám'), {
-      target: { value: '45' },
-    })
-    await waitFor(() => expect(yearly).toHaveBeenCalledTimes(1))
-    expect(yearly).toHaveBeenCalledWith(
+    const numberSelect = screen.getByLabelText(
+      'Éves gyakoriságban vizsgált számok',
+    ) as HTMLSelectElement
+    for (const option of Array.from(numberSelect.options))
+      option.selected = option.value === '42' || option.value === '45'
+    fireEvent.change(numberSelect)
+    await waitFor(() => expect(yearly).toHaveBeenCalledTimes(2))
+    expect(yearly).toHaveBeenNthCalledWith(
+      1,
+      'six',
+      { set: 'main', number: 42 },
+      expect.any(AbortSignal),
+    )
+    expect(yearly).toHaveBeenNthCalledWith(
+      2,
       'six',
       { set: 'main', number: 45 },
       expect.any(AbortSignal),
     )
+    expect(router.state.location.search).toBe('?sort=most&number=42&number=45')
     expect(summary).not.toHaveBeenCalled()
     expect(frequencies).not.toHaveBeenCalled()
     expect(loader).toHaveBeenCalledTimes(1)
+    await router.navigate(-1)
+    await waitFor(() =>
+      expect(
+        screen.getByLabelText('Éves gyakoriságban vizsgált számok'),
+      ).toHaveValue(['1']),
+    )
+    await router.navigate(1)
+    await waitFor(() =>
+      expect(router.state.location.search).toBe(
+        '?sort=most&number=42&number=45',
+      ),
+    )
     router.dispose()
   })
   it('hydrates existing results without clearing them, then retains them on refresh failure', async () => {

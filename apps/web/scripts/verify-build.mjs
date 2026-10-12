@@ -5,7 +5,7 @@ import { JSDOM } from 'jsdom'
 
 export async function verifyBuild(fixture = false) {
   for (const [path, title, heading = title] of [
-    ['', 'Lottóeredmények és statisztikák', 'Lottóeredmények, tisztán.'],
+    ['', 'Lottóeredmények és statisztikák', 'A számok mögött.'],
     ['otoslotto/', 'Ötöslottó'],
     ['hatoslotto/', 'Hatoslottó'],
     ['skandinav-lotto/', 'Skandináv lottó'],
@@ -52,8 +52,21 @@ export async function verifyBuild(fixture = false) {
       assert.equal(document.querySelectorAll('main article').length, 3)
       assert.equal(document.querySelectorAll('main article time').length, 3)
     }
+    assert.equal(
+      document.querySelector('link[rel="icon"]')?.getAttribute('href'),
+      '/favicon.ico',
+    )
+    assert.equal(
+      document.querySelector('header img')?.getAttribute('src'),
+      '/images/logo.png',
+    )
     assert.ok(document.querySelector('header nav'))
     assert.ok(document.querySelector('footer'))
+    assert.equal(
+      document.querySelector('footer img')?.getAttribute('src'),
+      '/images/logo.png',
+    )
+    assert.equal(document.querySelector('footer a')?.getAttribute('href'), '/')
     if (path)
       assert.ok(
         document.querySelector('table caption')?.textContent.includes(title),
@@ -145,6 +158,8 @@ export async function verifyBuild(fixture = false) {
     assert.ok(!html.includes(process.env.PRERENDER_API_BASE_URL ?? '\u0000'))
     console.log(`Verified initial Hungarian HTML without JavaScript: /${path}`)
   }
+  await readFile('build/client/images/logo.png')
+  await readFile('build/client/favicon.ico')
   await readFile('build/client/theme-bootstrap.js', 'utf8')
   const fallback = await readFile('build/client/__spa-fallback.html', 'utf8')
   assert.ok(!fallback.includes('Legutóbbi elérhető sorsolás'))

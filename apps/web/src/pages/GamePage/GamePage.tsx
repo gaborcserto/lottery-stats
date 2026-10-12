@@ -1,7 +1,16 @@
 import { lazy } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import {
+  LuCalendarDays,
+  LuChartColumn,
+  LuChartPie,
+  LuHistory,
+  LuLayers,
+} from 'react-icons/lu'
+import { FaTrophy } from 'react-icons/fa6'
+import { useSearchParams } from 'react-router'
 import type { GameCode } from '../../api/contracts'
 import type { GamePageData } from '../../api/page-data'
+import { HistoryPagination } from '../../components/HistoryPagination'
 import { PrizeBreakdown } from '../../components/PrizeBreakdown'
 import { LotteryBall } from '../../components/LotteryBall'
 import { gamePages } from '../../config/games'
@@ -75,9 +84,11 @@ function dateLabel(value: string) {
 export function GamePage({
   game,
   data: initialData,
+  refreshing = false,
 }: {
   game: GameCode
   data: GamePageData
+  refreshing?: boolean
 }) {
   const [params, setParams] = useSearchParams()
   const hydrated = useHydrated()
@@ -93,7 +104,10 @@ export function GamePage({
     hydrated && isFiltered ? `${game}?${query}` : null,
     loadFiltered,
   )
-  const data = filtered.data ?? initialData
+  const data =
+    filtered.data ??
+    (isFiltered ? filtered.previousData : undefined) ??
+    initialData
   const historyQuery = new URLSearchParams()
   for (const [key, value] of Object.entries(filters.population))
     if (value !== undefined) historyQuery.set(key, String(value))
@@ -103,13 +117,21 @@ export function GamePage({
     loadHistoryPage,
   )
   const history =
-    filters.page > 1 ? (historyResult.data?.history ?? []) : data.history
+    filters.page > 1
+      ? (historyResult.data?.history ??
+        historyResult.previousData?.history ??
+        data.history)
+      : data.history
   const historyError =
     filters.page > 1
       ? (historyResult.error ?? historyResult.data?.historyError)
       : data.historyError
   const pagination =
-    filters.page > 1 ? historyResult.data?.historyPage : data.historyPage
+    filters.page > 1
+      ? (historyResult.data?.historyPage ??
+        historyResult.previousData?.historyPage ??
+        data.historyPage)
+      : data.historyPage
   const frequencies = data.frequencies.data
     .slice()
     .sort((a, b) =>
@@ -127,32 +149,77 @@ export function GamePage({
 
   return (
     <div className={styles.page}>
-      <Link className={styles.backLink} to="/" prefetch="intent">
-        ← Vissza a főoldalra
-      </Link>
+      {refreshing && (
+        <p className={styles.refreshStatus} role="status">
+          Az adatok frissítése…
+        </p>
+      )}
       {data.refreshError && (
         <p className={styles.refreshStatus} role="status">
           A frissítés nem sikerült. A korábban elérhető adatokat látod.{' '}
           {data.refreshError}
         </p>
       )}
-      <header className={styles.hero}>
-        <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}>Lottóstatisztikák</p>
-          <h1>{page.name}</h1>
-          <p>{page.introduction}</p>
-          <p className={styles.historyNote}>
-            A múltbeli gyakoriság leíró adat, és nem növeli egy szám későbbi
-            kihúzásának esélyét.
-          </p>
-        </div>
-        <img
-          src={page.logo}
-          alt={`${page.name} logó`}
-          width="180"
-          height="90"
-        />
-      </header>
+      <div className={styles.overview}>
+        <header className={styles.hero}>
+          <div className={styles.heroCopy}>
+            <p className={styles.eyebrow}>Lottóstatisztikák</p>
+            <h1>{page.name}</h1>
+            <p>{page.introduction}</p>
+            <p className={styles.historyNote}>
+              A múltbeli gyakoriság leíró adat, és nem növeli egy szám későbbi
+              kihúzásának esélyét.
+            </p>
+          </div>
+          <img
+            src={page.logo}
+            alt={`${page.name} logó`}
+            width="180"
+            height="90"
+          />
+        </header>
+        <section className={styles.latest} aria-labelledby="latest-heading">
+          <div className={styles.sectionHeading}>
+            <div>
+              <p className={styles.eyebrow}>Legfrissebb eredmény</p>
+              <h2 id="latest-heading">
+                <LuCalendarDays aria-hidden="true" /> Legutóbbi sorsolás
+              </h2>
+            </div>
+            {data.latest?.drawn_on && (
+              <time dateTime={data.latest.drawn_on}>
+                {dateLabel(data.latest.drawn_on)}
+              </time>
+            )}
+          </div>
+          {data.latest ? (
+            <>
+              <p className={styles.drawingMeta}>
+                {data.latest.year}. év · {data.latest.week}. hét
+              </p>
+              <div className={styles.resultSets}>
+                {data.latest.sets
+                  .filter((set) => isRelevantSet(game, set.type))
+                  .map((set) => (
+                    <div className={styles.resultSet} key={set.type}>
+                      <h3>{setLabels[set.type]}</h3>
+                      <ul
+                        className={styles.balls}
+                        aria-label={setLabels[set.type]}
+                      >
+                        {set.numbers.map((value) => (
+                          <LotteryBall key={value} value={value} />
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+              </div>
+            </>
+          ) : (
+            <p>Még nincs elérhető sorsolási adat.</p>
+          )}
+        </section>
+      </div>
 
       <StatisticsFilters game={game} filters={filters} />
       {filtered.loading && (
@@ -179,51 +246,13 @@ export function GamePage({
         .
       </p>
 
-      <section className={styles.latest} aria-labelledby="latest-heading">
-        <div className={styles.sectionHeading}>
-          <div>
-            <p className={styles.eyebrow}>Legfrissebb eredmény</p>
-            <h2 id="latest-heading">Legutóbbi sorsolás</h2>
-          </div>
-          {data.latest?.drawn_on && (
-            <time dateTime={data.latest.drawn_on}>
-              {dateLabel(data.latest.drawn_on)}
-            </time>
-          )}
-        </div>
-        {data.latest ? (
-          <>
-            <p className={styles.drawingMeta}>
-              {data.latest.year}. év · {data.latest.week}. hét
-            </p>
-            <div className={styles.resultSets}>
-              {data.latest.sets
-                .filter((set) => isRelevantSet(game, set.type))
-                .map((set) => (
-                  <div className={styles.resultSet} key={set.type}>
-                    <h3>{setLabels[set.type]}</h3>
-                    <ul
-                      className={styles.balls}
-                      aria-label={setLabels[set.type]}
-                    >
-                      {set.numbers.map((value) => (
-                        <LotteryBall key={value} value={value} />
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-            </div>
-          </>
-        ) : (
-          <p>Még nincs elérhető sorsolási adat.</p>
-        )}
-      </section>
-
       <section className={styles.summary} aria-labelledby="summary-heading">
         <div className={styles.sectionHeading}>
           <div>
             <p className={styles.eyebrow}>Az adatok lefedettsége</p>
-            <h2 id="summary-heading">Történeti áttekintés</h2>
+            <h2 id="summary-heading">
+              <LuLayers aria-hidden="true" /> Történeti áttekintés
+            </h2>
           </div>
         </div>
         {summary.drawing_count > 0 ? (
@@ -255,6 +284,38 @@ export function GamePage({
         ) : (
           <p>Még nincs elérhető történeti sorsolás.</p>
         )}
+        <div className={styles.summaryHighlights}>
+          <div>
+            <h3>Leggyakoribbak</h3>
+            <ul className={styles.ranking}>
+              {most.length ? (
+                most.map((row) => (
+                  <li key={row.number}>
+                    <LotteryBall value={row.number} as="span" tone="most" />
+                    <span>({count(row.count)})</span>
+                  </li>
+                ))
+              ) : (
+                <li>Nincs adat</li>
+              )}
+            </ul>
+          </div>
+          <div>
+            <h3>Legritkábbak</h3>
+            <ul className={styles.ranking}>
+              {least.length ? (
+                least.map((row) => (
+                  <li key={row.number}>
+                    <LotteryBall value={row.number} as="span" tone="least" />
+                    <span>({count(row.count)})</span>
+                  </li>
+                ))
+              ) : (
+                <li>Nincs adat</li>
+              )}
+            </ul>
+          </div>
+        </div>
         {summary.undated_drawing_count > 0 && (
           <p className={styles.caption}>
             {count(summary.undated_drawing_count)} sorsolás dátuma nem ismert.
@@ -262,160 +323,150 @@ export function GamePage({
         )}
       </section>
 
-      <div className={styles.columns}>
-        <section className={styles.card} aria-labelledby="frequency-heading">
-          <p className={styles.eyebrow}>Számok a történeti adatokban</p>
-          <h2 id="frequency-heading">Számgyakoriság</h2>
-          <p className={styles.caption}>
-            Az arány nevezője a{' '}
-            {count(data.frequencies.meta.eligible_set_count)} vizsgált számsor;
-            az előfordulás minden számsorban legfeljebb egyszer számít.
-          </p>
-          <div className={styles.highlights}>
-            <div>
-              <h3>Leggyakoribbak</h3>
-              <p>
-                {most.length
-                  ? most
-                      .map((row) => `${row.number} (${count(row.count)})`)
-                      .join(' · ')
-                  : 'Nincs adat'}
-              </p>
+      <div className={styles.dashboard}>
+        <div className={styles.columns}>
+          <section className={styles.card} aria-labelledby="frequency-heading">
+            <p className={styles.eyebrow}>Számok a történeti adatokban</p>
+            <h2 id="frequency-heading">
+              <LuChartColumn aria-hidden="true" /> Számgyakoriság
+            </h2>
+            <p className={styles.caption}>
+              Az arány nevezője a{' '}
+              {count(data.frequencies.meta.eligible_set_count)} vizsgált
+              számsor; az előfordulás minden számsorban legfeljebb egyszer
+              számít.
+            </p>
+            {data.frequencies.meta.eligible_set_count > 0 ? (
+              <ChartSlot label="Számgyakorisági oszlopdiagram">
+                <FrequencyChart data={frequencies} />
+              </ChartSlot>
+            ) : (
+              <p>Nincs vizsgált számsor a kiválasztott időszakban.</p>
+            )}
+            <div
+              className={styles.tableWrap}
+              tabIndex={0}
+              aria-label="Számgyakorisági táblázat"
+            >
+              <table>
+                <caption>
+                  {page.name}: előfordulások és a vizsgált számsorok aránya
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Szám</th>
+                    <th scope="col">Előfordulás</th>
+                    <th scope="col">Számsorok aránya</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {frequencies.map((row) => (
+                    <tr key={row.number}>
+                      <th scope="row">{row.number}</th>
+                      <td>{count(row.count)}</td>
+                      <td>
+                        {row.occurrence_percentage.toLocaleString('hu-HU', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                        %
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div>
-              <h3>Legritkábbak</h3>
-              <p>
-                {least.length
-                  ? least
-                      .map((row) => `${row.number} (${count(row.count)})`)
-                      .join(' · ')
-                  : 'Nincs adat'}
-              </p>
-            </div>
-          </div>
-          {data.frequencies.meta.eligible_set_count > 0 ? (
-            <ChartSlot label="Számgyakorisági oszlopdiagram">
-              <FrequencyChart data={frequencies} />
+          </section>
+
+          <section className={styles.card} aria-labelledby="parity-heading">
+            <p className={styles.eyebrow}>Eloszlás</p>
+            <h2 id="parity-heading">
+              <LuChartPie aria-hidden="true" /> Páros és páratlan számok
+            </h2>
+            <p className={styles.caption}>
+              Az előfordulási arány nevezője az összes vizsgált számelőfordulás
+              ({count(parity.number_occurrence_count)}).
+            </p>
+            <ChartSlot
+              className={styles.parityChartSlot}
+              label="Páros és páratlan előfordulások"
+            >
+              <ParityChart data={parity} />
             </ChartSlot>
-          ) : (
-            <p>Nincs vizsgált számsor a kiválasztott időszakban.</p>
-          )}
-          <div
-            className={styles.tableWrap}
-            tabIndex={0}
-            aria-label="Számgyakorisági táblázat"
-          >
-            <table>
-              <caption>
-                {page.name}: előfordulások és a vizsgált számsorok aránya
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Szám</th>
-                  <th scope="col">Előfordulás</th>
-                  <th scope="col">Számsorok aránya</th>
-                </tr>
-              </thead>
-              <tbody>
-                {frequencies.map((row) => (
-                  <tr key={row.number}>
-                    <th scope="row">{row.number}</th>
-                    <td>{count(row.count)}</td>
-                    <td>
-                      {row.occurrence_percentage.toLocaleString('hu-HU', {
-                        minimumFractionDigits: 2,
+            <dl className={styles.parityCounts}>
+              <div>
+                <dt>Páros előfordulás</dt>
+                <dd>
+                  {count(parity.even.count)}{' '}
+                  <span>
+                    (
+                    {parity.even.occurrence_share_percentage.toLocaleString(
+                      'hu-HU',
+                      { maximumFractionDigits: 2 },
+                    )}
+                    %)
+                  </span>
+                </dd>
+              </div>
+              <div>
+                <dt>Páratlan előfordulás</dt>
+                <dd>
+                  {count(parity.odd.count)}{' '}
+                  <span>
+                    (
+                    {parity.odd.occurrence_share_percentage.toLocaleString(
+                      'hu-HU',
+                      { maximumFractionDigits: 2 },
+                    )}
+                    %)
+                  </span>
+                </dd>
+              </div>
+            </dl>
+            <h3>Számsoronkénti megoszlás</h3>
+            <p className={styles.caption}>
+              Az arány nevezője a {count(data.parity.meta.eligible_set_count)}{' '}
+              vizsgált számsor.
+            </p>
+            {parity.distribution.length ? (
+              <ul className={styles.distributions}>
+                {parity.distribution.map((row) => (
+                  <li key={`${row.even_count}-${row.odd_count}`}>
+                    <span>
+                      {row.even_count} páros · {row.odd_count} páratlan
+                    </span>
+                    <strong>
+                      {row.set_percentage.toLocaleString('hu-HU', {
                         maximumFractionDigits: 2,
                       })}
                       %
-                    </td>
-                  </tr>
+                    </strong>
+                  </li>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+              </ul>
+            ) : (
+              <p>Nincs elérhető számsoronkénti adat.</p>
+            )}
+          </section>
+        </div>
 
-        <section className={styles.card} aria-labelledby="parity-heading">
-          <p className={styles.eyebrow}>Eloszlás</p>
-          <h2 id="parity-heading">Páros és páratlan számok</h2>
-          <p className={styles.caption}>
-            Az előfordulási arány nevezője az összes vizsgált számelőfordulás (
-            {count(parity.number_occurrence_count)}).
-          </p>
-          <ChartSlot label="Páros és páratlan előfordulások">
-            <ParityChart data={parity} />
-          </ChartSlot>
-          <dl className={styles.parityCounts}>
-            <div>
-              <dt>Páros előfordulás</dt>
-              <dd>
-                {count(parity.even.count)}{' '}
-                <span>
-                  (
-                  {parity.even.occurrence_share_percentage.toLocaleString(
-                    'hu-HU',
-                    { maximumFractionDigits: 2 },
-                  )}
-                  %)
-                </span>
-              </dd>
-            </div>
-            <div>
-              <dt>Páratlan előfordulás</dt>
-              <dd>
-                {count(parity.odd.count)}{' '}
-                <span>
-                  (
-                  {parity.odd.occurrence_share_percentage.toLocaleString(
-                    'hu-HU',
-                    { maximumFractionDigits: 2 },
-                  )}
-                  %)
-                </span>
-              </dd>
-            </div>
-          </dl>
-          <h3>Számsoronkénti megoszlás</h3>
-          <p className={styles.caption}>
-            Az arány nevezője a {count(data.parity.meta.eligible_set_count)}{' '}
-            vizsgált számsor.
-          </p>
-          {parity.distribution.length ? (
-            <ul className={styles.distributions}>
-              {parity.distribution.map((row) => (
-                <li key={`${row.even_count}-${row.odd_count}`}>
-                  <span>
-                    {row.even_count} páros · {row.odd_count} páratlan
-                  </span>
-                  <strong>
-                    {row.set_percentage.toLocaleString('hu-HU', {
-                      maximumFractionDigits: 2,
-                    })}
-                    %
-                  </strong>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>Nincs elérhető számsoronkénti adat.</p>
-          )}
-        </section>
+        <StatisticsDetails
+          className={styles.details}
+          game={game}
+          data={data}
+          filters={
+            filtered.loading || filtered.error
+              ? parseFilters(new URLSearchParams(), game)
+              : filters
+          }
+          hydrated={hydrated && !filtered.loading && !filtered.error}
+        />
       </div>
 
-      <StatisticsDetails
-        game={game}
-        data={data}
-        filters={
-          filtered.loading || filtered.error
-            ? parseFilters(new URLSearchParams(), game)
-            : filters
-        }
-        hydrated={hydrated && !filtered.loading && !filtered.error}
-      />
-
       <section className={styles.card} aria-labelledby="history-heading">
-        <p className={styles.eyebrow}>Korábbi eredmények</p>
-        <h2 id="history-heading">Legutóbbi sorsolások</h2>
+        <h2 id="history-heading">
+          <LuHistory aria-hidden="true" /> Korábbi eredmények
+        </h2>
         <p className={styles.caption}>
           Oldalanként legfeljebb öt sorsolás, év és hét szerint csökkenő, stabil
           sorrendben.
@@ -470,45 +521,25 @@ export function GamePage({
           <p>Még nincs megjeleníthető sorsolás.</p>
         ) : null}
         {pagination && (pagination.last > 1 || pagination.current > 1) && (
-          <nav
-            className={styles.pagination}
-            aria-label="Sorsolási előzmények lapozása"
-          >
-            <button
-              disabled={pagination.current <= 1}
-              onClick={() => {
-                const next = new URLSearchParams(params)
-                next.set(
-                  'page',
-                  String(Math.min(pagination.current - 1, pagination.last)),
-                )
-                setParams(next, { preventScrollReset: true })
-              }}
-            >
-              Előző
-            </button>
-            <span>
-              {pagination.current}. / {pagination.last}. oldal ·{' '}
-              {pagination.total} sorsolás
-            </span>
-            <button
-              disabled={pagination.current >= pagination.last}
-              onClick={() => {
-                const next = new URLSearchParams(params)
-                next.set('page', String(pagination.current + 1))
-                setParams(next, { preventScrollReset: true })
-              }}
-            >
-              Következő
-            </button>
-          </nav>
+          <HistoryPagination
+            current={historyResult.loading ? filters.page : pagination.current}
+            last={pagination.last}
+            busy={historyResult.loading}
+            onPageChange={(page) => {
+              const next = new URLSearchParams(params)
+              next.set('page', String(page))
+              setParams(next, { preventScrollReset: true })
+            }}
+          />
         )}
       </section>
 
       {data.latest && (
         <section className={styles.card} aria-labelledby="prizes-heading">
-          <p className={styles.eyebrow}>Legutóbbi sorsolás</p>
-          <h2 id="prizes-heading">Nyeremények</h2>
+          <h2 id="prizes-heading">
+            <FaTrophy aria-hidden="true" /> Nyeremények
+          </h2>
+          <p className={styles.caption}>Legutóbbi sorsolás</p>
           <PrizeBreakdown prizes={data.latest.prizes} />
         </section>
       )}

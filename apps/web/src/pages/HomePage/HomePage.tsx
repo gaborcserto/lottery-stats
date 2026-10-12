@@ -40,15 +40,16 @@ export function HomePage({ data }: { data: HomePageData }) {
   return (
     <div className={`${styles.home} lottery-home`}>
       <div className={styles.content}>
-        <p className={styles.eyebrow}>A számok mögött történetek</p>
-        <h1>Lottóeredmények, tisztán.</h1>
+        <h1>
+          A számok <span>mögött.</span>
+        </h1>
         <p className={styles.intro}>
-          A legutóbbi sorsolások számai és nyereményei, egy helyen.
+          Három lottójáték. Eredmények, nyeremények és részletes statisztikák
+          egy helyen.
         </p>
         <section className={styles.results} aria-labelledby="results-title">
           <div className={styles.sectionHeading}>
             <div>
-              <p className={styles.eyebrow}>A legfrissebb eredmények</p>
               <h2 id="results-title">Válassz egy játékot</h2>
             </div>
             {refreshFailed && (

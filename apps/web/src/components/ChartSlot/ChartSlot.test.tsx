@@ -18,6 +18,14 @@ describe('viewport chart loading', () => {
     ).toContain('Interaktív ábra')
     expect(load).not.toHaveBeenCalled()
   })
+  it('keeps component-specific layout hooks on the shared chart slot', () => {
+    const { container } = render(
+      <ChartSlot className="parityChartSlot" label="Páros diagram">
+        <p>Diagram</p>
+      </ChartSlot>,
+    )
+    expect(container.firstElementChild).toHaveClass('parityChartSlot')
+  })
   it('loads only when near the viewport', async () => {
     let enter: (() => void) | undefined
     const disconnect = vi.fn()

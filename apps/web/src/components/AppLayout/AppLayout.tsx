@@ -14,7 +14,7 @@ export function AppLayout({
   return (
     <ThemeProvider>
       <div className={styles.layout}>
-        <AppHeader />
+        <AppHeader pending={pending} />
         <main
           id="main"
           tabIndex={-1}

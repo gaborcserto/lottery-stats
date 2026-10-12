@@ -15,6 +15,7 @@ export interface PageFilters {
   statistics: StatisticsQuery
   sort: NonNullable<FrequencyQuery['sort']>
   number: number
+  numbers: number[]
   page: number
 }
 function positive(value: string | null, maximum: number) {
@@ -49,6 +50,14 @@ export function parseFilters(
   }
   const set = params.get('set')
   const sort = params.get('sort')
+  const selectedNumbers = [
+    ...new Set(
+      params
+        .getAll('number')
+        .map((value) => positive(value, maximumNumbers[game]))
+        .filter((value): value is number => value !== undefined),
+    ),
+  ].sort((a, b) => a - b)
   return {
     population,
     statistics: {
@@ -61,7 +70,8 @@ export function parseFilters(
           : 'main',
     },
     sort: sort === 'most' || sort === 'least' ? sort : 'number',
-    number: positive(params.get('number'), maximumNumbers[game]) ?? 1,
+    numbers: selectedNumbers.length ? selectedNumbers : [1],
+    number: selectedNumbers[0] ?? 1,
     page: positive(params.get('page'), 1_000_000) ?? 1,
   }
 }

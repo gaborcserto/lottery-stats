@@ -1,4 +1,5 @@
 import { lazy, useState } from 'react'
+import { LuChartLine, LuLink } from 'react-icons/lu'
 import { useSearchParams } from 'react-router'
 import { api, ApiError } from '../../api/client'
 import type { GameCode } from '../../api/contracts'
@@ -23,7 +24,7 @@ const NumberPairsChart = lazy(() =>
     default: module.NumberPairsChart,
   })),
 )
-const loadYearly = cachedResource((key, signal) => {
+const loadSingleYearly = cachedResource((key, signal) => {
   const [game, query] = key.split('?')
   if (game !== 'five' && game !== 'six' && game !== 'scandinavian')
     throw new Error('Invalid game')
@@ -39,6 +40,20 @@ const loadYearly = cachedResource((key, signal) => {
         throw new ApiError('invalid-response')
       return result
     })
+})
+const loadYearly = cachedResource(async (key, signal) => {
+  const [game, query] = key.split('?')
+  if (game !== 'five' && game !== 'six' && game !== 'scandinavian')
+    throw new Error('Invalid game')
+  const params = new URLSearchParams(query)
+  const numbers = parseFilters(params, game).numbers
+  return Promise.all(
+    numbers.map((number) => {
+      const single = new URLSearchParams(params)
+      single.set('number', String(number))
+      return loadSingleYearly(`${game}?${single}`, signal)
+    }),
+  )
 })
 const loadPairs = cachedResource((key, signal) => {
   const [game, query] = key.split('?')
@@ -62,11 +77,13 @@ export function StatisticsDetails({
   data,
   filters,
   hydrated,
+  className = '',
 }: {
   game: GameCode
   data: GamePageData
   filters: PageFilters
   hydrated: boolean
+  className?: string
 }) {
   const [params, setParams] = useSearchParams()
   const [retryYearly, setRetryYearly] = useState(false)
@@ -75,32 +92,62 @@ export function StatisticsDetails({
   for (const [key, value] of Object.entries(filters.statistics))
     if (value !== undefined) query.set(key, String(value))
   const pairsKey = `${game}?${query}`
-  query.set('number', String(filters.number))
+  const requestedNumbers =
+    data.yearly && !retryYearly
+      ? filters.numbers.filter((number) => number !== 1)
+      : filters.numbers
+  for (const number of requestedNumbers) query.append('number', String(number))
   const yearly = useResource(
-    hydrated && (filters.number !== 1 || retryYearly)
+    hydrated &&
+      requestedNumbers.length > 0 &&
+      (requestedNumbers.some((number) => number !== 1) || retryYearly)
       ? `${game}?${query}`
       : null,
     loadYearly,
   )
   const pairs = useResource(hydrated && retryPairs ? pairsKey : null, loadPairs)
+  const loadedTrend =
+    yearly.data &&
+    filters.numbers
+      .map((number) =>
+        number === 1 && data.yearly && !retryYearly
+          ? data.yearly
+          : yearly.data?.find(
+              (result) => result.meta.selected_number === number,
+            ),
+      )
+      .filter((result) => result !== undefined)
   const trendData =
-    filters.number === 1 ? (yearly.data ?? data.yearly) : yearly.data
+    loadedTrend ??
+    (yearly.loading || yearly.error
+      ? (yearly.previousData ?? (data.yearly ? [data.yearly] : undefined))
+      : filters.numbers.length === 1 && filters.number === 1 && data.yearly
+        ? [data.yearly]
+        : undefined)
   const pairsData = pairs.data ?? data.pairs
   const yearlyError = yearly.data
     ? null
     : (yearly.error ?? (filters.number === 1 ? data.yearlyError : null))
   const pairsError = pairs.data ? null : (pairs.error ?? data.pairsError)
   return (
-    <div className={styles.sections}>
+    <div className={`${styles.sections} ${className}`}>
       <section className={styles.card} aria-labelledby="trends-heading">
-        <h2 id="trends-heading">Éves számgyakoriság</h2>
+        <h2 id="trends-heading">
+          <LuChartLine aria-hidden="true" /> Éves számgyakoriság
+        </h2>
         <label className={styles.select}>
-          Vizsgált szám
+          Vizsgált számok
           <select
-            value={filters.number}
+            multiple
+            aria-label="Éves gyakoriságban vizsgált számok"
+            value={filters.numbers.map(String)}
             onChange={(event) => {
               const next = new URLSearchParams(params)
-              next.set('number', event.currentTarget.value)
+              next.delete('number')
+              for (const option of Array.from(
+                event.currentTarget.selectedOptions,
+              ))
+                next.append('number', option.value)
               setParams(next, { preventScrollReset: true })
             }}
           >
@@ -111,6 +158,30 @@ export function StatisticsDetails({
             ))}
           </select>
         </label>
+        <p>
+          Több számhoz használd a Ctrl / Cmd billentyűt, vagy érintsd meg a
+          számokat.
+        </p>
+        <ul className={styles.selectedNumbers} aria-label="Kiválasztott számok">
+          {filters.numbers.map((number) => (
+            <li key={number}>
+              <button
+                aria-label={`${number}. szám eltávolítása`}
+                onClick={() => {
+                  const next = new URLSearchParams(params)
+                  next.delete('number')
+                  for (const value of filters.numbers.filter(
+                    (value) => value !== number,
+                  ))
+                    next.append('number', String(value))
+                  setParams(next, { preventScrollReset: true })
+                }}
+              >
+                {number} ×
+              </button>
+            </li>
+          ))}
+        </ul>
         <p>
           Az arány nevezője az adott év vizsgált számsorainak száma. A hiányzó
           évek nem jelentenek nulla előfordulást. Az ábra nem előrejelzés.
@@ -128,15 +199,24 @@ export function StatisticsDetails({
             </button>
           </p>
         ) : yearly.loading ? (
-          <p>Az éves adatok betöltése…</p>
+          <p role="status">Az éves adatok betöltése…</p>
         ) : null}
         {trendData &&
-          (trendData.data.length ? (
+          (trendData.some((result) => result.data.length) ? (
             <>
-              <ChartSlot label="Éves gyakorisági vonaldiagram">
+              <ChartSlot
+                className={styles.yearlyChartSlot}
+                label="Éves gyakorisági vonaldiagram"
+                busy={yearly.loading}
+              >
                 <YearlyTrendChart
-                  data={trendData.data}
-                  number={filters.number}
+                  series={trendData.map((result, index) => ({
+                    number:
+                      result.meta.selected_number ??
+                      filters.numbers[index] ??
+                      filters.number,
+                    data: result.data,
+                  }))}
                 />
               </ChartSlot>
               <div
@@ -145,24 +225,33 @@ export function StatisticsDetails({
                 aria-label="Éves adatok"
               >
                 <table>
-                  <caption>{filters.number}. szám éves előfordulásai</caption>
+                  <caption>
+                    {trendData
+                      .map((result) => `${result.meta.selected_number}. szám`)
+                      .join(', ')}{' '}
+                    éves előfordulásai
+                  </caption>
                   <thead>
                     <tr>
-                      <th scope="col">Év</th>
+                      <th scope="col">Szám · év</th>
                       <th scope="col">Előfordulás</th>
                       <th scope="col">Vizsgált számsor</th>
                       <th scope="col">Arány</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {trendData.data.map((row) => (
-                      <tr key={row.year}>
-                        <th scope="row">{row.year}</th>
-                        <td>{row.selected_number_count}</td>
-                        <td>{row.eligible_set_count}</td>
-                        <td>{row.selected_number_occurrence_percentage}%</td>
-                      </tr>
-                    ))}
+                    {trendData.flatMap((result) =>
+                      result.data.map((row) => (
+                        <tr key={`${result.meta.selected_number}-${row.year}`}>
+                          <th scope="row">
+                            {result.meta.selected_number}. szám · {row.year}
+                          </th>
+                          <td>{row.selected_number_count}</td>
+                          <td>{row.eligible_set_count}</td>
+                          <td>{row.selected_number_occurrence_percentage}%</td>
+                        </tr>
+                      )),
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -172,7 +261,9 @@ export function StatisticsDetails({
           ))}
       </section>
       <section className={styles.card} aria-labelledby="pairs-heading">
-        <h2 id="pairs-heading">Gyakori számpárok</h2>
+        <h2 id="pairs-heading">
+          <LuLink aria-hidden="true" /> Gyakori számpárok
+        </h2>
         <p>
           Egy pár egyszer számít minden olyan vizsgált számsorban, amely mindkét
           számot tartalmazza. Az arány nevezője{' '}
@@ -197,12 +288,14 @@ export function StatisticsDetails({
         {pairsData &&
           (pairsData.data.length ? (
             <>
-              <ChartSlot label="Számpárok gyakorisági ábrája">
+              <ChartSlot
+                className={styles.pairsChartSlot}
+                label="Számpárok gyakorisági ábrája"
+              >
                 <NumberPairsChart data={pairsData.data} />
               </ChartSlot>
               <div
-                className={styles.tableWrap}
-                tabIndex={0}
+                className={`${styles.tableWrap} ${styles.pairsTable}`}
                 aria-label="Számpárok adatai"
               >
                 <table>

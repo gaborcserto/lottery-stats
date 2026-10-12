@@ -17,12 +17,14 @@ export type ApiErrorKind =
   | 'invalid-response'
   | 'http'
 const messages: Record<ApiErrorKind, string> = {
-  'not-found': 'A kért adat nem található.',
-  validation: 'Ellenőrizze a megadott szűrőket.',
+  'not-found': 'A kért sorsolás vagy adat nem található.',
+  validation: 'Ellenőrizze a megadott szűrőket, majd próbálja újra.',
   'rate-limit': 'Túl sok kérés. Kérjük, várjon az újrapróbálkozással.',
   server: 'Az adatok átmenetileg nem érhetők el.',
-  network: 'Nem sikerült kapcsolódni az adatforráshoz.',
-  'invalid-response': 'Az adatforrás válasza nem értelmezhető.',
+  network:
+    'Nem sikerült kapcsolódni az adatforráshoz. Ellenőrizze a kapcsolatot, majd próbálja újra.',
+  'invalid-response':
+    'Az adatforrás válasza nem értelmezhető. Próbálja meg később.',
   http: 'Az adatok lekérése nem sikerült.',
 }
 export class ApiError extends Error {
@@ -36,7 +38,21 @@ export class ApiError extends Error {
     retryAt?: number,
     fields: string[] = [],
   ) {
-    super(messages[kind])
+    super(
+      status === 400 || status === 422
+        ? messages.validation
+        : status === 401
+          ? 'A kéréshez nincs megfelelő hozzáférés.'
+          : status === 403
+            ? 'A kért tartalomhoz nincs hozzáférése.'
+            : status === 404
+              ? messages['not-found']
+              : status === 429
+                ? messages['rate-limit']
+                : status === 503
+                  ? messages.server
+                  : messages[kind],
+    )
     this.kind = kind
     this.status = status
     this.retryAt = retryAt
@@ -91,10 +107,10 @@ export function createApiClient(
     if (!response.ok) {
       const status = response.status
       const kind =
-        status === 404
-          ? 'not-found'
-          : status === 422
-            ? 'validation'
+        status === 400 || status === 422
+          ? 'validation'
+          : status === 404
+            ? 'not-found'
             : status === 429
               ? 'rate-limit'
               : status >= 500

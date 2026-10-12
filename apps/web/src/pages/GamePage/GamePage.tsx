@@ -222,6 +222,20 @@ export function GamePage({
       </div>
 
       <StatisticsFilters game={game} filters={filters} />
+      {isFiltered &&
+        !filtered.loading &&
+        filtered.data &&
+        filtered.data.summary.data.drawing_count === 0 && (
+          <p role="status">
+            Nincs sorsolás a kiválasztott szűrőknek megfelelően.{' '}
+            <button
+              type="button"
+              onClick={() => setParams(new URLSearchParams())}
+            >
+              Szűrők törlése
+            </button>
+          </p>
+        )}
       {filtered.loading && (
         <p aria-live="polite">
           A szűrt adatok betöltése… Addig a korábbi adatpillanatkép látható.

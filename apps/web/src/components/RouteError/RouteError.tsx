@@ -6,7 +6,6 @@ import {
 } from 'react-router'
 import { ApiError } from '../../api/client'
 import { ErrorPage } from '../ErrorPage'
-import styles from './RouteError.module.scss'
 
 export function RouteError() {
   const error: unknown = useRouteError()
@@ -23,34 +22,39 @@ export function RouteError() {
     )
     return () => window.clearTimeout(timer)
   }, [retryAt])
-  const missing = isRouteErrorResponse(error) && error.status === 404
+  const status =
+    error instanceof ApiError
+      ? (error.status ?? (error.kind === 'server' ? 500 : 503))
+      : isRouteErrorResponse(error)
+        ? error.status
+        : 500
+  const retryable =
+    error instanceof ApiError
+      ? ['network', 'server', 'rate-limit', 'invalid-response'].includes(
+          error.kind,
+        )
+      : !isRouteErrorResponse(error) || status >= 500
+  const retryStatus = waiting
+    ? 'Az adatforrás várakozást kér az újabb lekérés előtt.'
+    : revalidator.state !== 'idle'
+      ? 'Adatok betöltése…'
+      : undefined
+  const message = error instanceof ApiError ? error.message : undefined
   return (
     <>
-      <title>{`${missing ? 'Az oldal nem található' : 'Az adatok nem érhetők el'} | Lottery Stats`}</title>
+      <title>{`${status === 404 ? 'Az oldal nem található' : status === 503 ? 'A szolgáltatás átmenetileg nem érhető el' : status === 401 ? 'A hozzáférés nem engedélyezett' : status === 403 ? 'A hozzáférés megtagadva' : status === 400 || status === 422 ? 'Ellenőrizze a megadott szűrőket' : 'Váratlan hiba történt'} | Lottery Stats`}</title>
       <meta name="robots" content="noindex" />
       <ErrorPage
-        missing={missing}
-        message={error instanceof ApiError ? error.message : undefined}
+        status={status}
+        message={
+          status === 400 || status === 422
+            ? 'Ellenőrizze a megadott szűrőket, majd próbálja újra.'
+            : message
+        }
+        onRetry={retryable ? () => void revalidator.revalidate() : undefined}
+        retryDisabled={waiting || revalidator.state !== 'idle'}
+        retryStatus={retryStatus}
       />
-      {!missing && (
-        <div className={styles.retry}>
-          <button
-            type="button"
-            disabled={waiting || revalidator.state !== 'idle'}
-            onClick={() => void revalidator.revalidate()}
-          >
-            Újrapróbálkozás
-          </button>
-          {waiting && (
-            <p role="status">
-              Az adatforrás várakozást kér az újabb lekérés előtt.
-            </p>
-          )}
-          {revalidator.state !== 'idle' && (
-            <p role="status">Adatok betöltése…</p>
-          )}
-        </div>
-      )}
     </>
   )
 }

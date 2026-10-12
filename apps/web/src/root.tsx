@@ -8,7 +8,7 @@ import {
   useNavigation,
 } from 'react-router'
 import { AppLayout } from './components/AppLayout'
-import { ErrorPage } from './components/ErrorPage'
+import { RouteError } from './components/RouteError'
 import './index.scss'
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -51,9 +51,7 @@ export function HydrateFallback() {
 export function ErrorBoundary() {
   return (
     <AppLayout>
-      <title>Az oldal nem tölthető be | Lottery Stats</title>
-      <meta name="robots" content="noindex" />
-      <ErrorPage />
+      <RouteError />
     </AppLayout>
   )
 }

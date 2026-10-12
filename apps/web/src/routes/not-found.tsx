@@ -12,5 +12,5 @@ export function meta() {
   ]
 }
 export default function NotFound() {
-  return <ErrorPage missing />
+  return <ErrorPage status={404} />
 }

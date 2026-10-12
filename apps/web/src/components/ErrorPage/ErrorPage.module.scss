@@ -1,3 +1,106 @@
 .error {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  min-height: min(34rem, 65vh);
   padding-block: var(--space-6);
+  text-align: center;
+}
+
+.mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 5rem;
+  height: 5rem;
+  margin-bottom: var(--space-4);
+  border: 2px solid var(--brand-lime);
+  border-radius: 50%;
+  color: var(--brand-lime);
+  svg {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  span {
+    position: absolute;
+    inset-inline-end: -0.5rem;
+    inset-block-end: -0.25rem;
+    padding: 0.15rem 0.35rem;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--heading);
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+}
+
+.brand {
+  margin: 0 0 var(--space-2);
+  color: var(--green);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.error h1 {
+  max-width: 38rem;
+  margin: 0;
+  color: var(--heading);
+  font-size: clamp(1.65rem, 5vw, 2.5rem);
+  line-height: 1.15;
+}
+
+.message {
+  max-width: 36rem;
+  margin: var(--space-4) 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  button,
+  a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 2.75rem;
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--action-background);
+    color: var(--action-text);
+    font: inherit;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+  a {
+    background: var(--surface);
+    color: var(--text);
+  }
+  button:focus-visible,
+  a:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+  }
+  svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+}
+
+.status {
+  margin: var(--space-3) 0 0;
+  color: var(--muted);
 }

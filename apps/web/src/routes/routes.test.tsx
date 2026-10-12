@@ -145,10 +145,10 @@ describe('explicit route modules', () => {
       render(<RouterProvider router={router} />)
       expect(
         await screen.findByRole('heading', {
-          name: 'Az oldal nem tölthető be',
+          name: 'Váratlan hiba történt',
         }),
       ).toBeInTheDocument()
-      expect(document.title).toBe('Az adatok nem érhetők el | Lottery Stats')
+      expect(document.title).toBe('Váratlan hiba történt | Lottery Stats')
       expect(consoleError).not.toHaveBeenCalled()
     } finally {
       consoleError.mockRestore()

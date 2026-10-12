@@ -21,7 +21,9 @@ class ChartError extends Component<
     return this.state.failed ? (
       <p className={styles.placeholder}>
         Az ábra nem tölthető be. Az adatok szövegesen továbbra is elérhetők.{' '}
-        <button onClick={() => window.location.reload()}>Újratöltés</button>
+        <button type="button" onClick={() => window.location.reload()}>
+          Újratöltés
+        </button>
       </p>
     ) : (
       this.props.children

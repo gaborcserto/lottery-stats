@@ -134,8 +134,10 @@ describe('Laravel API client', () => {
     ).toThrow()
   })
   it.each([
+    [400, 'validation'],
     [404, 'not-found'],
     [422, 'validation'],
+    [401, 'http'],
     [500, 'server'],
     [503, 'server'],
     [403, 'http'],

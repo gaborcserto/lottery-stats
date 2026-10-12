@@ -2,6 +2,8 @@
 
 This is the single source of truth for stable coding-agent instructions. [README.md](README.md) covers project setup and commands. Optional workflows and a project-specific testing skill are deferred until recurring procedures warrant separate resources; load any future resources only when relevant.
 
+For frontend code quality audits or targeted follow-up refactoring, use [frontend-code-quality](.agents/skills/frontend-code-quality/SKILL.md). Invoke it as `$frontend-code-quality`; agents without skill discovery can read the linked file directly. The skill supplies a review workflow; repository rules remain here.
+
 The ignored `.notes/` directory contains optional local engineering notes and may be absent. Keep essential project decisions and instructions in tracked documentation; do not depend on `.notes/` files being present.
 
 ## Scope and workflow

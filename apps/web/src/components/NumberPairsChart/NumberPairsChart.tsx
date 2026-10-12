@@ -1,3 +1,4 @@
+import { SelectControl } from '../SelectControl'
 import { ResponsiveBar } from '@nivo/bar'
 import { useMemo, useState } from 'react'
 import type { GamePageData } from '../../api/page-data'
@@ -33,7 +34,8 @@ export function NumberPairsChart({
     <div className={styles.chart}>
       <label className={styles.selection}>
         Kiemelt pár{' '}
-        <select
+        <SelectControl
+          aria-label="Kiemelt pár"
           value={selectedPair ?? ''}
           onChange={(event) => setSelected(event.currentTarget.value || null)}
         >
@@ -43,7 +45,7 @@ export function NumberPairsChart({
               {row.pair}
             </option>
           ))}
-        </select>
+        </SelectControl>
         {selection && (
           <span>
             {' '}

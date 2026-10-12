@@ -1,0 +1,79 @@
+@use '../../styles/form-controls' as form;
+
+.control {
+  position: relative;
+  display: inline-grid;
+  max-width: 100%;
+  min-width: 0;
+  vertical-align: middle;
+
+  select {
+    @include form.surface;
+    width: 100%;
+    padding-right: 2.5rem;
+    appearance: none;
+    cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  option {
+    color: var(--text);
+    background: var(--select-option-background);
+  }
+  &:has(select:open) {
+    select {
+      border-color: var(--accent-lime);
+      box-shadow: 0 0 0 3px
+        color-mix(in srgb, var(--accent-lime) 15%, transparent);
+    }
+    .caret {
+      transform: rotate(180deg);
+    }
+  }
+}
+.caret {
+  @include form.caret;
+  position: absolute;
+  right: 0.85rem;
+  top: calc(50% - 0.5rem);
+}
+
+// Older native pickers expose focus, but do not expose their open state to CSS.
+@supports not selector(select:open) {
+  .control:focus-within .caret {
+    transform: rotate(180deg);
+  }
+}
+
+@supports (appearance: base-select) {
+  .control select,
+  .control select::picker(select) {
+    appearance: base-select;
+  }
+  .control select::picker-icon {
+    display: none;
+  }
+  .control select::picker(select) {
+    margin-block: 0.4rem;
+    padding: 0.35rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--select-option-background);
+    box-shadow: var(--glass-shadow);
+    max-height: min(20rem, 50dvh);
+    overflow: auto;
+  }
+  .control option {
+    padding: 0.6rem 0.75rem;
+    border-radius: calc(var(--radius) * 0.7);
+    &:hover,
+    &:focus-visible {
+      background: color-mix(in srgb, var(--accent-lime) 16%, var(--surface));
+    }
+    &:checked {
+      color: var(--action-text);
+      background: var(--accent-lime);
+    }
+  }
+}

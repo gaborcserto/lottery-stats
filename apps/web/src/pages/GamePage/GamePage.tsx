@@ -197,7 +197,7 @@ export function GamePage({
               <p className={styles.drawingMeta}>
                 {data.latest.year}. év · {data.latest.week}. hét
               </p>
-              <div className={styles.resultSets}>
+              <div className={styles.resultSets} data-game={game}>
                 {data.latest.sets
                   .filter((set) => isRelevantSet(game, set.type))
                   .map((set) => (

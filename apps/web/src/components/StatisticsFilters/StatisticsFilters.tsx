@@ -1,3 +1,5 @@
+import { SelectControl } from '../SelectControl'
+import { DateControl } from '../DateControl'
 import type { FormEvent } from 'react'
 import { useSearchParams } from 'react-router'
 import { FaFilter } from 'react-icons/fa6'
@@ -66,45 +68,55 @@ export function StatisticsFilters({
             placeholder="Összes hét"
           />
         </label>
-        <label>
-          Kezdő dátum
-          <input
+        <div className={styles.field}>
+          <label htmlFor="from-date">Kezdő dátum</label>
+          <DateControl
+            id="from-date"
+            label="Kezdő dátum"
             name="from_date"
-            type="date"
             defaultValue={filters.population.from_date ?? ''}
-            onChange={(event) =>
-              event.currentTarget.form
+            onValueChange={(input) => {
+              input.form
                 ?.querySelector<HTMLInputElement>('[name="to_date"]')
                 ?.setCustomValidity('')
-            }
+            }}
           />
-        </label>
-        <label>
-          Záró dátum
-          <input
+        </div>
+        <div className={styles.field}>
+          <label htmlFor="to-date">Záró dátum</label>
+          <DateControl
+            id="to-date"
+            label="Záró dátum"
             name="to_date"
-            type="date"
             defaultValue={filters.population.to_date ?? ''}
-            onChange={(event) => event.currentTarget.setCustomValidity('')}
+            onValueChange={(input) => input.setCustomValidity('')}
           />
-        </label>
+        </div>
         {game === 'scandinavian' && (
           <label>
             Statisztikai számsor
-            <select name="set" defaultValue={filters.statistics.set}>
+            <SelectControl
+              aria-label="Statisztikai számsor"
+              name="set"
+              defaultValue={filters.statistics.set}
+            >
               <option value="machine">Gépi</option>
               <option value="manual">Kézi</option>
               <option value="combined">Gépi és kézi együtt</option>
-            </select>
+            </SelectControl>
           </label>
         )}
         <label>
           Gyakoriság rendezése
-          <select name="sort" defaultValue={filters.sort}>
+          <SelectControl
+            aria-label="Gyakoriság rendezése"
+            name="sort"
+            defaultValue={filters.sort}
+          >
             <option value="number">Szám szerint</option>
             <option value="most">Leggyakoribb elöl</option>
             <option value="least">Legritkább elöl</option>
-          </select>
+          </SelectControl>
         </label>
         <button type="submit">Szűrés</button>
         <button

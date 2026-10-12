@@ -1,0 +1,136 @@
+@use '../../styles/form-controls' as form;
+
+.control {
+  position: relative;
+  display: block;
+  min-width: 0;
+  input[type='date'] {
+    @include form.surface;
+    width: 100%;
+    padding-right: 2.75rem;
+    font-variant-numeric: tabular-nums;
+    &[data-filled='true'] {
+      border-color: color-mix(in srgb, var(--accent-lime) 55%, var(--border));
+    }
+    &::-webkit-calendar-picker-indicator {
+      display: none;
+    }
+  }
+  .trigger {
+    position: absolute;
+    top: 50%;
+    right: 0.2rem;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    min-height: 2.5rem;
+    padding: 0;
+    border: 0;
+    color: var(--muted);
+    background: transparent;
+    svg {
+      width: 1rem;
+      height: 1rem;
+    }
+    &:hover {
+      background: var(--elevated);
+    }
+  }
+}
+.popup {
+  position: fixed;
+  inset: auto;
+  width: min(22rem, calc(100vw - 1rem));
+  max-height: calc(100dvh - 1rem);
+  margin: 0;
+  padding: 0.65rem;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: var(--select-option-background);
+  box-shadow: var(--glass-shadow);
+  font-size: 0.85rem;
+  &::backdrop {
+    background: transparent;
+  }
+  button {
+    min-height: 2.75rem;
+    padding: 0.35rem;
+    border: 0;
+    color: var(--text);
+    background: transparent;
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--accent-lime) 16%, var(--surface));
+    }
+    &:focus-visible {
+      outline-offset: -3px;
+    }
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+}
+.heading {
+  display: grid;
+  grid-template-columns: 2.75rem 1fr 2.75rem;
+  align-items: center;
+  gap: 0.25rem;
+  h3 {
+    margin: 0;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+  button {
+    display: grid;
+    place-items: center;
+    svg {
+      width: 1rem;
+      height: 1rem;
+      flex: 0 0 auto;
+    }
+  }
+}
+.weekdays,
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.15rem;
+  text-align: center;
+}
+.weekdays {
+  margin-block: 0.5rem 0.25rem;
+  color: var(--muted);
+}
+.days {
+  button {
+    font-variant-numeric: tabular-nums;
+    &[data-outside='true'] {
+      color: var(--muted);
+    }
+    &[aria-pressed='true'] {
+      color: var(--action-text);
+      background: var(--accent-lime);
+    }
+  }
+}
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border);
+  button {
+    padding-inline: 0.75rem;
+  }
+}
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

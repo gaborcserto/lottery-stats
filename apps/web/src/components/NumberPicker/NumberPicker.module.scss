@@ -1,0 +1,173 @@
+@use '../../styles/form-controls' as form;
+
+.picker {
+  min-width: 0;
+}
+.label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+.disclosure {
+  position: relative;
+  width: min(100%, 22rem);
+  summary {
+    @include form.surface;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    cursor: pointer;
+    list-style: none;
+    font-size: 0.85rem;
+    &::-webkit-details-marker {
+      display: none;
+    }
+    &[aria-disabled='true'] {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    small {
+      color: var(--muted);
+      font-size: inherit;
+    }
+  }
+  &[open] {
+    .options {
+      animation: reveal 200ms ease;
+    }
+    summary {
+      border-color: var(--accent-lime);
+      box-shadow: 0 0 0 3px
+        color-mix(in srgb, var(--accent-lime) 15%, transparent);
+    }
+    .caret {
+      transform: rotate(180deg);
+    }
+  }
+  &[data-side='above'] .options {
+    top: auto;
+    bottom: calc(100% + 0.4rem);
+  }
+}
+.caret {
+  @include form.caret;
+}
+.options {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  inset-inline: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
+  max-height: min(18rem, 40dvh);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--select-option-background);
+  box-shadow: var(--glass-shadow);
+}
+.option {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.2rem;
+  min-height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 0.75);
+  background: var(--elevated);
+  color: var(--text);
+  cursor: pointer;
+  input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+  }
+  svg {
+    width: 0.8rem;
+    display: none;
+  }
+  &:hover {
+    border-color: var(--accent-lime);
+  }
+  &:has(input:checked) {
+    background: var(--accent-lime);
+    color: var(--action-text);
+    border-color: var(--accent-lime);
+    svg {
+      display: block;
+    }
+  }
+  &:has(input:focus-visible) {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  &:has(input:disabled) {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0;
+  margin: 0.75rem 0;
+  list-style: none;
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding-left: 0.6rem;
+    border: 1px solid var(--series-color);
+    border-radius: 2rem;
+    background: color-mix(in srgb, var(--series-color) 12%, var(--surface));
+    color: var(--text);
+    font-size: 0.85rem;
+    font-weight: 650;
+  }
+  button {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    min-height: 2rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text);
+    &:hover {
+      background: var(--elevated);
+    }
+  }
+}
+.swatch {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--series-color);
+}
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .options {
+    animation: none;
+  }
+}

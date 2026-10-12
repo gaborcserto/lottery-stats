@@ -1,3 +1,4 @@
+import { SelectControl } from '../SelectControl'
 import { useState, type CSSProperties } from 'react'
 import { ResponsiveBar } from '@nivo/bar'
 import type { GamePageData } from '../../api/page-data'
@@ -21,7 +22,8 @@ export function FrequencyChart({
     <div className={styles.chart}>
       <label className={styles.hint}>
         Kiemelt szám{' '}
-        <select
+        <SelectControl
+          aria-label="Kiemelt szám"
           value={selected ?? ''}
           onChange={(event) =>
             setSelected(
@@ -37,7 +39,7 @@ export function FrequencyChart({
               {row.number}
             </option>
           ))}
-        </select>{' '}
+        </SelectControl>{' '}
         <span className={styles.mobileHint}>
           {' '}
           · Mobilon az ábra oldalra görgethető.

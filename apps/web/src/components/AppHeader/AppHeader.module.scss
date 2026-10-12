@@ -9,7 +9,11 @@
   transition:
     background-color 180ms ease,
     border-color 180ms ease,
+    box-shadow 180ms ease,
     backdrop-filter 180ms ease;
+}
+.header.scrolled {
+  box-shadow: var(--header-shadow);
 }
 .inner {
   position: relative;
@@ -239,6 +243,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .header,
   .navigation a,
   .activePill,
   .navigation,

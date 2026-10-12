@@ -1,3 +1,6 @@
+import { NumberPicker } from '../NumberPicker'
+import { useTheme } from '../ThemeProvider'
+import { getTrendColors } from '../../config/trend-colors'
 import { lazy, useState } from 'react'
 import { LuChartLine, LuLink } from 'react-icons/lu'
 import { useSearchParams } from 'react-router'
@@ -86,6 +89,8 @@ export function StatisticsDetails({
   className?: string
 }) {
   const [params, setParams] = useSearchParams()
+  const { resolvedTheme } = useTheme()
+  const seriesColors = getTrendColors(resolvedTheme)
   const [retryYearly, setRetryYearly] = useState(false)
   const [retryPairs, setRetryPairs] = useState(false)
   const query = new URLSearchParams()
@@ -135,53 +140,25 @@ export function StatisticsDetails({
         <h2 id="trends-heading">
           <LuChartLine aria-hidden="true" /> Éves számgyakoriság
         </h2>
-        <label className={styles.select}>
-          Vizsgált számok
-          <select
-            multiple
-            aria-label="Éves gyakoriságban vizsgált számok"
-            value={filters.numbers.map(String)}
-            onChange={(event) => {
-              const next = new URLSearchParams(params)
-              next.delete('number')
-              for (const option of Array.from(
-                event.currentTarget.selectedOptions,
-              ))
-                next.append('number', option.value)
-              setParams(next, { preventScrollReset: true })
-            }}
-          >
-            {Array.from({ length: maximumNumbers[game] }, (_, index) => (
-              <option key={index + 1} value={index + 1}>
-                {index + 1}
-              </option>
-            ))}
-          </select>
-        </label>
-        <p>
-          Több számhoz használd a Ctrl / Cmd billentyűt, vagy érintsd meg a
-          számokat.
-        </p>
-        <ul className={styles.selectedNumbers} aria-label="Kiválasztott számok">
-          {filters.numbers.map((number) => (
-            <li key={number}>
-              <button
-                aria-label={`${number}. szám eltávolítása`}
-                onClick={() => {
-                  const next = new URLSearchParams(params)
-                  next.delete('number')
-                  for (const value of filters.numbers.filter(
-                    (value) => value !== number,
-                  ))
-                    next.append('number', String(value))
-                  setParams(next, { preventScrollReset: true })
-                }}
-              >
-                {number} ×
-              </button>
-            </li>
-          ))}
-        </ul>
+        <NumberPicker
+          maximum={maximumNumbers[game]}
+          numbers={filters.numbers}
+          colorForNumber={(number) => {
+            const plottedIndex =
+              trendData?.findIndex(
+                (result) => result.meta.selected_number === number,
+              ) ?? -1
+            const index =
+              plottedIndex >= 0 ? plottedIndex : filters.numbers.indexOf(number)
+            return seriesColors[index % seriesColors.length]
+          }}
+          onChange={(numbers) => {
+            const next = new URLSearchParams(params)
+            next.delete('number')
+            for (const number of numbers) next.append('number', String(number))
+            setParams(next, { preventScrollReset: true })
+          }}
+        />
         <p>
           Az arány nevezője az adott év vizsgált számsorainak száma. A hiányzó
           évek nem jelentenek nulla előfordulást. Az ábra nem előrejelzés.

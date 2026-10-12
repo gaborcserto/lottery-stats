@@ -29,12 +29,8 @@ describe('game route loading', () => {
       { initialEntries: ['/otoslotto?sort=number'] },
     )
     render(<RouterProvider router={router} />)
-    const select = screen.getByLabelText(
-      'Éves gyakoriságban vizsgált számok',
-    ) as HTMLSelectElement
-    for (const option of Array.from(select.options))
-      option.selected = option.value === '1' || option.value === '12'
-    fireEvent.change(select)
+    fireEvent.click(screen.getByLabelText('Éves gyakoriságban vizsgált számok'))
+    fireEvent.click(screen.getByRole('checkbox', { name: '12. szám' }))
     await waitFor(() => expect(yearly).toHaveBeenCalledTimes(1))
     expect(yearly).toHaveBeenCalledWith(
       'five',
@@ -47,9 +43,12 @@ describe('game route loading', () => {
     fireEvent.click(
       screen.getByRole('button', { name: '12. szám eltávolítása' }),
     )
-    expect(select).toHaveValue(['1'])
+    expect(screen.getByRole('checkbox', { name: '1. szám' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: '12. szám' })).not.toBeChecked()
     await act(() => router.navigate(-1))
-    await waitFor(() => expect(select).toHaveValue(['1', '12']))
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox', { name: '12. szám' })).toBeChecked(),
+    )
     await screen.findByRole('table', {
       name: '1. szám, 12. szám éves előfordulásai',
     })
@@ -153,12 +152,16 @@ describe('game route loading', () => {
     )
     expect(summary).not.toHaveBeenCalled()
     expect(frequencies).not.toHaveBeenCalled()
-    const numberSelect = screen.getByLabelText(
-      'Éves gyakoriságban vizsgált számok',
-    ) as HTMLSelectElement
-    for (const option of Array.from(numberSelect.options))
-      option.selected = option.value === '42' || option.value === '45'
-    fireEvent.change(numberSelect)
+    fireEvent.click(screen.getByLabelText('Éves gyakoriságban vizsgált számok'))
+    fireEvent.click(screen.getByRole('checkbox', { name: '42. szám' }))
+    await screen.findByRole('table', {
+      name: '1. szám, 42. szám éves előfordulásai',
+    })
+    fireEvent.click(screen.getByRole('checkbox', { name: '45. szám' }))
+    await screen.findByRole('table', {
+      name: '1. szám, 42. szám, 45. szám éves előfordulásai',
+    })
+    fireEvent.click(screen.getByRole('checkbox', { name: '1. szám' }))
     await waitFor(() => expect(yearly).toHaveBeenCalledTimes(2))
     expect(yearly).toHaveBeenNthCalledWith(
       1,
@@ -176,13 +179,11 @@ describe('game route loading', () => {
     expect(summary).not.toHaveBeenCalled()
     expect(frequencies).not.toHaveBeenCalled()
     expect(loader).toHaveBeenCalledTimes(1)
-    await router.navigate(-1)
+    await router.navigate(-3)
     await waitFor(() =>
-      expect(
-        screen.getByLabelText('Éves gyakoriságban vizsgált számok'),
-      ).toHaveValue(['1']),
+      expect(screen.getByRole('checkbox', { name: '1. szám' })).toBeChecked(),
     )
-    await router.navigate(1)
+    await router.navigate(3)
     await waitFor(() =>
       expect(router.state.location.search).toBe(
         '?sort=most&number=42&number=45',

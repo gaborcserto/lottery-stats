@@ -430,5 +430,9 @@
   }
   .latest .resultSets {
     grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    // Each seven-number row needs 7 × 2rem balls and 6 × 0.55rem gaps.
+    &[data-game='scandinavian'] {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 17.3rem), 1fr));
+    }
   }
 }

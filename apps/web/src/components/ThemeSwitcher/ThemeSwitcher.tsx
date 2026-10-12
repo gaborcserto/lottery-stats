@@ -10,7 +10,12 @@ const options: { mode: ThemeMode; label: string; Icon: typeof LuSun }[] = [
 export function ThemeSwitcher() {
   const { mode, setMode } = useTheme()
   return (
-    <div className={styles.switcher} role="group" aria-label="Téma választása">
+    <div
+      className={styles.switcher}
+      role="group"
+      aria-label="Téma választása"
+      data-mode={mode}
+    >
       {options.map(({ mode: option, label, Icon }) => (
         <button
           className={styles.option}

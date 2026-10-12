@@ -13,6 +13,26 @@ html {
 html[data-theme='dark'] {
   color-scheme: dark;
 }
+// Keep the browser's default scrollbar width and high-contrast fallback.
+@media (forced-colors: none) {
+  * {
+    scrollbar-color: color-mix(in srgb, var(--muted) 60%, var(--surface))
+      var(--elevated);
+  }
+  @supports not (scrollbar-color: auto) {
+    ::-webkit-scrollbar-track {
+      background: var(--elevated);
+    }
+    ::-webkit-scrollbar-thumb {
+      border: 3px solid var(--elevated);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--muted) 60%, var(--surface));
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--muted);
+    }
+  }
+}
 body {
   margin: 0;
   background: var(--background);

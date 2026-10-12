@@ -25,13 +25,6 @@
   min-height: 3rem;
   color: var(--muted);
   font-size: 0.8rem;
-  select {
-    min-height: 2.75rem;
-    background: var(--select-background);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-  }
 }
 .tooltip {
   padding: 0.75rem;

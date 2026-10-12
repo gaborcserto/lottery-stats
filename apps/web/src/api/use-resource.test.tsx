@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { useState } from 'react'
+import { StrictMode, useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { useResource } from './use-resource'
+import { cachedResource } from './resource'
+import { deferred } from '../test/fixtures'
 
 function ResourceView({
   load,
@@ -23,6 +25,19 @@ function ResourceView({
 }
 
 describe('useResource refresh state', () => {
+  it('shares a pending request across Strict Mode effect replay', async () => {
+    const result = deferred<string>()
+    const load = vi.fn(() => result.promise)
+    const resource = cachedResource(load)
+    render(
+      <StrictMode>
+        <ResourceView load={resource} />
+      </StrictMode>,
+    )
+    expect(load).toHaveBeenCalledTimes(1)
+    result.resolve('loaded data')
+    expect(await screen.findByText('loaded data')).toBeInTheDocument()
+  })
   it('reports a pending retry while retaining the current data', async () => {
     const load = vi
       .fn()

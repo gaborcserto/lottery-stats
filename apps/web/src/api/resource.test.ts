@@ -3,6 +3,42 @@ import { cachedResource } from './resource'
 import { deferred } from '../test/fixtures'
 
 describe('statistics resource cache', () => {
+  it('uses seeded values without renewing their original freshness', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      const load = vi.fn(async () => 3)
+      const resource = cachedResource(load)
+      const signal = new AbortController().signal
+      resource.remember('a', 2, Date.now() - 29_000)
+      resource.remember('a', 1, Date.now() - 30_000)
+      expect(await resource('a', signal)).toBe(2)
+      expect(load).not.toHaveBeenCalled()
+      vi.setSystemTime(Date.now() + 1000)
+      expect(await resource('a', signal)).toBe(3)
+      expect(load).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('aborts abandoned requests and never caches their late response', async () => {
+    const response = deferred<number>()
+    const load = vi.fn<(key: string, signal: AbortSignal) => Promise<number>>(
+      () => response.promise,
+    )
+    const resource = cachedResource(load)
+    const controller = new AbortController()
+    const first = resource('a', controller.signal)
+    const rejection = expect(first).rejects.toMatchObject({
+      name: 'AbortError',
+    })
+    controller.abort()
+    await rejection
+    expect(load.mock.calls[0][1].aborted).toBe(true)
+    response.resolve(2)
+    await expect(resource('a', new AbortController().signal)).resolves.toBe(2)
+    expect(load).toHaveBeenCalledTimes(2)
+  })
   it('deduplicates subscribers and retains a successful result for 30 seconds', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     try {

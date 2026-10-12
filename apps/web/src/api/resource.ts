@@ -4,6 +4,14 @@ export function cachedResource<T>(
   load: (key: string, signal: AbortSignal) => Promise<T>,
 ) {
   const cache = new Map<string, { value: T; time: number }>()
+  const remember = (key: string, value: T, time = Date.now()) => {
+    if (!Number.isFinite(time) || time < (cache.get(key)?.time ?? 0)) return
+    cache.set(key, { value, time })
+    if (cache.size > 40) {
+      const oldest = cache.keys().next().value
+      if (oldest !== undefined) cache.delete(oldest)
+    }
+  }
   const pending = new Map<
     string,
     { controller: AbortController; promise: Promise<T>; subscribers: number }
@@ -18,11 +26,7 @@ export function cachedResource<T>(
       const promise = load(key, controller.signal)
         .then((value) => {
           controller.signal.throwIfAborted()
-          cache.set(key, { value, time: Date.now() })
-          if (cache.size > 40) {
-            const oldest = cache.keys().next().value
-            if (oldest !== undefined) cache.delete(oldest)
-          }
+          remember(key, value)
           return value
         })
         .finally(() => {
@@ -40,7 +44,13 @@ export function cachedResource<T>(
         finished = true
         signal.removeEventListener('abort', abort)
         current.subscribers--
-        if (!current.subscribers) current.controller.abort()
+        if (!current.subscribers) {
+          // Let same-turn effect replay/navigation reuse the request before aborting.
+          queueMicrotask(() => {
+            if (!current.subscribers && pending.get(key) === current)
+              current.controller.abort()
+          })
+        }
       }
       const abort = () => {
         release()
@@ -64,6 +74,7 @@ export function cachedResource<T>(
     })
   }
   return Object.assign(request, {
+    remember,
     invalidate: (key: string) => cache.delete(key),
   })
 }

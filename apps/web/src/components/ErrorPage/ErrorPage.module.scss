@@ -2,45 +2,75 @@
   display: grid;
   justify-items: center;
   align-content: center;
-  min-height: min(34rem, 65vh);
+  min-height: calc(100dvh - var(--space-6));
   padding-block: var(--space-6);
   text-align: center;
 }
 
-.mark {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 5rem;
-  height: 5rem;
-  margin-bottom: var(--space-4);
-  border: 2px solid var(--brand-lime);
-  border-radius: 50%;
-  color: var(--brand-lime);
-  svg {
-    width: 2.5rem;
-    height: 2.5rem;
-  }
-  span {
-    position: absolute;
-    inset-inline-end: -0.5rem;
-    inset-block-end: -0.25rem;
-    padding: 0.15rem 0.35rem;
-    border-radius: 999px;
-    background: var(--surface);
-    color: var(--heading);
-    font-size: 0.75rem;
-    font-weight: 800;
+:global(body):has(.error) {
+  :global(header),
+  :global(footer) {
+    display: none;
   }
 }
 
-.brand {
-  margin: 0 0 var(--space-2);
-  color: var(--green);
-  font-size: 0.85rem;
+.code {
+  position: relative;
+  display: inline-block;
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--brand-lime);
+  font-size: clamp(7rem, 20vw, 15rem);
   font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  line-height: 0.9;
+}
+
+// Adapted from AntiKippi/errorpages; see animation.LICENSE for licensing.
+// Keep the reference's slice positions, independent cycles and pause sequence.
+.codeLayers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  &::before,
+  &::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--background);
+    color: var(--brand-lime);
+    animation-timing-function: steps(8, jump-none), step-end;
+    animation-iteration-count: infinite, infinite;
+  }
+
+  &::before {
+    left: 0.03em;
+    text-shadow: -0.02em 0 var(--green);
+    animation-name: glitch-animation-1, glitch-hide;
+    animation-duration: 2.75s, 8s;
+  }
+
+  &::after {
+    left: -0.03em;
+    text-shadow: -0.02em 0 var(--navy);
+    animation-name: glitch-animation-2, glitch-hide;
+    animation-duration: 3.25s, 8s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .codeLayers {
+    display: none;
+    &::before,
+    &::after {
+      animation: none;
+      content: none;
+    }
+  }
 }
 
 .error h1 {
@@ -63,7 +93,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-3);
-  margin-top: var(--space-5);
+  margin-top: var(--space-6);
   button,
   a {
     display: inline-flex;
@@ -80,12 +110,19 @@
     font-weight: 700;
     text-decoration: none;
     cursor: pointer;
+    transition: box-shadow 150ms ease;
+    &:hover:not(:disabled) {
+      box-shadow: inset 0 0 0 999px rgb(16 35 48 / 6%);
+    }
+    &:active:not(:disabled) {
+      box-shadow: inset 0 0 0 999px rgb(16 35 48 / 12%);
+    }
   }
   button:disabled {
     opacity: 0.6;
     cursor: wait;
   }
-  a {
+  a.secondary {
     background: var(--surface);
     color: var(--text);
   }
@@ -100,7 +137,190 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .actions button,
+  .actions a {
+    transition: none;
+  }
+}
+
 .status {
   margin: var(--space-3) 0 0;
   color: var(--muted);
+}
+
+// SPDX-License-Identifier: LGPL-3.0-only (reference animation keyframes)
+@keyframes glitch-animation-1 {
+  0% {
+    clip: rect(0.3725em, auto, 0.7725em, auto);
+  }
+  5% {
+    clip: rect(0.6225em, auto, -0.0075em, auto);
+  }
+  10% {
+    clip: rect(-0.1275em, auto, 0.7425em, auto);
+  }
+  15% {
+    clip: rect(0.4125em, auto, 1.0725em, auto);
+  }
+  20% {
+    clip: rect(0.0125em, auto, 0.7225em, auto);
+  }
+  25% {
+    clip: rect(1.0125em, auto, 0.0925em, auto);
+  }
+  30% {
+    clip: rect(0.5925em, auto, 0.8625em, auto);
+  }
+  35% {
+    clip: rect(0.8625em, auto, 0.0625em, auto);
+  }
+  40% {
+    clip: rect(0.4025em, auto, -0.0175em, auto);
+  }
+  45% {
+    clip: rect(1.2625em, auto, 0.3025em, auto);
+  }
+  50% {
+    clip: rect(0.1225em, auto, 1.1625em, auto);
+  }
+  55% {
+    clip: rect(0.5525em, auto, 0.6625em, auto);
+  }
+  60% {
+    clip: rect(0.1825em, auto, 0.5325em, auto);
+  }
+  65% {
+    clip: rect(0.8725em, auto, 0.2525em, auto);
+  }
+  70% {
+    clip: rect(0.6325em, auto, -0.1375em, auto);
+  }
+  75% {
+    clip: rect(0.5925em, auto, 0.6225em, auto);
+  }
+  80% {
+    clip: rect(0.9125em, auto, 0.7325em, auto);
+  }
+  85% {
+    clip: rect(0.9625em, auto, 0.0825em, auto);
+  }
+  90% {
+    clip: rect(-0.0275em, auto, 0.9925em, auto);
+  }
+  95% {
+    clip: rect(1.3025em, auto, 1.1125em, auto);
+  }
+  100% {
+    clip: rect(0.2525em, auto, -0.0275em, auto);
+  }
+}
+@keyframes glitch-animation-2 {
+  0% {
+    clip: rect(0.8325em, auto, 1.2225em, auto);
+  }
+  5% {
+    clip: rect(0.8025em, auto, 0.0325em, auto);
+  }
+  10% {
+    clip: rect(0.3425em, auto, 0.9825em, auto);
+  }
+  15% {
+    clip: rect(0.7225em, auto, 0.1325em, auto);
+  }
+  20% {
+    clip: rect(0.4325em, auto, 0.6425em, auto);
+  }
+  25% {
+    clip: rect(0.7125em, auto, 0.6125em, auto);
+  }
+  30% {
+    clip: rect(0.2925em, auto, 0.9225em, auto);
+  }
+  35% {
+    clip: rect(1.1825em, auto, 0.62em, auto);
+  }
+  40% {
+    clip: rect(0.1625em, auto, 0.5325em, auto);
+  }
+  45% {
+    clip: rect(1.3125em, auto, 0.8425em, auto);
+  }
+  50% {
+    clip: rect(0.1525em, auto, 0.7725em, auto);
+  }
+  55% {
+    clip: rect(0.9725em, auto, 1.0325em, auto);
+  }
+  60% {
+    clip: rect(0.2825em, auto, 0.1725em, auto);
+  }
+  65% {
+    clip: rect(0.5325em, auto, 1.1525em, auto);
+  }
+  70% {
+    clip: rect(0.2325em, auto, 1.0025em, auto);
+  }
+  75% {
+    clip: rect(0.2025em, auto, 1.0425em, auto);
+  }
+  80% {
+    clip: rect(0.4125em, auto, -0.0775em, auto);
+  }
+  85% {
+    clip: rect(1.0625em, auto, 1.0925em, auto);
+  }
+  90% {
+    clip: rect(1.1625em, auto, 1.0025em, auto);
+  }
+  95% {
+    clip: rect(0.7025em, auto, 0.3425em, auto);
+  }
+  100% {
+    clip: rect(0.6225em, auto, 0.6525em, auto);
+  }
+}
+
+// Visibility preserves the reference's pause sequence without relying on the
+// page background to hide a negative stacking layer.
+@keyframes glitch-hide {
+  0% {
+    visibility: hidden;
+  }
+  15% {
+    visibility: visible;
+  }
+  18% {
+    visibility: hidden;
+  }
+  37% {
+    visibility: visible;
+  }
+  42% {
+    visibility: hidden;
+  }
+  54% {
+    visibility: visible;
+  }
+  64% {
+    visibility: hidden;
+  }
+  71% {
+    visibility: visible;
+  }
+  75% {
+    visibility: hidden;
+  }
+  85% {
+    visibility: visible;
+  }
+  88% {
+    visibility: hidden;
+  }
+  96% {
+    visibility: visible;
+  }
+  100% {
+    visibility: visible;
+  }
 }

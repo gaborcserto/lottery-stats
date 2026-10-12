@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { LuCircleAlert, LuHouse, LuRefreshCw } from 'react-icons/lu'
+import { LuHouse, LuRefreshCw } from 'react-icons/lu'
 import styles from './ErrorPage.module.scss'
 
 const pages = {
@@ -56,11 +56,10 @@ export function ErrorPage({
 
   return (
     <section className={styles.error} aria-labelledby="error-heading">
-      <div className={styles.mark} aria-hidden="true">
-        <LuCircleAlert />
+      <p className={styles.code} data-text={status}>
         <span>{status}</span>
-      </div>
-      <p className={styles.brand}>Lottery Stats</p>
+        <span className={styles.codeLayers} aria-hidden="true" />
+      </p>
       <h1 id="error-heading">{page.title}</h1>
       <p className={styles.message}>{message ?? page.message}</p>
       <div className={styles.actions}>
@@ -70,7 +69,7 @@ export function ErrorPage({
             {' \u00dajrapr\u00f3b\u00e1lkoz\u00e1s'}
           </button>
         )}
-        <Link to="/">
+        <Link to="/" className={onRetry ? styles.secondary : undefined}>
           <LuHouse aria-hidden="true" />
           {' Vissza a f\u0151oldalra'}
         </Link>

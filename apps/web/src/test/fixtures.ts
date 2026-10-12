@@ -55,6 +55,67 @@ export const fixtureGames = {
     { code: 'scandinavian', name: 'Skandináv lottó' },
   ],
 }
+
+// Echo the requested population/scope without calculating backend statistics.
+// Unknown endpoints fail loudly instead of accidentally returning a drawing.
+export function fixtureApiResponse(input: string): Response {
+  const url = new URL(input, 'http://fixture.test')
+  if (url.pathname === '/api/v1/games') return Response.json(fixtureGames)
+  const match = /^\/api\/v1\/games\/(five|six|scandinavian)(\/.*)$/.exec(
+    url.pathname,
+  )
+  const game = match?.[1]
+  if (game !== 'five' && game !== 'six' && game !== 'scandinavian')
+    throw new Error(`Unexpected fixture request: ${input}`)
+  const fixture = fixtureResponses(game)
+  const path = match?.[2]
+  if (path === '/drawings/latest' || path === '/drawings/7')
+    return Response.json(fixture.drawing)
+  if (path === '/drawings') return Response.json(fixture.history)
+  const body =
+    path === '/statistics/summary'
+      ? fixture.summary
+      : path === '/statistics/frequencies'
+        ? fixture.frequencies
+        : path === '/statistics/parity'
+          ? fixture.parity
+          : path === '/statistics/pairs'
+            ? fixture.pairs
+            : path === '/statistics/trends/yearly'
+              ? {
+                  ...fixture.yearly,
+                  data: fixture.yearly.data.map((row) => ({
+                    ...row,
+                    selected_number_count: 1,
+                    selected_number_occurrence_percentage: 100,
+                  })),
+                  meta: {
+                    ...fixture.yearly.meta,
+                    selected_number: Number(
+                      url.searchParams.get('number') ?? 1,
+                    ),
+                  },
+                }
+              : undefined
+  if (!body) throw new Error(`Unexpected fixture request: ${input}`)
+  const filters = Object.fromEntries(
+    ['year', 'week', 'from_date', 'to_date'].flatMap((key) => {
+      const value = url.searchParams.get(key)
+      return value === null
+        ? []
+        : [[key, key === 'year' || key === 'week' ? Number(value) : value]]
+    }),
+  )
+  return Response.json({
+    ...body,
+    meta: {
+      ...body.meta,
+      filters,
+      set_scope: url.searchParams.get('set') ?? body.meta.set_scope,
+    },
+  })
+}
+
 export function fixtureResponses(game: GameCode) {
   const main =
     game === 'five'

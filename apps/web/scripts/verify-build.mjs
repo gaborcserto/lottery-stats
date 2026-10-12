@@ -61,6 +61,23 @@ export async function verifyBuild(fixture = false) {
       '/images/logo.png',
     )
     assert.ok(document.querySelector('header nav'))
+    const navigation = document.querySelector('header nav')
+    if (path) {
+      assert.equal(
+        navigation.querySelector('[aria-current="page"]')?.getAttribute('href'),
+        `/${path.slice(0, -1)}`,
+      )
+      const index = ['otoslotto/', 'hatoslotto/', 'skandinav-lotto/'].indexOf(
+        path,
+      )
+      assert.equal(
+        navigation.querySelector('[aria-hidden="true"]')?.style.transform,
+        `translateX(${index * 100}%)`,
+      )
+    } else {
+      assert.equal(navigation.querySelector('[aria-current="page"]'), null)
+      assert.equal(navigation.querySelector('[aria-hidden="true"]'), null)
+    }
     assert.ok(document.querySelector('footer'))
     assert.equal(
       document.querySelector('footer img')?.getAttribute('src'),

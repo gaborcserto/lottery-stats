@@ -287,6 +287,7 @@ export async function loadHistory(
   signal?: AbortSignal,
   filters: PopulationFilters = {},
   historyPage = 1,
+  { throwOnError = false }: { throwOnError?: boolean } = {},
 ): Promise<Pick<GamePageData, 'history' | 'historyError' | 'historyPage'>> {
   try {
     const [page, latest] = await Promise.all([
@@ -338,7 +339,7 @@ export async function loadHistory(
     }
   } catch (error) {
     signal?.throwIfAborted()
-    if (!(error instanceof ApiError)) throw error
+    if (throwOnError || !(error instanceof ApiError)) throw error
     return { history: [], historyError: error.message }
   }
 }

@@ -111,13 +111,15 @@ export function StatisticsDetails({
     loadYearly,
   )
   const pairs = useResource(hydrated && retryPairs ? pairsKey : null, loadPairs)
+  const availableYearly =
+    yearly.data ?? (!hydrated ? yearly.previousData : undefined)
   const loadedTrend =
-    yearly.data &&
+    availableYearly &&
     filters.numbers
       .map((number) =>
         number === 1 && data.yearly && !retryYearly
           ? data.yearly
-          : yearly.data?.find(
+          : availableYearly.find(
               (result) => result.meta.selected_number === number,
             ),
       )

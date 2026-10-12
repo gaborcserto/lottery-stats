@@ -6,8 +6,9 @@ import styles from './AppHeader.module.scss'
 
 export function AppHeader({ pending = false }: { pending?: boolean }) {
   const { pathname } = useLocation()
+  const gamePath = pathname.replace(/\/+$/, '')
   const activeIndex = gameCodes.findIndex(
-    (code) => gamePages[code].path === pathname,
+    (code) => gamePages[code].path === gamePath,
   )
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)

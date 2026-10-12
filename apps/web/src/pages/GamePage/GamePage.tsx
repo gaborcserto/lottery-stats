@@ -54,6 +54,7 @@ const loadHistoryPage = cachedResource((key, signal) => {
     signal,
     filters.population,
     filters.page,
+    { throwOnError: true },
   )
 })
 
@@ -472,11 +473,7 @@ export function GamePage({
           className={styles.details}
           game={game}
           data={data}
-          filters={
-            filtered.loading || filtered.error
-              ? parseFilters(new URLSearchParams(), game)
-              : filters
-          }
+          filters={filters}
           hydrated={hydrated && !filtered.loading && !filtered.error}
         />
       </div>

@@ -1,10 +1,56 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { renderToString } from 'react-dom/server'
+import { hydrateRoot } from 'react-dom/client'
+import { describe, expect, it, vi } from 'vitest'
 import { AppHeader } from './AppHeader'
 import { ThemeProvider } from '../ThemeProvider'
 
 describe('sticky header state', () => {
+  it.each([
+    ['/otoslotto', 'Ötöslottó', 0],
+    ['/hatoslotto', 'Hatoslottó', 1],
+    ['/skandinav-lotto', 'Skandináv lottó', 2],
+  ] as const)(
+    'prerenders the active pill for the framework trailing-slash %s URL',
+    async (path, title, index) => {
+      const html = renderToString(
+        <MemoryRouter initialEntries={[`${path}/`]}>
+          <ThemeProvider>
+            <AppHeader />
+          </ThemeProvider>
+        </MemoryRouter>,
+      )
+      const container = document.createElement('div')
+      document.body.append(container)
+      container.innerHTML = html
+      const navigation = container.querySelector('nav')
+      expect(
+        navigation?.querySelector('[aria-current="page"]')?.textContent,
+      ).toBe(title)
+      expect(navigation?.querySelector('[aria-hidden="true"]')).toHaveStyle({
+        transform: `translateX(${index * 100}%)`,
+      })
+      const recovery = vi.fn()
+      const root = hydrateRoot(
+        container,
+        <MemoryRouter initialEntries={[path]}>
+          <ThemeProvider>
+            <AppHeader />
+          </ThemeProvider>
+        </MemoryRouter>,
+        { onRecoverableError: recovery },
+      )
+      try {
+        await act(async () => {})
+        expect(container.querySelector('nav')).toBe(navigation)
+        expect(recovery).not.toHaveBeenCalled()
+      } finally {
+        await act(async () => root.unmount())
+        container.remove()
+      }
+    },
+  )
   it('keeps the active route through hover and slides the active pill on route changes', () => {
     render(
       <MemoryRouter initialEntries={['/otoslotto']}>

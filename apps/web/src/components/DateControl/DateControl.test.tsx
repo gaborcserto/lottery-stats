@@ -131,4 +131,50 @@ describe('date calendar', () => {
       screen.getByRole('button', { name: '2025. október 12., vasárnap' }),
     ).toHaveFocus()
   })
+
+  it('moves from adjacent-month cells using their own date for arrows and week edges', () => {
+    const { input, trigger } = setup('2024-03-01')
+    fireEvent.click(trigger)
+    fireEvent.keyDown(document.activeElement ?? input, { key: 'ArrowLeft' })
+    expect(
+      screen.getByRole('button', { name: '2024. február 29., csütörtök' }),
+    ).toHaveFocus()
+    fireEvent.keyDown(document.activeElement ?? input, { key: 'Home' })
+    expect(
+      screen.getByRole('button', { name: '2024. február 26., hétfő' }),
+    ).toHaveFocus()
+    fireEvent.keyDown(document.activeElement ?? input, { key: 'End' })
+    expect(
+      screen.getByRole('button', { name: '2024. március 3., vasárnap' }),
+    ).toHaveFocus()
+  })
+
+  it('moves from trailing adjacent-month cells using the focused date', () => {
+    const { input, trigger } = setup('2024-03-31')
+    fireEvent.click(trigger)
+    fireEvent.keyDown(document.activeElement ?? input, { key: 'ArrowRight' })
+    expect(
+      screen.getByRole('button', { name: '2024. április 1., hétfő' }),
+    ).toHaveFocus()
+    fireEvent.keyDown(document.activeElement ?? input, { key: 'Home' })
+    expect(
+      screen.getByRole('button', { name: '2024. április 1., hétfő' }),
+    ).toHaveFocus()
+    fireEvent.keyDown(document.activeElement ?? input, { key: 'End' })
+    expect(
+      screen.getByRole('button', { name: '2024. április 7., vasárnap' }),
+    ).toHaveFocus()
+  })
+
+  it('keeps keyboard movement inside supported year boundaries', () => {
+    const { input, trigger } = setup('9999-12-31')
+    fireEvent.click(trigger)
+    fireEvent.keyDown(document.activeElement ?? input, { key: 'ArrowRight' })
+    expect(
+      screen.getByRole('button', { name: '9999. december 31., péntek' }),
+    ).toHaveFocus()
+    expect(
+      screen.getByRole('button', { name: 'Következő hónap' }),
+    ).toBeDisabled()
+  })
 })

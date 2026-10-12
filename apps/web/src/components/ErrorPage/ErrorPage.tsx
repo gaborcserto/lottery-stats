@@ -56,9 +56,13 @@ export function ErrorPage({
 
   return (
     <section className={styles.error} aria-labelledby="error-heading">
-      <p className={styles.code} data-text={status}>
+      <p className={styles.code}>
         <span>{status}</span>
-        <span className={styles.codeLayers} aria-hidden="true" />
+        <span
+          className={styles.codeLayers}
+          data-text={status}
+          aria-hidden="true"
+        />
       </p>
       <h1 id="error-heading">{page.title}</h1>
       <p className={styles.message}>{message ?? page.message}</p>

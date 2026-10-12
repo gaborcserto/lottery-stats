@@ -8,12 +8,16 @@ export function NumberPicker({
   numbers,
   onChange,
   colorForNumber,
+  maximumSelections,
+  minimumSelections = 1,
   disabled = false,
 }: {
   maximum: number
   numbers: number[]
   onChange: (numbers: number[]) => void
   colorForNumber: (number: number) => string
+  maximumSelections?: number
+  minimumSelections?: number
   disabled?: boolean
 }) {
   const disclosure = useRef<HTMLDetailsElement>(null)
@@ -113,14 +117,27 @@ export function NumberPicker({
                   type="checkbox"
                   aria-label={`${number}. szám`}
                   checked={numbers.includes(number)}
-                  disabled={disabled}
-                  onChange={() =>
-                    onChange(
-                      numbers.includes(number)
-                        ? numbers.filter((value) => value !== number)
-                        : [...numbers, number].sort((a, b) => a - b),
-                    )
+                  disabled={
+                    disabled ||
+                    (numbers.includes(number) &&
+                      numbers.length <= minimumSelections) ||
+                    (!numbers.includes(number) &&
+                      maximumSelections !== undefined &&
+                      numbers.length >= maximumSelections)
                   }
+                  onChange={() => {
+                    if (numbers.includes(number)) {
+                      if (numbers.length <= minimumSelections) return
+                      onChange(numbers.filter((value) => value !== number))
+                      return
+                    }
+                    if (
+                      maximumSelections !== undefined &&
+                      numbers.length >= maximumSelections
+                    )
+                      return
+                    onChange([...numbers, number].sort((a, b) => a - b))
+                  }}
                 />
                 <span>{number}</span>
                 <LuCheck aria-hidden="true" />
@@ -129,6 +146,18 @@ export function NumberPicker({
           )}
         </div>
       </details>
+      {maximumSelections !== undefined &&
+        numbers.length >= maximumSelections && (
+          <p role="status">
+            Legfeljebb {maximumSelections} szám hasonlítható össze egyszerre.
+          </p>
+        )}
+      {numbers.length <= minimumSelections && (
+        <p role="status">
+          Legalább {minimumSelections} számot kell kiválasztani az
+          összehasonlításhoz.
+        </p>
+      )}
       <ul className={styles.chips} aria-label="Kiválasztott számok">
         {numbers.map((number) => {
           const style: CSSProperties & { '--series-color': string } = {
@@ -140,10 +169,15 @@ export function NumberPicker({
               <span>{number}</span>
               <button
                 type="button"
-                disabled={disabled}
+                disabled={disabled || numbers.length <= minimumSelections}
                 aria-label={`${number}. szám eltávolítása`}
                 onClick={(event) => {
+                  if (numbers.length <= minimumSelections) return
                   onChange(numbers.filter((value) => value !== number))
+                  if (numbers.length - 1 <= minimumSelections) {
+                    disclosure.current?.querySelector('summary')?.focus()
+                    return
+                  }
                   const nextChip =
                     event.currentTarget.closest('li')?.nextElementSibling ??
                     event.currentTarget.closest('li')?.previousElementSibling

@@ -240,7 +240,13 @@ export function DateControl({
                   }
                   if (event.key in steps) {
                     event.preventDefault()
-                    move(dateAt(year, month, day.getDate() + steps[event.key]))
+                    move(
+                      dateAt(
+                        day.getFullYear(),
+                        day.getMonth(),
+                        day.getDate() + steps[event.key],
+                      ),
+                    )
                   } else if (
                     event.key === 'PageUp' ||
                     event.key === 'PageDown'

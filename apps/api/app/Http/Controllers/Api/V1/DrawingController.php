@@ -21,10 +21,11 @@ class DrawingController extends Controller
         $validator = Validator::make($request->query(), [
             'page' => ['sometimes', 'integer', 'min:1'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'include' => ['sometimes', 'in:details'],
             ...DrawingFilters::rules(),
         ])->after(function ($validator) use ($request): void {
             foreach (array_diff(array_keys($request->query()), [
-                'page', 'per_page', 'year', 'week', 'from_date', 'to_date',
+                'page', 'per_page', 'include', 'year', 'week', 'from_date', 'to_date',
             ]) as $parameter) {
                 $validator->errors()->add($parameter, 'This query parameter is not supported.');
             }
@@ -34,7 +35,13 @@ class DrawingController extends Controller
         $query = $this->orderedDrawings($gameModel);
         DrawingFilters::apply($query, $validated);
 
-        return DrawingSummaryResource::collection($query->paginate(
+        $resource = DrawingSummaryResource::class;
+        if (($validated['include'] ?? null) === 'details') {
+            $query->with($this->detailRelations());
+            $resource = DrawingResource::class;
+        }
+
+        return $resource::collection($query->paginate(
             (int) ($validated['per_page'] ?? 20),
             ['*'],
             'page',

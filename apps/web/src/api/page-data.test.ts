@@ -41,140 +41,123 @@ function fixtureFetcher() {
 }
 
 describe('game page data loading', () => {
-  it.each(['five', 'six', 'scandinavian'] as const)(
-    'reuses %s snapshot details without renewing them on return visits',
-    async (game) => {
-      vi.useFakeTimers({ toFake: ['Date'] })
-      const fetcher = fixtureFetcher()
-      const client = createApiClient('/api/v1', fetcher)
-      const snapshot = {
-        ...fixturePageData(game),
-        capturedAt: new Date().toISOString(),
-      }
-      rememberGamePage(game, snapshot, client)
-      await loadHistory(client, game, Promise.resolve(null))
-      expect(fetcher).toHaveBeenCalledTimes(1)
-      vi.setSystemTime(Date.now() + 29_000)
-      rememberGamePage(
-        game,
-        { ...snapshot, capturedAt: new Date().toISOString() },
-        client,
-      )
-      await loadHistory(client, game, Promise.resolve(null))
-      expect(fetcher).toHaveBeenCalledTimes(2)
-      vi.setSystemTime(Date.now() + 1000)
-      await loadHistory(client, game, Promise.resolve(null))
-      expect(fetcher).toHaveBeenCalledTimes(4)
-    },
-  )
-  it('reuses overlapping drawing details across date filters and history pages until TTL', async () => {
+  it('keeps a realistic three-game navigation and history scenario below the shared quota', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     const base = fixtureFetcher()
-    const fixture = fixtureResponses('five')
-    const fetcher = vi.fn<typeof fetch>(async (input, init) => {
-      const url = String(input)
-      if (url.includes('/drawings?'))
-        return Response.json({
-          ...fixture.history,
-          data: [7, 6, 5, 4, 3].map((id) => ({
-            ...fixture.history.data[0],
-            id,
-          })),
-        })
-      const id = /\/drawings\/(\d+)$/.exec(url)?.[1]
-      if (id)
-        return Response.json({
-          data: { ...fixture.drawing.data, id: Number(id) },
-        })
-      return base(input, init)
-    })
-    const client = createApiClient('/api/v1', fetcher)
-    const first = await loadGame(client, 'five', undefined, {
-      from_date: '2026-01-01',
-    })
-    expect(first.history.map((drawing) => drawing.id)).toEqual([7, 6, 5, 4, 3])
-    expect(fetcher).toHaveBeenCalledTimes(11)
-    for (const from_date of [
-      '2026-01-02',
-      '2026-01-03',
-      '2026-01-04',
-      '2026-01-05',
-      '2026-01-06',
-    ])
-      await loadGame(client, 'five', undefined, { from_date })
-    expect(fetcher).toHaveBeenCalledTimes(41)
-    const details = () =>
-      fetcher.mock.calls.filter(([url]) => /\/drawings\/\d+$/.test(String(url)))
-    expect(details()).toHaveLength(4)
-    await loadHistory(client, 'five', Promise.resolve(null), undefined, {}, 2)
-    expect(details()).toHaveLength(4)
-    vi.setSystemTime(Date.now() + 30_000)
-    await loadHistory(client, 'five', Promise.resolve(null))
-    expect(details()).toHaveLength(9)
-  })
-
-  it('shares in-flight details between histories and cancels only the departing subscriber', async () => {
-    const fixture = fixtureResponses('five')
-    const response = deferred<Response>()
-    const fetcher = vi.fn<typeof fetch>(async (input) =>
-      String(input).includes('/drawings?')
-        ? Response.json(fixture.history)
-        : response.promise,
+    let requests = 0
+    const fetcher = vi.fn<typeof fetch>((input, init) =>
+      ++requests > 60
+        ? Promise.resolve(Response.json({}, { status: 429 }))
+        : base(input, init),
     )
     const client = createApiClient('/api/v1', fetcher)
-    const first = new AbortController()
-    const second = new AbortController()
-    const a = loadHistory(client, 'five', Promise.resolve(null), first.signal)
-    const b = loadHistory(client, 'five', Promise.resolve(null), second.signal)
-    await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(3))
-    const rejection = expect(a).rejects.toMatchObject({ name: 'AbortError' })
-    first.abort()
-    await rejection
-    expect(fetcher.mock.calls[2][1]?.signal?.aborted).toBe(false)
-    response.resolve(Response.json(fixture.drawing))
-    expect((await b).history).toHaveLength(1)
-    expect(fetcher).toHaveBeenCalledTimes(3)
+    const games = ['five', 'six', 'scandinavian'] as const
+    for (const game of games) await loadGameWithFallback(client, game)
+    expect(fetcher).toHaveBeenCalledTimes(21)
+    for (let cycle = 0; cycle < 3; cycle++) {
+      for (const game of games) {
+        expect(
+          (
+            await loadGameRoute(
+              client,
+              game,
+              () => Promise.resolve(fixturePageData(game)),
+              new AbortController().signal,
+            )
+          ).refreshError,
+        ).toBeUndefined()
+        await loadGameWithFallback(client, game)
+      }
+    }
+    expect(fetcher).toHaveBeenCalledTimes(21)
+    for (const game of games) {
+      await loadHistory(client, game, Promise.resolve(null), undefined, {}, 2)
+      await loadHistory(client, game, Promise.resolve(null), undefined, {}, 2)
+    }
+    expect(fetcher).toHaveBeenCalledTimes(24)
+    vi.setSystemTime(Date.now() + 30_000)
+    for (const game of games) await loadGameWithFallback(client, game)
+    expect(fetcher).toHaveBeenCalledTimes(45)
+    expect(
+      fetcher.mock.calls.some(([url]) => /\/drawings\/\d+$/.test(String(url))),
+    ).toBe(false)
   })
 
-  it('bounds detail concurrency and sends no queued details or refresh requests during Retry-After', async () => {
+  it('reuses unchanged history when only the Scandinavian statistics scope changes', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
+    const fetcher = fixtureFetcher()
+    const client = createApiClient('/api/v1', fetcher)
+    await loadHistory(client, 'scandinavian', Promise.resolve(null))
+    await loadHistory(client, 'scandinavian', Promise.resolve(null))
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    vi.setSystemTime(Date.now() + 30_000)
+    await loadHistory(client, 'scandinavian', Promise.resolve(null))
+    expect(fetcher).toHaveBeenCalledTimes(2)
+  })
+
+  it('loads five complete historical drawings in one request without detail fan-out', async () => {
     const fixture = fixtureResponses('five')
-    const responses = [deferred<Response>(), deferred<Response>()]
-    const fetcher = vi.fn<typeof fetch>(async (input) => {
-      const url = String(input)
-      if (url.includes('/drawings?'))
-        return Response.json({
-          ...fixture.history,
-          data: [1, 2, 3, 4, 5].map((id) => ({
-            ...fixture.history.data[0],
-            id,
-          })),
-        })
-      const id = Number(url.split('/').at(-1))
-      return responses[id - 1].promise
-    })
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        ...fixture.history,
+        data: [7, 6, 5, 4, 3].map((id) => ({ ...fixture.drawing.data, id })),
+      }),
+    )
+    const client = createApiClient('/api/v1', fetcher)
+    const data = await loadHistory(client, 'five', Promise.resolve(null))
+    expect(data.history.map((drawing) => drawing.id)).toEqual([7, 6, 5, 4, 3])
+    expect(data.history[0].sets).toEqual(fixture.drawing.data.sets)
+    expect(data.history[0].prizes).toEqual(fixture.drawing.data.prizes)
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    expect(String(fetcher.mock.calls[0][0])).toContain(
+      'per_page=5&include=details',
+    )
+  })
+
+  it('retains a snapshot during quota exhaustion and respects Retry-After without requests', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json(
+        {},
+        {
+          status: 429,
+          headers: { 'Retry-After': '30' },
+        },
+      ),
+    )
     const client = createApiClient('/api/v1', fetcher)
     const snapshot = fixturePageData('five')
     rememberGamePage('five', snapshot, client)
-    const history = loadHistory(client, 'five', Promise.resolve(null))
-    await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(3))
-    responses[0].resolve(
-      Response.json({}, { status: 429, headers: { 'Retry-After': '30' } }),
-    )
-    expect((await history).historyError).toMatch(/Túl sok kérés/)
-    responses[1].resolve(
-      Response.json({ data: { ...fixture.drawing.data, id: 2 } }),
-    )
-    const refresh = await loadGameWithFallback(client, 'five')
-    expect(refresh.history).toEqual(snapshot.history)
-    expect(refresh.refreshError).toMatch(/Túl sok kérés/)
-    expect(fetcher).toHaveBeenCalledTimes(3)
+    const failed = await loadGameWithFallback(client, 'five')
+    expect(failed.history).toEqual(snapshot.history)
+    expect(failed.refreshError).toMatch(/sok/)
+    const count = fetcher.mock.calls.length
+    await loadGameWithFallback(client, 'five')
+    expect(fetcher).toHaveBeenCalledTimes(count)
     vi.setSystemTime(Date.now() + 30_000)
     fetcher.mockImplementation(fixtureFetcher())
     expect(
       (await loadGameWithFallback(client, 'five')).refreshError,
     ).toBeUndefined()
-    expect(fetcher.mock.calls.length).toBeGreaterThan(3)
+  })
+
+  it('shares a pending game refresh and cancels only the departing subscriber', async () => {
+    const response = deferred<Response>()
+    const base = fixtureFetcher()
+    const fetcher = vi.fn<typeof fetch>((input, init) =>
+      String(input).includes('/summary') ? response.promise : base(input, init),
+    )
+    const client = createApiClient('/api/v1', fetcher)
+    const first = new AbortController()
+    const second = new AbortController()
+    const a = loadGameWithFallback(client, 'five', first.signal)
+    const b = loadGameWithFallback(client, 'five', second.signal)
+    const rejection = expect(a).rejects.toMatchObject({ name: 'AbortError' })
+    first.abort()
+    await rejection
+    response.resolve(Response.json(fixtureResponses('five').summary))
+    expect((await b).history).toHaveLength(1)
+    expect(fetcher).toHaveBeenCalledTimes(7)
   })
 
   it('sends intersected filters and Scandinavian combined scope only to supported endpoints', async () => {
@@ -241,6 +224,7 @@ describe('game page data loading', () => {
           from_date: '2024-01-01',
           to_date: '2024-12-31',
           per_page: '5',
+          include: 'details',
         })
       }
     }
@@ -269,7 +253,11 @@ describe('game page data loading', () => {
       fixturePageData('five'),
     )
     expect(fetcher).not.toHaveBeenCalled()
-    const live = await loadGameRoute(client, 'five', snapshot, signal)
+    expect(await loadGameRoute(client, 'five', snapshot, signal)).toEqual(
+      fixturePageData('five'),
+    )
+    expect(fetcher).not.toHaveBeenCalled()
+    const live = await loadGameWithFallback(client, 'five', signal)
     expect(live.pairs?.data).toEqual(fixtureResponses('five').pairs.data)
     expect(live.yearly?.meta.selected_number).toBe(1)
     expect(fetcher).toHaveBeenCalledTimes(7)

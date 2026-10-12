@@ -65,7 +65,9 @@ describe('number picker', () => {
       screen.queryByRole('button', { name: '1. szám eltávolítása' }),
     ).not.toBeInTheDocument()
     const last = screen.getByRole('button', { name: '12. szám eltávolítása' })
-    expect(last).toHaveFocus()
+    expect(
+      screen.getByLabelText('Éves gyakoriságban vizsgált számok'),
+    ).toHaveFocus()
     expect(last.closest('li')?.style.getPropertyValue('--series-color')).toBe(
       '#2563eb',
     )
@@ -73,6 +75,7 @@ describe('number picker', () => {
     expect(
       screen.getByLabelText('Éves gyakoriságban vizsgált számok'),
     ).toHaveFocus()
+    expect(last).toBeDisabled()
   })
   it('dismisses outside the picker and blocks disabled selection', () => {
     const change = vi.fn()
@@ -100,5 +103,26 @@ describe('number picker', () => {
       screen.getByRole('button', { name: '1. szám eltávolítása' }),
     ).toBeDisabled()
     expect(change).not.toHaveBeenCalled()
+  })
+  it('blocks additions at the comparison limit and explains the limit', () => {
+    const change = vi.fn()
+    render(
+      <NumberPicker
+        maximum={35}
+        maximumSelections={2}
+        numbers={[1, 12]}
+        onChange={change}
+        colorForNumber={() => '#2563eb'}
+      />,
+    )
+    expect(
+      screen.getByText('Legfeljebb 2 szám hasonlítható össze egyszerre.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: '1. szám' })).toBeEnabled()
+    expect(screen.getByRole('checkbox', { name: '3. szám' })).toBeDisabled()
+    fireEvent.click(
+      screen.getByRole('button', { name: '1. szám eltávolítása' }),
+    )
+    expect(change).toHaveBeenCalledWith([12])
   })
 })

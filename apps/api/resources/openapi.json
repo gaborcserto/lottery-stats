@@ -150,8 +150,8 @@
         "tags": [
           "Results"
         ],
-        "summary": "List historical drawing summaries",
-        "description": "Descending year, week, dated before undated, date descending, ID descending. Stable ties do not imply physical draw order. Unknown query parameters return 422. Pagination links follow Laravel behavior and do not retain filters; resend filters when changing page.",
+        "summary": "List historical drawings",
+        "description": "Descending year, week, dated before undated, date descending, ID descending. Stable ties do not imply physical draw order. Unknown query parameters return 422. Pagination links follow Laravel behavior and do not retain filters; resend filters when changing page. With include=details, each drawing also contains ordered sets, numbers and exact nullable prizes, using the drawing-detail contract. Relations are eager-loaded for the bounded page.",
         "parameters": [
           {
             "$ref": "#/components/parameters/Game"
@@ -173,6 +173,9 @@
           },
           {
             "$ref": "#/components/parameters/ToDate"
+          },
+          {
+            "$ref": "#/components/parameters/IncludeDrawingDetails"
           }
         ],
         "responses": {
@@ -1351,7 +1354,48 @@
           "data": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/DrawingSummary"
+              "type": "object",
+              "required": [
+                "id",
+                "year",
+                "week",
+                "drawn_on"
+              ],
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "year": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9999
+                },
+                "week": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 53
+                },
+                "drawn_on": {
+                  "type": "string",
+                  "format": "date",
+                  "nullable": true
+                },
+                "sets": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NumberSet"
+                  }
+                },
+                "prizes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Prize"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Drawing summary by default; sets and prizes are both present with include=details."
             }
           },
           "links": {
@@ -1970,6 +2014,18 @@
           "minimum": 1,
           "maximum": 100,
           "default": 20
+        }
+      },
+      "IncludeDrawingDetails": {
+        "name": "include",
+        "in": "query",
+        "required": false,
+        "description": "Include complete drawing details to avoid one detail request per history row.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "details"
+          ]
         }
       }
     },

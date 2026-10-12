@@ -46,6 +46,11 @@ describe('ErrorPage', () => {
         .getByText(String(status))
         .parentElement?.querySelector('[aria-hidden="true"]'),
     ).toHaveAttribute('aria-hidden', 'true')
+    expect(
+      screen
+        .getByText(String(status))
+        .parentElement?.querySelector('[aria-hidden="true"]'),
+    ).toHaveAttribute('data-text', String(status))
     expect(screen.queryByText('Lottery Stats')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument()
   })

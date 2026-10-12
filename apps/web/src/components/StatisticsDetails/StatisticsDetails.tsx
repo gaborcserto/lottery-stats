@@ -1,7 +1,7 @@
 import { NumberPicker } from '../NumberPicker'
 import { useTheme } from '../ThemeProvider'
 import { getTrendColors } from '../../config/trend-colors'
-import { lazy, useState } from 'react'
+import { lazy, memo, useMemo, useState } from 'react'
 import { LuChartLine, LuLink } from 'react-icons/lu'
 import { useSearchParams } from 'react-router'
 import { api, ApiError } from '../../api/client'
@@ -9,6 +9,7 @@ import type { GameCode } from '../../api/contracts'
 import type { GamePageData } from '../../api/page-data'
 import {
   maximumNumbers,
+  maximumTrendSelections,
   parseFilters,
   type PageFilters,
 } from '../../api/filters'
@@ -19,12 +20,12 @@ import styles from './StatisticsDetails.module.scss'
 
 const YearlyTrendChart = lazy(() =>
   import('../YearlyTrendChart').then((module) => ({
-    default: module.YearlyTrendChart,
+    default: memo(module.YearlyTrendChart),
   })),
 )
 const NumberPairsChart = lazy(() =>
   import('../NumberPairsChart').then((module) => ({
-    default: module.NumberPairsChart,
+    default: memo(module.NumberPairsChart),
   })),
 )
 const loadSingleYearly = cachedResource((key, signal) => {
@@ -113,29 +114,47 @@ export function StatisticsDetails({
   const pairs = useResource(hydrated && retryPairs ? pairsKey : null, loadPairs)
   const availableYearly =
     yearly.data ?? (!hydrated ? yearly.previousData : undefined)
-  const loadedTrend =
-    availableYearly &&
-    filters.numbers
-      .map((number) =>
-        number === 1 && data.yearly && !retryYearly
-          ? data.yearly
-          : availableYearly.find(
-              (result) => result.meta.selected_number === number,
-            ),
-      )
-      .filter((result) => result !== undefined)
+  const loadedTrend = useMemo(
+    () =>
+      availableYearly &&
+      filters.numbers
+        .map((number) =>
+          number === 1 && data.yearly && !retryYearly
+            ? data.yearly
+            : availableYearly.find(
+                (result) => result.meta.selected_number === number,
+              ),
+        )
+        .filter((result) => result !== undefined),
+    [availableYearly, filters.numbers, data.yearly, retryYearly],
+  )
+  const defaultTrend = useMemo(
+    () => (data.yearly ? [data.yearly] : undefined),
+    [data.yearly],
+  )
   const trendData =
     loadedTrend ??
     (yearly.loading || yearly.error
-      ? (yearly.previousData ?? (data.yearly ? [data.yearly] : undefined))
+      ? (yearly.previousData ?? defaultTrend)
       : filters.numbers.length === 1 && filters.number === 1 && data.yearly
-        ? [data.yearly]
+        ? defaultTrend
         : undefined)
   const pairsData = pairs.data ?? data.pairs
   const yearlyError = yearly.data
     ? null
     : (yearly.error ?? (filters.number === 1 ? data.yearlyError : null))
   const pairsError = pairs.data ? null : (pairs.error ?? data.pairsError)
+  const trendSeries = useMemo(
+    () =>
+      trendData?.map((result, index) => ({
+        number:
+          result.meta.selected_number ??
+          filters.numbers[index] ??
+          filters.number,
+        data: result.data,
+      })),
+    [trendData, filters.numbers, filters.number],
+  )
   return (
     <div className={`${styles.sections} ${className}`}>
       <section className={styles.card} aria-labelledby="trends-heading">
@@ -144,6 +163,7 @@ export function StatisticsDetails({
         </h2>
         <NumberPicker
           maximum={maximumNumbers[game]}
+          maximumSelections={maximumTrendSelections}
           numbers={filters.numbers}
           colorForNumber={(number) => {
             const plottedIndex =
@@ -188,15 +208,7 @@ export function StatisticsDetails({
                 label="Éves gyakorisági vonaldiagram"
                 busy={yearly.loading}
               >
-                <YearlyTrendChart
-                  series={trendData.map((result, index) => ({
-                    number:
-                      result.meta.selected_number ??
-                      filters.numbers[index] ??
-                      filters.number,
-                    data: result.data,
-                  }))}
-                />
+                {trendSeries && <YearlyTrendChart series={trendSeries} />}
               </ChartSlot>
               <div
                 className={styles.tableWrap}

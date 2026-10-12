@@ -399,8 +399,7 @@
     .columns > .card:first-child {
       grid-column: 1 / -1;
     }
-    .columns > .card[aria-labelledby='parity-heading'],
-    .details > .card {
+    .columns > .card[aria-labelledby='parity-heading'] {
       display: flex;
       min-height: 0;
       flex-direction: column;

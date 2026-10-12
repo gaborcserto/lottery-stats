@@ -209,7 +209,7 @@ export function fixtureResponses(game: GameCode) {
     mostFrequencies,
     leastFrequencies,
     history: {
-      data: [{ id: 7, year: 2026, week: 40, drawn_on: null }],
+      data: [drawing],
       links: {
         first: root + '?page=1',
         last: root + '?page=1',

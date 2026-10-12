@@ -83,4 +83,29 @@ describe('shareable statistics controls', () => {
     expect(screen.getByLabelText('Év')).toHaveValue(null)
     router.dispose()
   })
+  it('clears draft fields and validity when URL defaults are already active', () => {
+    const router = createMemoryRouter([{ path: '/', Component: Filters }], {
+      initialEntries: ['/?sort=number&set=machine'],
+    })
+    render(<RouterProvider router={router} />)
+    fireEvent.change(screen.getByLabelText('Év'), { target: { value: '2024' } })
+    fireEvent.change(screen.getByLabelText('Hét'), { target: { value: '12' } })
+    fireEvent.change(screen.getByLabelText('Kezdő dátum'), {
+      target: { value: '2024-03-01' },
+    })
+    fireEvent.change(screen.getByLabelText('Záró dátum'), {
+      target: { value: '2024-02-29' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Szűrés' }))
+    expect(screen.getByLabelText('Záró dátum')).toBeInvalid()
+    fireEvent.click(screen.getByRole('button', { name: 'Alaphelyzet' }))
+    expect(router.state.location.search).toBe('')
+    expect(screen.getByLabelText('Év')).toHaveValue(null)
+    expect(screen.getByLabelText('Hét')).toHaveValue(null)
+    expect(screen.getByLabelText('Kezdő dátum')).toHaveValue('')
+    expect(screen.getByLabelText('Záró dátum')).toHaveValue('')
+    expect(screen.getByLabelText('Záró dátum')).toBeValid()
+    expect(screen.getByLabelText('Gyakoriság rendezése')).toHaveValue('number')
+    router.dispose()
+  })
 })

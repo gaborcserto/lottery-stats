@@ -183,6 +183,17 @@ export function createApiClient(
         query,
         signal,
       ),
+    drawingHistory: (
+      game: GameCode,
+      query?: HistoryQuery,
+      signal?: AbortSignal,
+    ) =>
+      request(
+        `${gamePath(game)}/drawings`,
+        contract.decodeDrawingHistory,
+        { ...query, include: 'details' },
+        signal,
+      ),
     latest: (game: GameCode, signal?: AbortSignal) =>
       request(
         `${gamePath(game)}/drawings/latest`,

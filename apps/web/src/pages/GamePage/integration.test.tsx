@@ -67,6 +67,59 @@ function frequencyTable() {
 }
 
 describe('statistics user journeys through the typed API client', () => {
+  it('keeps one trend selection and disables both removal controls accessibly', async () => {
+    const { router, fetcher } = setup('six', '?number=12')
+    await screen.findByRole('table', {
+      name: '12. szám éves előfordulásai',
+    })
+    const chips = screen.getByRole('list', { name: 'Kiválasztott számok' })
+    const removal = within(chips).getByRole('button', {
+      name: '12. szám eltávolítása',
+    })
+    expect(removal).toBeDisabled()
+    expect(
+      screen.getByText(
+        'Legalább 1 számot kell kiválasztani az összehasonlításhoz.',
+      ),
+    ).toHaveAttribute('role', 'status')
+    const checkbox = screen.getByRole('checkbox', { name: '12. szám' })
+    expect(checkbox).toBeDisabled()
+    const count = fetcher.mock.calls.length
+    fireEvent.click(removal)
+    fireEvent.click(checkbox)
+    expect(router.state.location.search).toBe('?number=12')
+    expect(fetcher).toHaveBeenCalledTimes(count)
+  })
+
+  it('bounds oversized trend URLs and reports yearly API failures safely', async () => {
+    const query = Array.from(
+      { length: 35 },
+      (_, index) => `number=${index + 1}`,
+    ).join('&')
+    const { fetcher } = setup('scandinavian', `?${query}`)
+    await screen.findByRole('table', { name: /éves előfordulásai/i })
+    const yearlyCalls = fetcher.mock.calls.filter(([input]) =>
+      String(input).includes('/trends/yearly'),
+    )
+    expect(yearlyCalls.length).toBeLessThanOrEqual(9)
+    expect(
+      screen.getByText('Legfeljebb 10 szám hasonlítható össze egyszerre.'),
+    ).toBeInTheDocument()
+
+    fetcher.mockImplementation(async (input) =>
+      String(input).includes('/trends/yearly')
+        ? Response.json({}, { status: 503 })
+        : fixtureApiResponse(String(input)),
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: /^1\. szám eltávolítása$/ }),
+    )
+    fireEvent.click(screen.getByRole('checkbox', { name: '11. szám' }))
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Az adatok átmenetileg nem érhetők el')
+    expect(alert).not.toHaveTextContent('private')
+  })
+
   it('retains selected numbers while population filters load and fail', async () => {
     const { fetcher } = setup('six', '?number=1&number=12')
     await screen.findByRole('table', {

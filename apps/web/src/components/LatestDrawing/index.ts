@@ -1,1 +1,0 @@
-export { LatestDrawing } from './LatestDrawing'

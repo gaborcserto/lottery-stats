@@ -126,6 +126,36 @@ class ResultsApiTest extends TestCase
         $this->getJson('/api/v1/games/five/drawings/999999')->assertNotFound()->assertJsonStructure(['message']);
     }
 
+    public function test_history_details_are_filtered_paginated_and_eager_loaded(): void
+    {
+        $game = Game::query()->where('code', 'six')->firstOrFail();
+        for ($week = 1; $week <= 6; $week++) {
+            $drawing = $this->makeDrawing($game, 'history-'.$week, 2026, $week, null);
+            $main = $drawing->sets()->create(['type' => 'main']);
+            $main->numbers()->createMany(array_map(fn (int $number): array => ['number' => $number], range(1, 6)));
+            $drawing->prizes()->create(['tier' => 'match_6', 'winner_count' => null, 'amount' => '999999999999.00', 'currency' => 'HUF']);
+        }
+
+        $this->getJson('/api/v1/games/six/drawings?include=invalid')->assertUnprocessable();
+        $summary = $this->getJson('/api/v1/games/six/drawings?per_page=5')->assertOk();
+        $this->assertArrayNotHasKey('sets', $summary->json('data.0'));
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+        $page = $this->getJson('/api/v1/games/six/drawings?include=details&per_page=5&year=2026')->assertOk()
+            ->assertJsonCount(5, 'data')->assertJsonPath('meta.total', 6)
+            ->assertJsonPath('data.0.week', 6)->assertJsonPath('data.0.drawn_on', null)
+            ->assertJsonPath('data.0.sets.0.numbers', [1, 2, 3, 4, 5, 6])
+            ->assertJsonPath('data.0.prizes.0.amount', '999999999999.00');
+        // Game, count, page, sets, numbers and prizes: independent of page size.
+        $this->assertCount(6, DB::getQueryLog());
+        DB::disableQueryLog();
+        $id = $page->json('data.0.id');
+        $this->assertSame($this->getJson('/api/v1/games/six/drawings/'.$id)->json('data'), $page->json('data.0'));
+        $this->getJson('/api/v1/games/six/drawings?include=details&per_page=5&page=2&year=2026')
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.week', 1);
+        $this->getJson('/api/v1/games/six/drawings?include=details&year=2025')->assertOk()->assertJsonCount(0, 'data');
+    }
+
     private function makeDrawing(Game $game, string $key, int $year, int $week, ?string $date): Drawing
     {
         return $game->drawings()->create([

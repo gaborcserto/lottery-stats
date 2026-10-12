@@ -7,6 +7,7 @@ import Root from '../../root'
 import Five from '../../routes/five'
 import { shouldRevalidate } from '../../routes/six'
 import { deferred, fixturePageData } from '../../test/fixtures'
+import * as pageData from '../../api/page-data'
 import type { GamePageData } from '../../api/page-data'
 import { api, ApiError } from '../../api/client'
 import { GameRoute } from '.'
@@ -15,7 +16,10 @@ afterEach(() => vi.restoreAllMocks())
 
 describe('game route loading', () => {
   it('reuses the default yearly series, deselects numbers and restores selections from history', async () => {
-    const data = fixturePageData('five')
+    const data = {
+      ...fixturePageData('five'),
+      capturedAt: new Date().toISOString(),
+    }
     if (!data.yearly) throw new Error('Missing yearly fixture')
     const base = data.yearly
     const yearly = vi
@@ -63,7 +67,7 @@ describe('game route loading', () => {
     vi.spyOn(api, 'latest').mockRejectedValue(new ApiError('network'))
     vi.spyOn(api, 'frequencies').mockResolvedValue(data.frequencies)
     vi.spyOn(api, 'parity').mockResolvedValue(data.parity)
-    vi.spyOn(api, 'drawings').mockRejectedValue(new ApiError('network'))
+    vi.spyOn(api, 'drawingHistory').mockRejectedValue(new ApiError('network'))
     vi.spyOn(api, 'pairs').mockRejectedValue(new ApiError('network'))
     vi.spyOn(api, 'yearly').mockRejectedValue(new ApiError('network'))
     const loader = vi.fn(async () => data)
@@ -121,7 +125,10 @@ describe('game route loading', () => {
     }
   })
   it('changes visual sorting without a request and fetches only selected yearly data', async () => {
-    const data = fixturePageData('six')
+    const data = {
+      ...fixturePageData('six'),
+      capturedAt: new Date().toISOString(),
+    }
     if (!data.yearly) throw new Error('Missing yearly fixture')
     const yearly = vi.spyOn(api, 'yearly').mockImplementation((_game, query) =>
       Promise.resolve({
@@ -191,10 +198,13 @@ describe('game route loading', () => {
     )
     router.dispose()
   })
-  it('hydrates existing results without clearing them, then retains them on refresh failure', async () => {
+  it('refreshes a stale sorted URL after hydration without clearing results or blocking the router', async () => {
     const data = fixturePageData('five')
     const refresh = deferred<GamePageData>()
-    const loader = vi.fn(() => refresh.promise)
+    const background = vi
+      .spyOn(pageData, 'loadGameWithFallback')
+      .mockReturnValue(refresh.promise)
+    const loader = vi.fn(async () => data)
     const router = createMemoryRouter(
       [
         {
@@ -206,7 +216,7 @@ describe('game route loading', () => {
         },
       ],
       {
-        initialEntries: ['/otoslotto'],
+        initialEntries: ['/otoslotto?sort=most&number=1'],
         hydrationData: { loaderData: { game: data } },
       },
     )
@@ -219,8 +229,9 @@ describe('game route loading', () => {
       onRecoverableError: recovery,
     })
     try {
-      await waitFor(() => expect(loader).toHaveBeenCalledTimes(1))
-      expect(router.state.revalidation).toBe('loading')
+      await waitFor(() => expect(background).toHaveBeenCalledTimes(1))
+      expect(router.state.revalidation).toBe('idle')
+      expect(screen.getByText(/Az adatok friss/)).toBeInTheDocument()
       expect(container.querySelector('h1')).toBe(heading)
       expect(
         screen.getByRole('heading', { name: 'Számgyakoriság' }),
@@ -233,11 +244,11 @@ describe('game route loading', () => {
         }),
       )
       expect(container.querySelector('h1')).toBe(heading)
-      expect(screen.getByRole('status')).toHaveTextContent(
+      expect(screen.getByText(/A frissítés nem sikerült/)).toHaveTextContent(
         'Az adatok átmenetileg nem érhetők el.',
       )
       expect(recovery).not.toHaveBeenCalled()
-      expect(loader).toHaveBeenCalledTimes(1)
+      expect(loader).not.toHaveBeenCalled()
     } finally {
       await act(async () => root.unmount())
       router.dispose()

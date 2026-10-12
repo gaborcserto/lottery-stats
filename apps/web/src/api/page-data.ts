@@ -7,6 +7,7 @@ import type {
 } from './contracts'
 import { gameCodes } from '../config/games'
 import { cachedResource } from './resource'
+import { parseFilters } from './filters'
 
 export interface GamePageData {
   latest: Drawing | null
@@ -36,7 +37,10 @@ const caches = new WeakMap<
   {
     pages: Map<GameCode, GamePageData>
     latest: Map<GameCode, { drawing: Drawing | null; capturedAt: string }>
-    drawings: ReturnType<typeof cachedResource<Drawing>>
+    refresh: ReturnType<typeof cachedResource<GamePageData>>
+    history: ReturnType<
+      typeof cachedResource<Awaited<ReturnType<ApiClient['drawingHistory']>>>
+    >
   }
 >()
 
@@ -46,13 +50,25 @@ function cacheFor(client: ApiClient) {
     cache = {
       pages: new Map(),
       latest: new Map(),
-      drawings: cachedResource(async (key, signal) => {
-        const [game, id] = key.split(':')
+      refresh: cachedResource((game, signal) => {
         if (game !== 'five' && game !== 'six' && game !== 'scandinavian')
           throw new Error('Invalid game')
-        const drawing = (await client.drawing(game, Number(id), signal)).data
-        if (drawing.id !== Number(id)) throw new ApiError('invalid-response')
-        return drawing
+        return loadGame(client, game, signal)
+      }),
+      history: cachedResource((key, signal) => {
+        const [game, query] = key.split('?')
+        if (game !== 'five' && game !== 'six' && game !== 'scandinavian')
+          throw new Error('Invalid game')
+        const filters = parseFilters(new URLSearchParams(query), game)
+        return client.drawingHistory(
+          game,
+          {
+            ...filters.population,
+            per_page: 5,
+            ...(filters.page === 1 ? {} : { page: filters.page }),
+          },
+          signal,
+        )
       }),
     }
     caches.set(client, cache)
@@ -71,19 +87,6 @@ export function rememberGamePage(
   client: ApiClient = api,
 ) {
   const cache = cacheFor(client)
-  // Seed only the first snapshot; rendering reused data must not renew detail TTLs.
-  if (!cache.pages.has(game)) {
-    const capturedAt = Date.parse(data.capturedAt)
-    if (!data.historyError)
-      for (const drawing of data.history)
-        cache.drawings.remember(`${game}:${drawing.id}`, drawing, capturedAt)
-    if (data.latest)
-      cache.drawings.remember(
-        `${game}:${data.latest.id}`,
-        data.latest,
-        capturedAt,
-      )
-  }
   cache.pages.set(game, data)
   // A failed refresh must not extend the freshness of earlier results.
   if (!data.refreshError && !cache.latest.has(game))
@@ -99,12 +102,6 @@ export function rememberHomeData(data: HomePageData, client: ApiClient = api) {
   for (const { game, drawing } of data.latest) {
     if (!cache.latest.has(game)) {
       cache.latest.set(game, { drawing, capturedAt })
-      if (drawing)
-        cache.drawings.remember(
-          `${game}:${drawing.id}`,
-          drawing,
-          Date.parse(capturedAt),
-        )
     }
   }
 }
@@ -116,14 +113,19 @@ export async function loadGameRoute(
   signal: AbortSignal,
 ): Promise<GamePageData> {
   signal.throwIfAborted()
-  if (!cacheFor(client).pages.has(game)) {
+  const cached = cacheFor(client).pages.get(game)
+  if (!cached) {
     // Native prerender data gives a first visit content without waiting for live statistics.
     const data = await snapshot()
     signal.throwIfAborted()
     rememberGamePage(game, data, client)
     return data
   }
-  return loadGameWithFallback(client, game, signal)
+  return cached
+}
+
+export function invalidateGameRefresh(game: GameCode, client: ApiClient = api) {
+  cacheFor(client).refresh.invalidate(game)
 }
 
 export async function loadGameWithFallback(
@@ -136,7 +138,10 @@ export async function loadGameWithFallback(
   if (cached && !cached.refreshError && isFresh(cached.capturedAt))
     return cached
   try {
-    const data = await loadGame(client, game, signal)
+    const data = await cacheFor(client).refresh(
+      game,
+      signal ?? new AbortController().signal,
+    )
     const result = cached
       ? {
           ...data,
@@ -170,7 +175,6 @@ export async function loadLatest(
   try {
     const drawing = (await client.latest(game, signal)).data
     cache.latest.set(game, { drawing, capturedAt: new Date().toISOString() })
-    cache.drawings.remember(`${game}:${drawing.id}`, drawing)
     return drawing
   } catch (error) {
     if (error instanceof ApiError && error.kind === 'not-found') return null
@@ -290,44 +294,22 @@ export async function loadHistory(
   { throwOnError = false }: { throwOnError?: boolean } = {},
 ): Promise<Pick<GamePageData, 'history' | 'historyError' | 'historyPage'>> {
   try {
+    const query = new URLSearchParams()
+    for (const [key, value] of Object.entries(filters))
+      if (value !== undefined) query.set(key, String(value))
+    query.set('page', String(historyPage))
     const [page, latest] = await Promise.all([
-      client.drawings(
-        game,
-        {
-          ...filters,
-          per_page: 5,
-          ...(historyPage === 1 ? {} : { page: historyPage }),
-        },
-        signal,
+      cacheFor(client).history(
+        `${game}?${query}`,
+        signal ?? new AbortController().signal,
       ),
       latestRequest,
     ])
-    const details = new Map<number, Drawing>()
-    const items = page.data.filter((item) => item.id !== latest?.id)
-    const detailController = new AbortController()
-    const detailSignal = signal
-      ? AbortSignal.any([signal, detailController.signal])
-      : detailController.signal
-    const drawings = cacheFor(client).drawings
-    let next = 0
-    // Bound each history batch instead of launching all five details together.
-    await Promise.all(
-      Array.from({ length: Math.min(2, items.length) }, async () => {
-        while (next < items.length) {
-          detailSignal.throwIfAborted()
-          const item = items[next++]
-          const drawing = await drawings(`${game}:${item.id}`, detailSignal)
-          details.set(item.id, drawing)
-        }
-      }),
-    ).catch((error: unknown) => {
-      detailController.abort()
-      throw error
-    })
-    const history = page.data.flatMap((item) => {
-      const drawing = item.id === latest?.id ? latest : details.get(item.id)
-      return drawing ? [drawing] : []
-    })
+    // The paginated details response replaces the list-plus-N-detail waterfall.
+    signal?.throwIfAborted()
+    const history = page.data.map((drawing) =>
+      drawing.id === latest?.id ? latest : drawing,
+    )
     return {
       history,
       historyError: null,

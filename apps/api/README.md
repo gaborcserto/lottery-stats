@@ -76,7 +76,7 @@ All endpoints return JSON. Game codes are `five`, `six`, and `scandinavian`; gam
 | --- | --- |
 | `GET /games` | `data` array of supported games |
 | `GET /games/{game}` | One game in `data` |
-| `GET /games/{game}/drawings` | Paginated drawing summaries |
+| `GET /games/{game}/drawings` | Paginated drawing summaries; `include=details` adds sets and prizes |
 | `GET /games/{game}/drawings/latest` | Latest drawing detail |
 | `GET /games/{game}/drawings/{drawing}` | Drawing detail |
 
@@ -95,7 +95,9 @@ Drawing summaries contain `id`, `year`, `week`, and nullable `drawn_on`. Detail 
 }
 ```
 
-The drawings list accepts `page` (default `1`), `per_page` (default `20`, maximum `100`), `year` (1–9999), `week` (1–53), `from_date`, and `to_date` (both `YYYY-MM-DD`, inclusive). Year/week filters include undated records. Date filters exclude records with a null date. Malformed values and reversed date ranges return `422` with Laravel's JSON validation errors. Unknown game codes and missing or cross-game drawing IDs return JSON `404`.
+Use `include=details` on the drawings list for complete drawing records in one paginated request. It preserves the detail endpoint's set ordering, missing dates, and exact nullable prize strings; the default remains summaries. Relations are eager-loaded only for the requested page.
+
+The drawings list accepts `include` (only `details`), `page` (default `1`), `per_page` (default `20`, maximum `100`), `year` (1–9999), `week` (1–53), `from_date`, and `to_date` (both `YYYY-MM-DD`, inclusive). Year/week filters include undated records. Date filters exclude records with a null date. Malformed values and reversed date ranges return `422` with Laravel's JSON validation errors. Unknown game codes and missing or cross-game drawing IDs return JSON `404`.
 
 List and latest use the same descending source ordering: year, then week, with dated records ahead of undated records within a week, then date and numeric ID descending for stable ties. The ID tie-breaker does not claim physical draw order. Standard Laravel pagination metadata and links accompany `data`; an empty collection has an empty `data` array and zero total.
 

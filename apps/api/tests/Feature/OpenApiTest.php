@@ -73,7 +73,7 @@ class OpenApiTest extends TestCase
                     $request->authorize();
                     $rules = $request->rules();
                 } else {
-                    $rules = ['page' => ['integer', 'min:1'], 'per_page' => ['integer', 'min:1', 'max:100'], ...DrawingFilters::rules()];
+                    $rules = ['page' => ['integer', 'min:1'], 'per_page' => ['integer', 'min:1', 'max:100'], 'include' => ['in:details'], ...DrawingFilters::rules()];
                 }
                 $queries = [];
                 foreach ($item['get']['parameters'] as $parameter) {
@@ -130,6 +130,11 @@ class OpenApiTest extends TestCase
                 $response = $this->get($url)->assertOk();
                 $schema = $item['get']['responses']['200']['content']['application/json']['schema'];
                 $this->assertSchema(json_decode($response->getContent(), flags: JSON_THROW_ON_ERROR), $schema);
+                if (str_ends_with($path, '/drawings')) {
+                    $details = $this->get($url.'?include=details')->assertOk();
+                    $this->assertSchema(json_decode($details->getContent(), flags: JSON_THROW_ON_ERROR), $schema);
+                    $this->assertSame($this->get($url.'/'.$drawing->id)->json('data'), $details->json('data.0'));
+                }
                 if (str_ends_with($path, '/trends/yearly')) {
                     $response = $this->get($url.'?number=7')->assertOk();
                     $this->assertSchema(json_decode($response->getContent(), flags: JSON_THROW_ON_ERROR), $schema);

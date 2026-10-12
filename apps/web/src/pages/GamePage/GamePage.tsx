@@ -1,4 +1,4 @@
-import { lazy } from 'react'
+import { lazy, memo, useMemo } from 'react'
 import {
   LuCalendarDays,
   LuChartColumn,
@@ -27,12 +27,12 @@ import { useHydrated } from '../../api/use-hydrated'
 
 const FrequencyChart = lazy(() =>
   import('../../components/FrequencyChart').then((module) => ({
-    default: module.FrequencyChart,
+    default: memo(module.FrequencyChart),
   })),
 )
 const ParityChart = lazy(() =>
   import('../../components/ParityChart').then((module) => ({
-    default: module.ParityChart,
+    default: memo(module.ParityChart),
   })),
 )
 const loadFiltered = cachedResource((key, signal) => {
@@ -93,7 +93,10 @@ export function GamePage({
 }) {
   const [params, setParams] = useSearchParams()
   const hydrated = useHydrated()
-  const filters = parseFilters(hydrated ? params : new URLSearchParams(), game)
+  const filters = useMemo(
+    () => parseFilters(hydrated ? params : new URLSearchParams(), game),
+    [hydrated, params, game],
+  )
   const query = new URLSearchParams()
   for (const [key, value] of Object.entries(filters.statistics))
     if (value !== undefined) query.set(key, String(value))
@@ -133,15 +136,19 @@ export function GamePage({
         historyResult.previousData?.historyPage ??
         data.historyPage)
       : data.historyPage
-  const frequencies = data.frequencies.data
-    .slice()
-    .sort((a, b) =>
-      filters.sort === 'most'
-        ? b.count - a.count || a.number - b.number
-        : filters.sort === 'least'
-          ? a.count - b.count || a.number - b.number
-          : a.number - b.number,
-    )
+  const frequencies = useMemo(
+    () =>
+      data.frequencies.data
+        .slice()
+        .sort((a, b) =>
+          filters.sort === 'most'
+            ? b.count - a.count || a.number - b.number
+            : filters.sort === 'least'
+              ? a.count - b.count || a.number - b.number
+              : a.number - b.number,
+        ),
+    [data.frequencies.data, filters.sort],
+  )
   const page = gamePages[game]
   const summary = data.summary.data
   const parity = data.parity.data

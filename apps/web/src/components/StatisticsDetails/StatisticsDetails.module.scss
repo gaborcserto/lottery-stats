@@ -60,6 +60,11 @@
   .sections {
     display: contents;
   }
+  .card {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+  }
   .card .yearlyChartSlot {
     height: clamp(320px, 11vw, 400px);
     flex-grow: 1;

@@ -1,6 +1,6 @@
 import { SelectControl } from '../SelectControl'
 import { DateControl } from '../DateControl'
-import type { FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router'
 import { FaFilter } from 'react-icons/fa6'
 import type { GameCode } from '../../api/contracts'
@@ -17,6 +17,7 @@ export function StatisticsFilters({
   pending?: boolean
 }) {
   const [params, setParams] = useSearchParams()
+  const [resetKey, setResetKey] = useState(0)
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const values = new FormData(event.currentTarget)
@@ -44,7 +45,7 @@ export function StatisticsFilters({
         <FaFilter aria-hidden="true" /> Időszak és számsor
       </h2>
       <form
-        key={JSON.stringify({ ...filters.statistics, sort: filters.sort })}
+        key={`${JSON.stringify({ ...filters.statistics, sort: filters.sort })}-${resetKey}`}
         onSubmit={submit}
         className={styles.form}
         aria-busy={pending}
@@ -127,7 +128,10 @@ export function StatisticsFilters({
         </button>
         <button
           type="button"
-          onClick={() => setParams({}, { preventScrollReset: true })}
+          onClick={() => {
+            setResetKey((key) => key + 1)
+            setParams({}, { preventScrollReset: true })
+          }}
         >
           Alaphelyzet
         </button>

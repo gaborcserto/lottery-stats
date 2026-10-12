@@ -89,7 +89,7 @@ describe('history URL navigation', () => {
     expect(pages).toHaveLength(2)
     for (const [input] of pages)
       expect(new URL(String(input), 'http://fixture.test').search).toBe(
-        '?per_page=5&page=5',
+        '?per_page=5&page=5&include=details',
       )
   })
   it('fetches only the requested page and restores cached pages through browser history', async () => {
@@ -97,7 +97,7 @@ describe('history URL navigation', () => {
     data.historyPage = { current: 1, last: 727, total: 3631 }
     const fixture = fixtureResponses('five')
     const drawings = vi
-      .spyOn(api, 'drawings')
+      .spyOn(api, 'drawingHistory')
       .mockImplementation(async (_game, query) => ({
         ...fixture.history,
         meta: {

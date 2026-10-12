@@ -77,6 +77,7 @@ export interface StatisticsQuery extends PopulationFilters {
   set?: SetScope
 }
 export interface HistoryQuery extends PopulationFilters {
+  include?: 'details'
   page?: number
   per_page?: number
 }
@@ -322,12 +323,12 @@ export function decodeYearlyResponse(value: unknown) {
     },
   }
 }
-export function decodeDrawingPage(value: unknown) {
+function decodePage<T>(value: unknown, decode: Decoder<T>) {
   const v = record(value),
     links = record(v.links),
     meta = record(v.meta)
   return {
-    data: array(decodeDrawingSummary)(v.data),
+    data: array(decode)(v.data),
     links: {
       first: text(links.first),
       last: text(links.last),
@@ -356,4 +357,11 @@ export function decodeDrawingPage(value: unknown) {
       })(meta.links),
     },
   }
+}
+
+export function decodeDrawingPage(value: unknown) {
+  return decodePage(value, decodeDrawingSummary)
+}
+export function decodeDrawingHistory(value: unknown) {
+  return decodePage(value, decodeDrawing)
 }

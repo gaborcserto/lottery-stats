@@ -10,6 +10,8 @@ export const maximumNumbers: Record<GameCode, number> = {
   six: 45,
   scandinavian: 35,
 }
+// Leave most of the shared API quota available for page and user requests.
+export const maximumTrendSelections = 10
 export interface PageFilters {
   population: PopulationFilters
   statistics: StatisticsQuery
@@ -57,7 +59,9 @@ export function parseFilters(
         .map((value) => positive(value, maximumNumbers[game]))
         .filter((value): value is number => value !== undefined),
     ),
-  ].sort((a, b) => a - b)
+  ]
+    .slice(0, maximumTrendSelections)
+    .sort((a, b) => a - b)
   return {
     population,
     statistics: {

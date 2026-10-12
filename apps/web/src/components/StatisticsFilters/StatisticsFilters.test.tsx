@@ -8,16 +8,32 @@ import { describe, expect, it } from 'vitest'
 import { StatisticsFilters } from '.'
 import { parseFilters } from '../../api/filters'
 
-function Filters() {
+function Filters({ pending = false }: { pending?: boolean }) {
   const [params] = useSearchParams()
   return (
     <StatisticsFilters
       game="scandinavian"
       filters={parseFilters(params, 'scandinavian')}
+      pending={pending}
     />
   )
 }
 describe('shareable statistics controls', () => {
+  it('shows pending feedback and prevents another submission while filtering', () => {
+    const router = createMemoryRouter(
+      [{ path: '/', Component: () => <Filters pending /> }],
+      { initialEntries: ['/?year=2020'] },
+    )
+    render(<RouterProvider router={router} />)
+    expect(
+      screen.getByRole('button', { name: 'Szűrés folyamatban…' }),
+    ).toBeDisabled()
+    expect(
+      screen.getByLabelText('Statisztikai szűrők').querySelector('form'),
+    ).toHaveAttribute('aria-busy', 'true')
+    router.dispose()
+  })
+
   it('submits supported filters and follows browser back and forward', async () => {
     const router = createMemoryRouter([{ path: '/', Component: Filters }], {
       initialEntries: ['/?year=2020&set=manual&number=35&page=2'],

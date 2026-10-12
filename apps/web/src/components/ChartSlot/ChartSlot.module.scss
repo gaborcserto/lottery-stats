@@ -25,10 +25,62 @@
     var(--elevated) 65%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.2s ease-in-out infinite;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+.chartShape {
+  display: block;
+  width: min(72%, 24rem);
+  height: 58%;
+  padding: 0 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  opacity: 0.68;
+  background-image:
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--brand-lime) 48%, var(--surface)),
+      color-mix(in srgb, var(--brand-lime) 48%, var(--surface))
+    ),
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--brand-lime) 48%, var(--surface)),
+      color-mix(in srgb, var(--brand-lime) 48%, var(--surface))
+    ),
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--brand-lime) 48%, var(--surface)),
+      color-mix(in srgb, var(--brand-lime) 48%, var(--surface))
+    ),
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--brand-lime) 48%, var(--surface)),
+      color-mix(in srgb, var(--brand-lime) 48%, var(--surface))
+    ),
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--brand-lime) 48%, var(--surface)),
+      color-mix(in srgb, var(--brand-lime) 48%, var(--surface))
+    );
+  background-repeat: no-repeat;
+  background-size:
+    12% 52%,
+    12% 78%,
+    12% 42%,
+    12% 90%,
+    12% 64%;
+  background-position:
+    8% 100%,
+    29% 100%,
+    50% 100%,
+    71% 100%,
+    92% 100%;
 }
 @keyframes shimmer {
   to {
     background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading {
+    animation: none;
   }
 }

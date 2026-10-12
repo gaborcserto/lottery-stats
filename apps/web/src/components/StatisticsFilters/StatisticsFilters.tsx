@@ -10,9 +10,11 @@ import styles from './StatisticsFilters.module.scss'
 export function StatisticsFilters({
   game,
   filters,
+  pending = false,
 }: {
   game: GameCode
   filters: PageFilters
+  pending?: boolean
 }) {
   const [params, setParams] = useSearchParams()
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -45,6 +47,7 @@ export function StatisticsFilters({
         key={JSON.stringify({ ...filters.statistics, sort: filters.sort })}
         onSubmit={submit}
         className={styles.form}
+        aria-busy={pending}
       >
         <label>
           Év
@@ -118,7 +121,10 @@ export function StatisticsFilters({
             <option value="least">Legritkább elöl</option>
           </SelectControl>
         </label>
-        <button type="submit">Szűrés</button>
+        <button type="submit" disabled={pending}>
+          {pending && <span className={styles.spinner} aria-hidden="true" />}
+          {pending ? 'Szűrés folyamatban…' : 'Szűrés'}
+        </button>
         <button
           type="button"
           onClick={() => setParams({}, { preventScrollReset: true })}

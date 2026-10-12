@@ -221,7 +221,11 @@ export function GamePage({
         </section>
       </div>
 
-      <StatisticsFilters game={game} filters={filters} />
+      <StatisticsFilters
+        game={game}
+        filters={filters}
+        pending={filtered.loading}
+      />
       {isFiltered &&
         !filtered.loading &&
         filtered.data &&

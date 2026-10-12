@@ -1,5 +1,8 @@
 .card {
   --ball-size: 2.2rem;
+  --hover-shadow:
+    0 0.9rem 1.8rem color-mix(in srgb, var(--brand-lime) 26%, transparent),
+    0 0.3rem 0.8rem rgb(16 35 48 / 8%);
   display: flex;
   min-width: 0;
   height: 100%;
@@ -10,6 +13,33 @@
   background: var(--card-background);
   color: var(--text);
   box-shadow: var(--glass-shadow);
+  transition:
+    transform 280ms cubic-bezier(0.25, 0.45, 0.45, 0.95),
+    box-shadow 280ms ease;
+  &:focus-within {
+    transform: translateY(-5px);
+    box-shadow: var(--glass-shadow), var(--hover-shadow);
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    transform: translateY(-5px) scale(1.01);
+    box-shadow: var(--glass-shadow), var(--hover-shadow);
+  }
+}
+:global(:root[data-theme='dark']) .card {
+  --hover-shadow:
+    0 1rem 2rem rgb(0 0 0 / 34%),
+    0 0.35rem 1rem color-mix(in srgb, var(--brand-lime) 25%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+  .card:hover,
+  .card:focus-within {
+    transform: none;
+  }
 }
 @supports (
   (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))

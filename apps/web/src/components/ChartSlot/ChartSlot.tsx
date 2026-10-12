@@ -61,6 +61,7 @@ export function ChartSlot({
   }, [])
   const placeholder = (
     <p className={`${styles.placeholder} ${styles.loading}`} role="status">
+      <span className={styles.chartShape} aria-hidden="true" />
       Az interaktív ábra betöltése…
     </p>
   )
@@ -77,6 +78,7 @@ export function ChartSlot({
         </ChartError>
       ) : (
         <div className={styles.placeholder}>
+          <span className={styles.chartShape} aria-hidden="true" />
           <span>Interaktív ábra</span>
           <noscript>
             Az ábrához JavaScript szükséges; az adatok alább olvashatók.

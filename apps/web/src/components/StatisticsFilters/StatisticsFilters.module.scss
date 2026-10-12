@@ -57,4 +57,34 @@
   > button {
     min-height: 2.75rem;
   }
+  > button[type='submit'] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  > button:disabled {
+    cursor: progress;
+    opacity: 0.8;
+  }
+}
+.spinner {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: 0 0 auto;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    border-right-color: currentColor;
+  }
 }

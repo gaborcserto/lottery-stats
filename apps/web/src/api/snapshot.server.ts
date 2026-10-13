@@ -30,6 +30,26 @@ function serverClient() {
     )
   return createApiClient(url.href)
 }
+
+class IncompleteSnapshotError extends Error {
+  constructor(game: GameCode, sources: string[]) {
+    super(`${game} game is missing required ${sources.join(', ')} data.`)
+  }
+}
+
+function requireCompleteGameSnapshot(
+  game: GameCode,
+  data: GamePageData,
+): GamePageData {
+  const missing: string[] = []
+  if (data.historyError) missing.push('history')
+  if (data.pairsError || !data.pairs) missing.push('pairs')
+  if (data.yearlyError || !data.yearly) missing.push('yearly statistics')
+  if (missing.length) throw new IncompleteSnapshotError(game, missing)
+
+  return data
+}
+
 async function acquireSnapshot(): Promise<Record<GameCode, GamePageData>> {
   try {
     const client = serverClient()
@@ -41,16 +61,27 @@ async function acquireSnapshot(): Promise<Record<GameCode, GamePageData>> {
     )
       throw new Error('Incomplete game list')
     // One release snapshot, shared by all route loaders. No automatic retries or feed access.
-    const five = await loadGame(client, 'five', signal)
-    const six = await loadGame(client, 'six', signal)
-    const scandinavian = await loadGame(client, 'scandinavian', signal)
+    const five = requireCompleteGameSnapshot(
+      'five',
+      await loadGame(client, 'five', signal),
+    )
+    const six = requireCompleteGameSnapshot(
+      'six',
+      await loadGame(client, 'six', signal),
+    )
+    const scandinavian = requireCompleteGameSnapshot(
+      'scandinavian',
+      await loadGame(client, 'scandinavian', signal),
+    )
     const capturedAt = new Date().toISOString()
     return {
       five: { ...five, capturedAt },
       six: { ...six, capturedAt },
       scandinavian: { ...scandinavian, capturedAt },
     }
-  } catch {
+  } catch (error) {
+    if (error instanceof IncompleteSnapshotError)
+      throw new Error(`Prerender snapshot acquisition failed: ${error.message}`)
     throw new Error(
       'Prerender snapshot acquisition failed. Check PRERENDER_API_BASE_URL, Laravel availability, API contracts and rate limits; no release should be published.',
     )

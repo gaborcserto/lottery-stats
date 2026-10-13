@@ -50,6 +50,9 @@ class ResultsApiTest extends TestCase
         $this->getJson('/api/v1/games/five/drawings?per_page=100')->assertJsonPath('meta.per_page', 100);
         $this->getJson('/api/v1/games/five/drawings?per_page=101')->assertUnprocessable();
         $this->getJson('/api/v1/games/five/drawings?page=0')->assertUnprocessable();
+        $this->getJson('/api/v1/games/five/drawings?page=1000001')
+            ->assertUnprocessable()->assertJsonValidationErrors('page');
+        $this->getJson('/api/v1/games/five/drawings?page=1000000')->assertOk();
         $this->getJson('/api/v1/games/five/drawings?week=54')->assertUnprocessable();
         $this->getJson('/api/v1/games/five/drawings?unknown=value')->assertUnprocessable();
         $this->getJson('/api/v1/games/five/drawings?from_date=not-a-date')->assertUnprocessable();
@@ -124,6 +127,8 @@ class ResultsApiTest extends TestCase
         $this->getJson('/api/v1/games/five/drawings')->assertOk()->assertJsonCount(0, 'data');
         $this->getJson('/api/v1/games/invalid/drawings')->assertNotFound()->assertJsonStructure(['message']);
         $this->getJson('/api/v1/games/five/drawings/999999')->assertNotFound()->assertJsonStructure(['message']);
+        $this->getJson('/api/v1/games/five/drawings/9223372036854775808')
+            ->assertNotFound()->assertJsonStructure(['message']);
     }
 
     public function test_history_details_are_filtered_paginated_and_eager_loaded(): void

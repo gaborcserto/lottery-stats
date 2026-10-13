@@ -180,6 +180,27 @@ class LotterySynchronizationTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_source_urls_with_any_forbidden_component_are_rejected_without_a_request(): void
+    {
+        $official = $this->url('five');
+        foreach ([
+            'port' => 'https://bet.szerencsejatek.hu:443/cmsfiles/otos.json',
+            'username' => 'https://user@bet.szerencsejatek.hu/cmsfiles/otos.json',
+            'password' => 'https://user:secret@bet.szerencsejatek.hu/cmsfiles/otos.json',
+            'query' => $official.'?download=1',
+            'fragment' => $official.'#download',
+        ] as $component => $url) {
+            config()->set('lottery.sources.five', $url);
+            Http::fake();
+
+            $result = $this->synchronizer->synchronize('five', true);
+
+            $this->assertSame('failed', $result->status, "URL containing {$component} was accepted.");
+            $this->assertSame('The configured lottery source is not allowed.', $result->message);
+            Http::assertNothingSent();
+        }
+    }
+
     public function test_invalid_freshness_configuration_is_rejected_without_a_request(): void
     {
         config()->set('lottery.sync.interval_hours', 0);

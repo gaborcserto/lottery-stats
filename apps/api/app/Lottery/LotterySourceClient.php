@@ -105,7 +105,11 @@ final class LotterySourceClient
             && ($parts['scheme'] ?? null) === 'https'
             && ($parts['host'] ?? null) === 'bet.szerencsejatek.hu'
             && ($parts['path'] ?? null) === self::ALLOWED_PATHS[$gameCode]
-            && ! isset($parts['port'], $parts['user'], $parts['pass'], $parts['query'], $parts['fragment']);
+            && ! isset($parts['port'])
+            && ! isset($parts['user'])
+            && ! isset($parts['pass'])
+            && ! isset($parts['query'])
+            && ! isset($parts['fragment']);
     }
 
     private function positiveInteger(string $key, int $maximum = PHP_INT_MAX): int

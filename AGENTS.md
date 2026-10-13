@@ -41,7 +41,7 @@ The ignored `.notes/` directory contains optional local engineering notes and ma
 - Avoid excessive custom hooks/component fragmentation, unnecessary effects or memoization, and duplicated state. Derive values from existing state when possible.
 - Handle loading, error, empty, and success states explicitly. Never fabricate results or silently ignore failures.
 - Use semantic HTML, accessible names/labels, keyboard interactions, and visible focus states. Check responsive behavior with a mobile-first approach.
-- Use SCSS + CSS Modules for application styling; keep shared resets/theme styles global where appropriate. Support light, dark, and system themes and respect reduced-motion preferences when building UI.
+- Use SCSS + CSS Modules for application styling; keep shared resets/theme styles global where appropriate. Support the implemented Light and Dark themes without inferring a theme from the operating system, and respect reduced-motion preferences when building UI.
 - Do not introduce architecture/state management libraries or design systems without demonstrated need. React accesses the Laravel API, never the external lottery JSON feeds directly.
 
 ## Lottery data and API contracts

@@ -15,11 +15,13 @@ use Illuminate\Support\Facades\Validator;
 
 class DrawingController extends Controller
 {
+    private const MAX_PAGE = 1_000_000;
+
     public function index(Request $request, string $game): AnonymousResourceCollection
     {
         $gameModel = $this->findGame($game);
         $validator = Validator::make($request->query(), [
-            'page' => ['sometimes', 'integer', 'min:1'],
+            'page' => ['sometimes', 'integer', 'min:1', 'max:'.self::MAX_PAGE],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'include' => ['sometimes', 'in:details'],
             ...DrawingFilters::rules(),
@@ -58,8 +60,13 @@ class DrawingController extends Controller
         return new DrawingResource($drawing);
     }
 
-    public function show(string $game, int $drawing): DrawingResource
+    public function show(string $game, string $drawing): DrawingResource
     {
+        if (strlen($drawing) > strlen((string) PHP_INT_MAX)
+            || (strlen($drawing) === strlen((string) PHP_INT_MAX) && strcmp($drawing, (string) PHP_INT_MAX) > 0)) {
+            abort(404);
+        }
+
         $record = $this->findGame($game)->drawings()
             ->with($this->detailRelations())
             ->whereKey($drawing)

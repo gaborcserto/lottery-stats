@@ -73,7 +73,7 @@ class OpenApiTest extends TestCase
                     $request->authorize();
                     $rules = $request->rules();
                 } else {
-                    $rules = ['page' => ['integer', 'min:1'], 'per_page' => ['integer', 'min:1', 'max:100'], 'include' => ['in:details'], ...DrawingFilters::rules()];
+                    $rules = ['page' => ['integer', 'min:1', 'max:1000000'], 'per_page' => ['integer', 'min:1', 'max:100'], 'include' => ['in:details'], ...DrawingFilters::rules()];
                 }
                 $queries = [];
                 foreach ($item['get']['parameters'] as $parameter) {

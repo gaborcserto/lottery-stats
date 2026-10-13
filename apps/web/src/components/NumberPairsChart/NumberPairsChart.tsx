@@ -30,6 +30,11 @@ export function NumberPairsChart({
     : null
   const active = hovered ?? selectedPair
   const selection = rows.find((row) => row.pair === active)
+
+  function togglePair(pair: string) {
+    setSelected((current) => (current === pair ? null : pair))
+  }
+
   return (
     <div className={styles.chart}>
       <label className={styles.selection}>
@@ -53,7 +58,24 @@ export function NumberPairsChart({
           </span>
         )}
       </label>
-      <div className={styles.canvas}>
+      <div
+        className={styles.canvas}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return
+          if (!(event.target instanceof Element)) return
+
+          const label = event.target.getAttribute('aria-label')
+          const row = rows.find(
+            (candidate) =>
+              label ===
+              `${candidate.pair}: ${candidate.count} előfordulás, ${candidate.occurrence_percentage}%`,
+          )
+          if (!row) return
+
+          event.preventDefault()
+          togglePair(row.pair)
+        }}
+      >
         <ResponsiveBar
           theme={chartTheme}
           data={rows}
@@ -77,7 +99,7 @@ export function NumberPairsChart({
           }
           onMouseEnter={(bar) => setHovered(bar.data.pair)}
           onMouseLeave={() => setHovered(null)}
-          onClick={(bar) => setSelected(bar.data.pair)}
+          onClick={(bar) => togglePair(bar.data.pair)}
           tooltip={({ data: row }) => (
             <div className={styles.tooltip}>
               {row.pair}: {row.count} előfordulás · {row.occurrence_percentage}%

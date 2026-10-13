@@ -9,17 +9,23 @@ vi.mock('@nivo/pie', () => ({
   ),
 }))
 describe('parity occurrence shares', () => {
-  it('provides exact shares and controls the active slice through focus and touch', () => {
+  it('toggles an accessible parity selection with pointer and keyboard activation', () => {
     render(<ParityChart data={fixturePageData('five').parity.data} />)
     const even = screen.getByRole('button', { name: 'Páros: 2 · 40%' })
     fireEvent.focus(even)
+    expect(even).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(even)
     expect(even).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByTestId('donut')).toHaveAttribute('data-active', 'Páros')
+    fireEvent.click(even)
+    expect(even).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByTestId('donut')).not.toHaveAttribute('data-active')
     fireEvent.click(screen.getByRole('button', { name: 'Páratlan: 3 · 60%' }))
     expect(screen.getByTestId('donut')).toHaveAttribute(
       'data-active',
       'Páratlan',
     )
+    expect(even).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('labels an empty denominator without drawing fabricated slices', () => {

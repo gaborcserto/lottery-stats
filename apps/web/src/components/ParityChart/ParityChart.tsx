@@ -78,7 +78,11 @@ export function ParityChart({
           motionConfig={{ duration: 350 }}
           activeId={hovered ?? selected}
           onActiveIdChange={(id) => setHovered(id === null ? null : String(id))}
-          onClick={(row) => setSelected(String(row.id))}
+          onClick={(row) =>
+            setSelected((current) =>
+              current === String(row.id) ? null : String(row.id),
+            )
+          }
           tooltip={({ datum }) => (
             <div className={styles.tooltip}>
               {datum.id}: {datum.value} előfordulás · {datum.data.percentage}%
@@ -91,8 +95,9 @@ export function ParityChart({
           <button
             key={row.id}
             aria-pressed={selected === row.id}
-            onFocus={() => setSelected(row.id)}
-            onClick={() => setSelected(row.id)}
+            onClick={() =>
+              setSelected((current) => (current === row.id ? null : row.id))
+            }
           >
             {row.id}: {row.value} · {row.percentage}%
           </button>

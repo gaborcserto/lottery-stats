@@ -61,13 +61,6 @@ export function StatisticsDetails({
 
   return (
     <div className={`${styles.sections} ${className}`}>
-      <YearlyTrends
-        game={game}
-        data={data}
-        filters={filters}
-        hydrated={hydrated}
-        className={styles.card}
-      />
       <section className={styles.card} aria-labelledby="pairs-heading">
         <h2 id="pairs-heading">
           <LuLink aria-hidden="true" /> Gyakori számpárok
@@ -126,6 +119,13 @@ export function StatisticsDetails({
             <p>Nincs megfigyelt számpár a kiválasztott időszakban.</p>
           ))}
       </section>
+      <YearlyTrends
+        game={game}
+        data={data}
+        filters={filters}
+        hydrated={hydrated}
+        className={`${styles.card} ${styles.yearlyCard}`}
+      />
     </div>
   )
 }

@@ -42,7 +42,7 @@ describe('game route loading', () => {
       expect.any(AbortSignal),
     )
     await screen.findByRole('table', {
-      name: '1. szám, 12. szám éves előfordulásai',
+      name: '12. szám éves előfordulásai',
     })
     fireEvent.click(
       screen.getByRole('button', { name: '12. szám eltávolítása' }),
@@ -54,7 +54,7 @@ describe('game route loading', () => {
       expect(screen.getByRole('checkbox', { name: '12. szám' })).toBeChecked(),
     )
     await screen.findByRole('table', {
-      name: '1. szám, 12. szám éves előfordulásai',
+      name: '12. szám éves előfordulásai',
     })
     expect(yearly).toHaveBeenCalledTimes(1)
     router.dispose()
@@ -164,11 +164,11 @@ describe('game route loading', () => {
     fireEvent.click(screen.getByLabelText('Éves gyakoriságban vizsgált számok'))
     fireEvent.click(screen.getByRole('checkbox', { name: '42. szám' }))
     await screen.findByRole('table', {
-      name: '1. szám, 42. szám éves előfordulásai',
+      name: '42. szám éves előfordulásai',
     })
     fireEvent.click(screen.getByRole('checkbox', { name: '45. szám' }))
     await screen.findByRole('table', {
-      name: '1. szám, 42. szám, 45. szám éves előfordulásai',
+      name: '45. szám éves előfordulásai',
     })
     fireEvent.click(screen.getByRole('checkbox', { name: '1. szám' }))
     await waitFor(() => expect(yearly).toHaveBeenCalledTimes(2))

@@ -365,36 +365,6 @@ export function GamePage({
             >
               <ParityChart data={parity} />
             </ChartSlot>
-            <dl className={styles.parityCounts}>
-              <div>
-                <dt>Páros előfordulás</dt>
-                <dd>
-                  {count(parity.even.count)}{' '}
-                  <span>
-                    (
-                    {parity.even.occurrence_share_percentage.toLocaleString(
-                      'hu-HU',
-                      { maximumFractionDigits: 2 },
-                    )}
-                    %)
-                  </span>
-                </dd>
-              </div>
-              <div>
-                <dt>Páratlan előfordulás</dt>
-                <dd>
-                  {count(parity.odd.count)}{' '}
-                  <span>
-                    (
-                    {parity.odd.occurrence_share_percentage.toLocaleString(
-                      'hu-HU',
-                      { maximumFractionDigits: 2 },
-                    )}
-                    %)
-                  </span>
-                </dd>
-              </div>
-            </dl>
             <h3>Számsoronkénti megoszlás</h3>
             <p className={styles.caption}>
               Az arány nevezője a {count(data.parity.meta.eligible_set_count)}{' '}

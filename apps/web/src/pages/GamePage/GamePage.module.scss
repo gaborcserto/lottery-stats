@@ -227,28 +227,6 @@
     background: color-mix(in srgb, var(--card-background) 65%, transparent);
   }
 }
-.parityCounts {
-  margin: var(--space-4) 0;
-  div {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-3);
-    padding-block: 0.7rem;
-    border-bottom: 1px solid var(--border);
-  }
-  dt {
-    color: var(--muted);
-  }
-  dd {
-    margin: 0;
-    font-weight: 750;
-    font-variant-numeric: tabular-nums;
-  }
-  dd span {
-    color: var(--muted);
-    font-weight: 500;
-  }
-}
 .distributions {
   margin: 0;
   padding: 0;
@@ -270,10 +248,6 @@
 @media (min-width: 760px) {
   .summaryGrid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  .columns {
-    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-    align-items: start;
   }
 }
 @media (max-width: 480px) {
@@ -335,9 +309,6 @@
     flex-direction: column-reverse;
     align-items: start;
   }
-  .parityCounts div {
-    flex-wrap: wrap;
-  }
 }
 
 .summary {
@@ -367,8 +338,8 @@
 @media (min-width: 64rem) {
   .dashboard {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-items: stretch;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
     gap: var(--space-3);
     .columns,
     .details {
@@ -379,8 +350,17 @@
     }
     .columns > .card[aria-labelledby='parity-heading'] {
       display: flex;
+      align-self: stretch;
       min-height: 0;
       flex-direction: column;
+    }
+    .details > .card[aria-labelledby='pairs-heading'] {
+      grid-column: 2;
+      grid-row: 2;
+    }
+    .details > .card[aria-labelledby='trends-heading'] {
+      grid-column: 1 / -1;
+      grid-row: 3;
     }
     .parityChartSlot {
       height: clamp(340px, 15vw, 480px);
@@ -391,13 +371,13 @@
 
 @media (min-width: 80rem) {
   .dashboard {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 110rem) {
   .dashboard {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .overview {
     grid-template-columns: 2fr 1fr;

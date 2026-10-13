@@ -54,7 +54,7 @@
   --ball-text: #102330;
   --ball-most-background: var(--brand-lime);
   --ball-most-border: var(--brand-lime);
-  --ball-most-text: #102330;
+  --ball-most-text: #fff;
   --ball-least-background: var(--ball-least-blue);
   --ball-least-border: var(--ball-least-blue);
   --ball-least-text: #fff;
@@ -116,7 +116,7 @@
   --ball-text: #102330;
   --ball-most-background: var(--brand-lime);
   --ball-most-border: var(--brand-lime);
-  --ball-most-text: #102330;
+  --ball-most-text: #fff;
   --ball-least-background: var(--ball-least-blue);
   --ball-least-border: var(--ball-least-blue);
   --ball-least-text: #fff;
@@ -137,7 +137,7 @@
   --radius: 0.55rem;
   --card-shadow: 0 0.35rem 1rem rgb(4 18 25 / 6%);
   --action-background: var(--brand-lime);
-  --action-text: #102330;
+  --action-text: #fff;
 }
 
 :root[data-theme='dark'] {
@@ -146,7 +146,7 @@
 
 @media (min-width: 100rem) {
   :root {
-    --content-width: min(94vw, 210rem);
+    --content-width: min(94vw, 90rem);
   }
 }
 

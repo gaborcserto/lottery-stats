@@ -125,7 +125,7 @@ describe('statistics user journeys through the typed API client', () => {
   it('retains selected numbers while population filters load and fail', async () => {
     const { fetcher } = setup('six', '?number=1&number=12')
     await screen.findByRole('table', {
-      name: '1. szám, 12. szám éves előfordulásai',
+      name: '12. szám éves előfordulásai',
     })
     const pending = deferred<Response>()
     fetcher.mockImplementation(async (input) =>
@@ -497,7 +497,7 @@ describe('statistics user journeys through the typed API client', () => {
   it('keeps multiple number selections, badge colors and URL state through theme changes and history', async () => {
     const { router, fetcher } = setup('six', '?number=1&number=12')
     await screen.findByRole('table', {
-      name: '1. szám, 12. szám éves előfordulásai',
+      name: '12. szám éves előfordulásai',
     })
     const chips = screen.getByRole('list', { name: 'Kiválasztott számok' })
     expect(within(chips).getAllByRole('listitem')[1]).toHaveStyle(
@@ -515,7 +515,7 @@ describe('statistics user journeys through the typed API client', () => {
     expect(router.state.location.search).toBe('?number=1')
     await act(() => router.navigate(-1))
     await screen.findByRole('table', {
-      name: '1. szám, 12. szám éves előfordulásai',
+      name: '12. szám éves előfordulásai',
     })
     expect(within(chips).getAllByRole('listitem')).toHaveLength(2)
     expect(fetcher).toHaveBeenCalledTimes(count)
@@ -528,5 +528,27 @@ describe('statistics user journeys through the typed API client', () => {
     expect(
       screen.getByLabelText('Éves gyakoriságban vizsgált számok'),
     ).toHaveFocus()
+  })
+
+  it('keeps yearly table sorting independent for each selected number', async () => {
+    setup('six', '?number=1&number=12')
+    const firstTable = await screen.findByRole('table', {
+      name: '1. szám éves előfordulásai',
+    })
+    const secondTable = await screen.findByRole('table', {
+      name: '12. szám éves előfordulásai',
+    })
+    fireEvent.click(screen.getByText('Részletes éves adatok megjelenítése'))
+
+    const firstSort = within(firstTable).getByRole('button', {
+      name: 'Előfordulás, rendezés növekvő sorrendbe',
+    })
+    const secondSort = within(secondTable).getByRole('button', {
+      name: 'Előfordulás, rendezés növekvő sorrendbe',
+    })
+    fireEvent.click(firstSort)
+
+    expect(firstSort.closest('th')).toHaveAttribute('aria-sort', 'ascending')
+    expect(secondSort.closest('th')).not.toHaveAttribute('aria-sort')
   })
 })

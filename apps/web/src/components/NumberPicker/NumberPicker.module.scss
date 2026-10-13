@@ -100,9 +100,9 @@
     border-color: var(--accent-lime);
   }
   &:has(input:checked) {
-    background: var(--accent-lime);
+    background: var(--action-background);
     color: var(--action-text);
-    border-color: var(--accent-lime);
+    border-color: var(--action-background);
     svg {
       display: block;
     }

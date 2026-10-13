@@ -48,31 +48,21 @@
 }
 .pairsChartSlot {
   margin-block: 0.75rem;
-}
-@media (min-width: 1000px) {
-  .sections {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  height: clamp(340px, 15vw, 480px);
 }
 
+@media (min-width: 64rem) {
+  .sections > .card[aria-labelledby='pairs-heading'] {
+    display: flex;
+    align-self: stretch;
+    flex-direction: column;
+  }
+}
 @media (min-width: 64rem) {
   .sections {
     display: contents;
   }
-  .card {
-    display: flex;
-    min-height: 0;
-    flex-direction: column;
-  }
-  .card .pairsChartSlot {
-    height: clamp(340px, 12vw, 460px);
-    flex-grow: 1;
-  }
-  .card:first-child .tableWrap {
-    max-height: 18rem;
-    overflow: auto;
-    scrollbar-gutter: stable;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+  .yearlyCard {
+    grid-column: 1 / -1;
   }
 }

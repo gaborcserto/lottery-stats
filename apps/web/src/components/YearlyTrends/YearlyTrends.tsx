@@ -1,5 +1,7 @@
 import { lazy, memo, useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { LuChartLine } from 'react-icons/lu'
+import { FaChevronDown, FaSort, FaSortDown, FaSortUp } from 'react-icons/fa6'
 import { useSearchParams } from 'react-router'
 import { api, ApiError } from '../../api/client'
 import type { GameCode } from '../../api/contracts'
@@ -23,6 +25,12 @@ const YearlyTrendChart = lazy(() =>
     default: memo(module.YearlyTrendChart),
   })),
 )
+
+type YearlySortColumn = 'year' | 'count' | 'eligible' | 'percentage'
+type YearlySort = {
+  column: YearlySortColumn
+  direction: 'ascending' | 'descending'
+}
 
 function isGameCode(value: string | undefined): value is GameCode {
   return value === 'five' || value === 'six' || value === 'scandinavian'
@@ -82,6 +90,7 @@ export function YearlyTrends({
   const { resolvedTheme } = useTheme()
   const seriesColors = getTrendColors(resolvedTheme)
   const [retryYearly, setRetryYearly] = useState(false)
+  const [yearlySorts, setYearlySorts] = useState<Record<number, YearlySort>>({})
   const query = new URLSearchParams()
   for (const [key, value] of Object.entries(filters.statistics))
     if (value !== undefined) query.set(key, String(value))
@@ -181,6 +190,29 @@ export function YearlyTrends({
     yearly.retry()
   }
 
+  function updateSort(number: number, column: YearlySortColumn) {
+    setYearlySorts((current) => {
+      const active = current[number] ?? {
+        column: 'year' as const,
+        direction: 'descending' as const,
+      }
+      return {
+        ...current,
+        [number]: {
+          column,
+          direction:
+            active.column === column
+              ? active.direction === 'ascending'
+                ? 'descending'
+                : 'ascending'
+              : column === 'year'
+                ? 'descending'
+                : 'ascending',
+        },
+      }
+    })
+  }
+
   return (
     <section className={className} aria-labelledby="trends-heading">
       <h2 id="trends-heading">
@@ -215,42 +247,112 @@ export function YearlyTrends({
             >
               {trendSeries && <YearlyTrendChart series={trendSeries} />}
             </ChartSlot>
-            <div
-              className={styles.tableWrap}
-              tabIndex={0}
-              aria-label="Éves adatok"
-            >
-              <table>
-                <caption>
-                  {trendData
-                    .map((result) => `${result.meta.selected_number}. szám`)
-                    .join(', ')}{' '}
-                  éves előfordulásai
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Szám · év</th>
-                    <th scope="col">Előfordulás</th>
-                    <th scope="col">Vizsgált számsor</th>
-                    <th scope="col">Arány</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {trendData.flatMap((result) =>
-                    result.data.map((row) => (
-                      <tr key={`${result.meta.selected_number}-${row.year}`}>
-                        <th scope="row">
-                          {result.meta.selected_number}. szám · {row.year}
-                        </th>
-                        <td>{row.selected_number_count}</td>
-                        <td>{row.eligible_set_count}</td>
-                        <td>{row.selected_number_occurrence_percentage}%</td>
-                      </tr>
-                    )),
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <details className={styles.tableDisclosure}>
+              <summary>
+                <span>Részletes éves adatok megjelenítése</span>
+                <FaChevronDown className={styles.caret} aria-hidden="true" />
+              </summary>
+              <div className={styles.yearlyCards}>
+                {trendData.map((result, index) => {
+                  const number =
+                    result.meta.selected_number ??
+                    filters.numbers[index] ??
+                    filters.number
+                  const cardStyle = {
+                    '--number-color': colorForNumber(number),
+                  } as CSSProperties
+                  const sort = yearlySorts[number] ?? {
+                    column: 'year' as const,
+                    direction: 'descending' as const,
+                  }
+                  const rows = [...result.data].sort((left, right) => {
+                    const value = (row: (typeof result.data)[number]) => {
+                      switch (sort.column) {
+                        case 'year':
+                          return row.year
+                        case 'count':
+                          return row.selected_number_count ?? 0
+                        case 'eligible':
+                          return row.eligible_set_count
+                        case 'percentage':
+                          return row.selected_number_occurrence_percentage ?? 0
+                      }
+                    }
+
+                    return (
+                      (value(left) - value(right)) *
+                      (sort.direction === 'ascending' ? 1 : -1)
+                    )
+                  })
+
+                  function sortHeader(column: YearlySortColumn, label: string) {
+                    const active = sort.column === column
+                    return (
+                      <th
+                        scope="col"
+                        aria-sort={active ? sort.direction : undefined}
+                      >
+                        <button
+                          className={styles.sortButton}
+                          type="button"
+                          aria-label={`${label}, rendezés ${active && sort.direction === 'ascending' ? 'csökkenő' : 'növekvő'} sorrendbe`}
+                          onClick={() => updateSort(number, column)}
+                        >
+                          {label}
+                          <span aria-hidden="true">
+                            {active ? (
+                              sort.direction === 'ascending' ? (
+                                <FaSortUp aria-hidden="true" />
+                              ) : (
+                                <FaSortDown aria-hidden="true" />
+                              )
+                            ) : (
+                              <FaSort aria-hidden="true" />
+                            )}
+                          </span>
+                        </button>
+                      </th>
+                    )
+                  }
+
+                  return (
+                    <section
+                      className={styles.yearlyCard}
+                      key={number}
+                      style={cardStyle}
+                      aria-labelledby={`yearly-number-${number}`}
+                    >
+                      <h3 id={`yearly-number-${number}`}>{number}. szám</h3>
+                      <div className={styles.yearlyTableWrap}>
+                        <table>
+                          <caption>{number}. szám éves előfordulásai</caption>
+                          <thead>
+                            <tr>
+                              {sortHeader('year', 'Év')}
+                              {sortHeader('count', 'Előfordulás')}
+                              {sortHeader('eligible', 'Vizsgált számsor')}
+                              {sortHeader('percentage', 'Arány')}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map((row) => (
+                              <tr key={`${number}-${row.year}`}>
+                                <th scope="row">{row.year}</th>
+                                <td>{row.selected_number_count}</td>
+                                <td>{row.eligible_set_count}</td>
+                                <td>
+                                  {row.selected_number_occurrence_percentage}%
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </section>
+                  )
+                })}
+              </div>
+            </details>
           </>
         ) : (
           <p>Nincs éves adat a kiválasztott időszakban.</p>

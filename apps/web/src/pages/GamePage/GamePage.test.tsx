@@ -85,7 +85,11 @@ describe('game statistics pages', () => {
       expect(document.querySelector(`img[src="${logo}"]`)).not.toBeNull()
       expect(document.body.textContent).toContain(marker)
       expect(document.body.textContent).toContain('Legutóbbi sorsolás')
-      expect(document.body.textContent).toContain('Páros előfordulás')
+      const paritySection = document.querySelector(
+        'section[aria-labelledby="parity-heading"]',
+      )
+      if (!paritySection) throw new Error('Missing parity section')
+      expect(paritySection.querySelector('dl')).toBeNull()
       expect(document.body.textContent).toContain('Számsoronkénti megoszlás')
       expect(document.querySelector('table caption')?.textContent).toContain(
         title,

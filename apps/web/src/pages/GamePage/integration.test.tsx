@@ -171,7 +171,7 @@ describe('statistics user journeys through the typed API client', () => {
       fireEvent.keyDown(submit, { key: 'Enter' })
       const form = submit.closest('form')
       if (!form) throw new Error('Missing filters form')
-      form.requestSubmit(submit)
+      await act(async () => form.requestSubmit(submit))
 
       const loadingSubmit = await screen.findByRole('button', {
         name: 'Szűrés folyamatban…',

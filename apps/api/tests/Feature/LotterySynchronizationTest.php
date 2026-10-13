@@ -22,6 +22,7 @@ class LotterySynchronizationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
         $this->assertSame(':memory:', DB::connection()->getDatabaseName());
         $this->seed(GameSeeder::class);
         Http::preventStrayRequests();
@@ -49,6 +50,7 @@ class LotterySynchronizationTest extends TestCase
     public function test_fresh_data_is_skipped_without_http_and_force_refreshes_it(): void
     {
         Http::fake([$this->url('five') => Http::response($this->payload('five'))]);
+
         $this->synchronizer->synchronize('five');
         $attemptedAt = $this->state('five')->getRawOriginal('last_attempted_at');
         $this->travel(1)->hour();
@@ -67,6 +69,7 @@ class LotterySynchronizationTest extends TestCase
     {
         config()->set('lottery.sync.interval_hours', 12);
         Http::fake([$this->url('five') => Http::response($this->payload('five'))]);
+
         $this->synchronizer->synchronize('five');
         $this->travel(12)->hours();
 
@@ -82,6 +85,7 @@ class LotterySynchronizationTest extends TestCase
             $this->url('five') => Http::response($this->payload('five')),
             $this->url('six') => Http::response($this->payload('six')),
         ]);
+
         $this->synchronizer->synchronize('five');
 
         $this->assertSame('skipped', $this->synchronizer->synchronize('five')->status);
@@ -95,6 +99,7 @@ class LotterySynchronizationTest extends TestCase
     public function test_network_and_http_failures_do_not_advance_success_time(): void
     {
         Http::fake([$this->url('five') => Http::response($this->payload('five'))]);
+
         $this->synchronizer->synchronize('five');
         $succeededAt = $this->state('five')->getRawOriginal('last_succeeded_at');
         $this->travel(25)->hours();
@@ -137,6 +142,7 @@ class LotterySynchronizationTest extends TestCase
         $this->synchronizer->synchronize('five');
         $before = Drawing::query()->with(['sets.numbers', 'prizes'])->get()->toArray();
         $succeededAt = $this->state('five')->getRawOriginal('last_succeeded_at');
+
         DB::unprepared("CREATE TRIGGER fail_sync_prize BEFORE INSERT ON drawing_prizes WHEN NEW.winner_count = 42 BEGIN SELECT RAISE(ABORT, 'controlled test failure'); END");
 
         try {

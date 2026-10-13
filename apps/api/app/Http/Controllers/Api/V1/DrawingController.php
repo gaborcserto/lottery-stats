@@ -20,12 +20,14 @@ class DrawingController extends Controller
     public function index(Request $request, string $game): AnonymousResourceCollection
     {
         $gameModel = $this->findGame($game);
-        $validator = Validator::make($request->query(), [
+        $rules = [
             'page' => ['sometimes', 'integer', 'min:1', 'max:'.self::MAX_PAGE],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'include' => ['sometimes', 'in:details'],
             ...DrawingFilters::rules(),
-        ])->after(function ($validator) use ($request): void {
+        ];
+
+        $validator = Validator::make($request->query(), $rules)->after(function ($validator) use ($request): void {
             foreach (array_diff(array_keys($request->query()), [
                 'page', 'per_page', 'include', 'year', 'week', 'from_date', 'to_date',
             ]) as $parameter) {

@@ -24,6 +24,7 @@ class LotteryStatistics
                 $filters[$key] = (int) $filters[$key];
             }
         }
+
         $drawings = DB::table('drawings as d')->where('d.game_id', $game->id);
         DrawingFilters::apply($drawings, $filters, 'd.');
 
@@ -47,6 +48,7 @@ class LotteryStatistics
                     'to_date' => $population->to_date,
                     'undated_drawing_count' => (int) $population->undated_drawing_count,
                 ];
+
                 $sets = (clone $drawings)
                     ->join('drawing_sets as s', 's.drawing_id', '=', 'd.id')
                     ->whereIn('s.type', $types);
@@ -99,6 +101,7 @@ class LotteryStatistics
             ->pluck('frequency', 'n.number');
 
         $rows = [];
+
         foreach (range(1, $maximumNumber) as $number) {
             $count = (int) ($counts[$number] ?? 0);
             $rows[] = [
@@ -141,6 +144,7 @@ class LotteryStatistics
         $even = 0;
         $odd = 0;
         $distribution = [];
+
         foreach ($groups as $group) {
             $even += (int) $group->even_count * (int) $group->set_count;
             $odd += (int) $group->odd_count * (int) $group->set_count;

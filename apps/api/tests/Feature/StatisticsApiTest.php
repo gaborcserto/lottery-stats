@@ -17,6 +17,7 @@ class StatisticsApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
         $this->assertSame(':memory:', DB::connection()->getDatabaseName());
         Http::preventStrayRequests();
         $this->seed(GameSeeder::class);
@@ -25,6 +26,7 @@ class StatisticsApiTest extends TestCase
     public function test_summary_counts_drawings_once_and_reports_known_and_missing_dates(): void
     {
         $this->fiveDrawings();
+
         $this->getJson($this->url('five', 'summary'))->assertOk()->assertExactJson([
             'data' => [
                 'drawing_count' => 3, 'eligible_set_count' => 3,
@@ -46,6 +48,7 @@ class StatisticsApiTest extends TestCase
     public function test_five_frequencies_use_sets_not_balls_and_include_the_entire_range(): void
     {
         $this->fiveDrawings();
+
         $response = $this->getJson($this->url('five', 'frequencies'))->assertOk()->assertJsonCount(90, 'data')
             ->assertJsonPath('data.0', ['number' => 1, 'count' => 2, 'occurrence_percentage' => 66.67])
             ->assertJsonPath('data.1', ['number' => 2, 'count' => 3, 'occurrence_percentage' => 100])
@@ -77,6 +80,7 @@ class StatisticsApiTest extends TestCase
     public function test_scandinavian_scopes_preserve_overlapping_occurrences(): void
     {
         $this->scandinavianDrawings();
+
         $this->getJson($this->url('scandinavian', 'frequencies'))->assertOk()
             ->assertJsonPath('meta.set_scope', 'machine')->assertJsonPath('meta.eligible_set_count', 2)
             ->assertJsonPath('data.0.count', 2)->assertJsonPath('data.0.occurrence_percentage', 100);

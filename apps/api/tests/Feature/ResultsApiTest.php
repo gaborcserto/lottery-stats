@@ -16,6 +16,7 @@ class ResultsApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
         $this->assertSame(':memory:', DB::connection()->getDatabaseName());
         $this->seed(GameSeeder::class);
     }
@@ -33,6 +34,7 @@ class ResultsApiTest extends TestCase
     public function test_list_paginates_filters_and_orders_same_week_drawings_deterministically(): void
     {
         $game = Game::query()->where('code', 'five')->firstOrFail();
+
         $this->makeDrawing($game, 'older', 2025, 52, '2025-12-28');
         $this->makeDrawing($game, 'week-early', 2026, 10, '2026-03-01');
         $this->makeDrawing($game, 'week-late', 2026, 10, '2026-03-07');
@@ -62,6 +64,7 @@ class ResultsApiTest extends TestCase
     public function test_latest_returns_newest_source_week_and_empty_game_is_404(): void
     {
         $game = Game::query()->where('code', 'six')->firstOrFail();
+
         $older = $this->makeDrawing($game, 'later-id', 2025, 1, '2025-01-01');
         $newest = $this->makeDrawing($game, 'newest', 2026, 2, null);
 
@@ -92,6 +95,7 @@ class ResultsApiTest extends TestCase
     public function test_detail_keeps_sets_prizes_and_exact_nullable_money_fields(): void
     {
         $six = Game::query()->where('code', 'six')->firstOrFail();
+
         $drawing = $this->makeDrawing($six, 'six-detail', 2026, 1, '2026-01-03');
         $main = $drawing->sets()->create(['type' => 'main']);
         $main->numbers()->createMany(array_map(fn (int $number): array => ['number' => $number], range(1, 6)));
@@ -111,6 +115,7 @@ class ResultsApiTest extends TestCase
             ->assertJsonPath('data.prizes.1.amount', null);
 
         $skandi = Game::query()->where('code', 'scandinavian')->firstOrFail();
+
         $undated = $this->makeDrawing($skandi, 'skandi-detail', 1988, 43, null);
         foreach (['machine' => [1, 2, 3, 4, 5, 6, 7], 'manual' => [7, 8, 9, 10, 11, 12, 13]] as $type => $numbers) {
             $set = $undated->sets()->create(['type' => $type]);
@@ -134,6 +139,7 @@ class ResultsApiTest extends TestCase
     public function test_history_details_are_filtered_paginated_and_eager_loaded(): void
     {
         $game = Game::query()->where('code', 'six')->firstOrFail();
+
         for ($week = 1; $week <= 6; $week++) {
             $drawing = $this->makeDrawing($game, 'history-'.$week, 2026, $week, null);
             $main = $drawing->sets()->create(['type' => 'main']);

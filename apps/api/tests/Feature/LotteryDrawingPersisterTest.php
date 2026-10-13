@@ -31,6 +31,7 @@ class LotteryDrawingPersisterTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
         $this->assertSame(':memory:', DB::connection()->getDatabaseName());
         $this->assertSame('sqlite', DB::connection()->getDriverName());
         Http::preventStrayRequests();
@@ -41,6 +42,7 @@ class LotteryDrawingPersisterTest extends TestCase
     public function test_first_import_and_identical_reimport_preserve_all_rows(): void
     {
         $batch = [$this->drawing()];
+
         $this->assertCounts($this->persister->persist('five', $batch), 1, 0, 0);
         $before = $this->snapshot();
         $this->travel(1)->hour();
@@ -61,6 +63,7 @@ class LotteryDrawingPersisterTest extends TestCase
             sets: [new NormalizedNumberSet('main', [6, 7, 8, 9, 10])],
             prizes: [new NormalizedPrizeTier('match_4', 2, '234567890123.00', 'HUF')],
         );
+
         $this->assertCounts($this->persister->persist('five', [$corrected]), 0, 1, 0);
         $this->assertSame($parent->id, Drawing::query()->firstOrFail()->id);
         $this->assertSame($createdAt, $parent->refresh()->getRawOriginal('created_at'));

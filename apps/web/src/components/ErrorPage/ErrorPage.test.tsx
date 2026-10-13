@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
-import { ErrorPage } from './ErrorPage'
+import { ErrorPage, getErrorPageTitle } from '.'
 
 function renderPage(status: number, onRetry?: () => void) {
   const router = createMemoryRouter(
@@ -38,6 +38,7 @@ describe('ErrorPage', () => {
     [503, 'A szolg\u00e1ltat\u00e1s \u00e1tmenetileg nem \u00e9rhet\u0151 el'],
     [403, 'A hozz\u00e1f\u00e9r\u00e9s megtagadva'],
   ])('presents status %i with a safe localized heading', (status, heading) => {
+    expect(getErrorPageTitle(status)).toBe(heading)
     renderPage(status)
     expect(screen.getByText(String(status))).toBeVisible()
     expect(screen.getByText(String(status))).not.toHaveAttribute('aria-hidden')
@@ -53,6 +54,10 @@ describe('ErrorPage', () => {
     ).toHaveAttribute('data-text', String(status))
     expect(screen.queryByText('Lottery Stats')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument()
+  })
+
+  it('uses the unexpected error title for unsupported statuses', () => {
+    expect(getErrorPageTitle(429)).toBe('Váratlan hiba történt')
   })
 
   it('runs its retry action when requested', () => {

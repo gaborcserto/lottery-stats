@@ -249,6 +249,43 @@ describe('explicit route modules', () => {
       router.dispose()
     }
   })
+
+  it.each([
+    [404, 'Az oldal nem található'],
+    [429, 'Váratlan hiba történt'],
+  ])(
+    'sets the document title for route error status %i',
+    async (status, title) => {
+      const router = createMemoryRouter([
+        {
+          path: '/',
+          Component: Root,
+          HydrateFallback,
+          children: [
+            {
+              index: true,
+              Component: () => null,
+              loader: () => {
+                throw new Response(null, { status })
+              },
+              ErrorBoundary: home.ErrorBoundary,
+            },
+          ],
+        },
+      ])
+
+      try {
+        render(<RouterProvider router={router} />)
+        expect(
+          await screen.findByRole('heading', { name: title }),
+        ).toBeInTheDocument()
+        expect(document.title).toBe(`${title} | Lottery Stats`)
+      } finally {
+        router.dispose()
+      }
+    },
+  )
+
   it.each([
     ['/', 'A számok mögött.'],
     ['/otoslotto', 'Ötöslottó'],

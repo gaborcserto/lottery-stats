@@ -214,6 +214,8 @@ function decodeFrequency(value: unknown) {
   }
 }
 
+export type FrequencyRow = ReturnType<typeof decodeFrequency>
+
 function decodePair(value: unknown) {
   const v = record(value)
   const first = number(v.first_number),
@@ -226,6 +228,8 @@ function decodePair(value: unknown) {
     occurrence_percentage: percentage(v.occurrence_percentage),
   }
 }
+
+export type PairRow = ReturnType<typeof decodePair>
 
 function decodeShare(value: unknown) {
   const v = record(value)
@@ -262,6 +266,8 @@ function decodeParity(value: unknown) {
   }
 }
 
+export type ParityData = ReturnType<typeof decodeParity>
+
 function decodeYearly(value: unknown) {
   const v = record(value)
   return {
@@ -281,6 +287,8 @@ function decodeYearly(value: unknown) {
         }),
   }
 }
+
+export type YearlyRow = ReturnType<typeof decodeYearly>
 
 export function envelope<T>(decode: Decoder<T>): Decoder<{ data: T }> {
   return (value) => ({ data: decode(record(value).data) })

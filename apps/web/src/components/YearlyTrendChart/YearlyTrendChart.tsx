@@ -1,7 +1,7 @@
 import { getTrendColors } from '../../config/trend-colors'
 import { ResponsiveLine, type LineCustomSvgLayerProps } from '@nivo/line'
 import { useMemo } from 'react'
-import type { GamePageData } from '../../api/page-data'
+import type { YearlyRow } from '../../api/contracts'
 import { getChartTheme } from '../../config/charts'
 import { useTheme } from '../ThemeProvider'
 import { useChartMotion } from '../ChartSlot'
@@ -29,7 +29,7 @@ export function YearlyTrendChart({
 }: {
   series: {
     number: number
-    data: NonNullable<GamePageData['yearly']>['data']
+    data: YearlyRow[]
   }[]
 }) {
   const { resolvedTheme } = useTheme()

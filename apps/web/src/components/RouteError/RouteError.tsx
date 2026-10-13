@@ -5,7 +5,7 @@ import {
   useRouteError,
 } from 'react-router'
 import { ApiError } from '../../api/client'
-import { ErrorPage } from '../ErrorPage'
+import { ErrorPage, getErrorPageTitle } from '../ErrorPage'
 
 export function RouteError() {
   const error: unknown = useRouteError()
@@ -42,7 +42,7 @@ export function RouteError() {
   const message = error instanceof ApiError ? error.message : undefined
   return (
     <>
-      <title>{`${status === 404 ? 'Az oldal nem található' : status === 503 ? 'A szolgáltatás átmenetileg nem érhető el' : status === 401 ? 'A hozzáférés nem engedélyezett' : status === 403 ? 'A hozzáférés megtagadva' : status === 400 || status === 422 ? 'Ellenőrizze a megadott szűrőket' : 'Váratlan hiba történt'} | Lottery Stats`}</title>
+      <title>{`${getErrorPageTitle(status)} | Lottery Stats`}</title>
       <meta name="robots" content="noindex" />
       <ErrorPage
         status={status}

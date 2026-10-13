@@ -1,17 +1,13 @@
 import { SelectControl } from '../SelectControl'
 import { useState, type CSSProperties } from 'react'
 import { ResponsiveBar } from '@nivo/bar'
-import type { GamePageData } from '../../api/page-data'
+import type { FrequencyRow } from '../../api/contracts'
 import { getChartTheme } from '../../config/charts'
 import { useTheme } from '../ThemeProvider'
 import { useChartMotion } from '../ChartSlot'
 import styles from './FrequencyChart.module.scss'
 
-export function FrequencyChart({
-  data,
-}: {
-  data: GamePageData['frequencies']['data']
-}) {
+export function FrequencyChart({ data }: { data: FrequencyRow[] }) {
   const { resolvedTheme } = useTheme()
   const chartTheme = getChartTheme(resolvedTheme)
   const animate = useChartMotion(resolvedTheme)

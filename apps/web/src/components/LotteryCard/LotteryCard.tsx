@@ -13,12 +13,6 @@ const setLabels = {
   manual: 'Kézi számsor',
 }
 
-const gameLogos = {
-  five: '/images/logos/otoslotto.png',
-  six: '/images/logos/hatoslotto.png',
-  scandinavian: '/images/logos/skandinav-lotto.png',
-} satisfies Record<GameCode, string>
-
 function formatDate(date: string) {
   return new Intl.DateTimeFormat('hu-HU', {
     year: 'numeric',
@@ -43,7 +37,7 @@ export function LotteryCard({
         <div className={styles.logoFrame}>
           <img
             className={styles.logo}
-            src={gameLogos[game]}
+            src={page.logo}
             alt={`${page.name} logó`}
           />
         </div>

@@ -1,8 +1,6 @@
-import type { GamePageData } from '../../api/page-data'
+import type { YearlyRow } from '../../api/contracts'
 
-export function mapYearlyTrend(
-  rows: NonNullable<GamePageData['yearly']>['data'],
-) {
+export function mapYearlyTrend(rows: YearlyRow[]) {
   if (!rows.length) return []
   const byYear = new Map(rows.map((row) => [row.year, row]))
   const first = rows[0].year

@@ -1,17 +1,13 @@
 import { SelectControl } from '../SelectControl'
 import { ResponsiveBar } from '@nivo/bar'
 import { useMemo, useState } from 'react'
-import type { GamePageData } from '../../api/page-data'
+import type { PairRow } from '../../api/contracts'
 import { getChartTheme } from '../../config/charts'
 import { useTheme } from '../ThemeProvider'
 import { useChartMotion } from '../ChartSlot'
 import styles from './NumberPairsChart.module.scss'
 
-export function NumberPairsChart({
-  data,
-}: {
-  data: NonNullable<GamePageData['pairs']>['data']
-}) {
+export function NumberPairsChart({ data }: { data: PairRow[] }) {
   const { resolvedTheme } = useTheme()
   const chartTheme = getChartTheme(resolvedTheme)
   const animate = useChartMotion(resolvedTheme)

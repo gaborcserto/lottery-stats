@@ -1,16 +1,12 @@
 import { ResponsivePie } from '@nivo/pie'
 import { useMemo, useState } from 'react'
-import type { GamePageData } from '../../api/page-data'
+import type { ParityData } from '../../api/contracts'
 import { getChartTheme } from '../../config/charts'
 import { useTheme } from '../ThemeProvider'
 import { useChartMotion } from '../ChartSlot'
 import styles from './ParityChart.module.scss'
 
-export function ParityChart({
-  data,
-}: {
-  data: GamePageData['parity']['data']
-}) {
+export function ParityChart({ data }: { data: ParityData }) {
   const { resolvedTheme } = useTheme()
   const chartTheme = getChartTheme(resolvedTheme)
   const animate = useChartMotion(resolvedTheme)

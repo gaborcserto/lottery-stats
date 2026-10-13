@@ -19,6 +19,22 @@ function numbers(label: string) {
 }
 
 describe('LotteryCard', () => {
+  it.each([
+    ['five', '/images/logos/otoslotto.png'],
+    ['six', '/images/logos/hatoslotto.png'],
+    ['scandinavian', '/images/logos/skandinav-lotto.png'],
+  ] as const)(
+    'uses the configured %s logo with alternative text',
+    (game, logo) => {
+      renderCard(game)
+      expect(screen.getByRole('img')).toHaveAttribute('src', logo)
+      expect(screen.getByRole('img')).toHaveAttribute(
+        'alt',
+        expect.stringMatching(/logó$/),
+      )
+    },
+  )
+
   it('renders Ötöslottó numbers, Hungarian date, exact payout, and navigation', () => {
     renderCard('five')
     expect(

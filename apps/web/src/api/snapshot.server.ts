@@ -87,6 +87,7 @@ async function acquireSnapshot(): Promise<Record<GameCode, GamePageData>> {
     )
   }
 }
+
 function getSnapshot() {
   // Vite reloads server modules during edits. Keep the shared acquisition across
   // those reloads so a small UI change cannot trigger overlapping API batches.
@@ -105,9 +106,11 @@ function getSnapshot() {
   })
   return snapshot
 }
+
 export async function gameSnapshot(game: GameCode) {
   return (await getSnapshot())[game]
 }
+
 export async function homeSnapshot(): Promise<HomePageData> {
   const data = await getSnapshot()
   return {

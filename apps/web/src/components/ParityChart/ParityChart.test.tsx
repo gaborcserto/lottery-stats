@@ -21,6 +21,7 @@ describe('parity occurrence shares', () => {
       'Páratlan',
     )
   })
+
   it('labels an empty denominator without drawing fabricated slices', () => {
     const data = fixturePageData('five').parity.data
     render(<ParityChart data={{ ...data, number_occurrence_count: 0 }} />)

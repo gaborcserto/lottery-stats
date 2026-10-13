@@ -27,6 +27,7 @@ describe('accessible chart alternatives', () => {
       document.querySelectorAll('svg:not([aria-hidden="true"])'),
     ).toHaveLength(0)
   })
+
   it('keeps other chart data visible on an independent API failure', () => {
     const data = fixturePageData('six')
     delete data.pairs
@@ -49,6 +50,7 @@ describe('accessible chart alternatives', () => {
       screen.getByRole('table', { name: '1. szám éves előfordulásai' }),
     ).toBeInTheDocument()
   })
+
   it('labels empty filtered populations instead of fabricating chart values', () => {
     const data = fixturePageData('scandinavian')
     if (!data.pairs || !data.yearly) throw new Error('Missing fixtures')

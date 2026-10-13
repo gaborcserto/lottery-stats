@@ -43,6 +43,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
   vi.useRealTimers()
 })
+
 function renderRoute(path: string) {
   vi.stubGlobal(
     'fetch',
@@ -214,6 +215,7 @@ describe('explicit route modules', () => {
       screen.getByRole('navigation', { name: 'Fő navigáció' }),
     ).toHaveAttribute('data-open', 'false')
   })
+
   it('renders a genuine API failure with a deterministic Hungarian error title', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     const router = createMemoryRouter([
@@ -262,6 +264,7 @@ describe('explicit route modules', () => {
       ),
     ).toBeInTheDocument()
   })
+
   it('navigates with Laravel browser calls and shows an unknown-path fallback', async () => {
     renderRoute('/about')
     expect(

@@ -40,6 +40,7 @@ export const gamePages = {
 >
 
 export const gameCodes = ['five', 'six', 'scandinavian'] as const
+
 export function gameMeta(game: GameCode) {
   const page = gamePages[game]
   return [

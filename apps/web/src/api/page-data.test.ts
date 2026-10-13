@@ -255,6 +255,7 @@ describe('game page data loading', () => {
       }
     }
   })
+
   it('preserves chart tables when a background chart refresh fails', async () => {
     const cached = fixturePageData('six')
     const base = fixtureFetcher()
@@ -270,6 +271,7 @@ describe('game page data loading', () => {
     expect(refreshed.pairsError).toBe('Az adatok átmenetileg nem érhetők el.')
     expect(refreshed.yearlyError).toBe('Az adatok átmenetileg nem érhetők el.')
   })
+
   it('renders native snapshot data on a first visit, then refreshes and caches live data', async () => {
     const fetcher = fixtureFetcher()
     const client = createApiClient('/api/v1', fetcher)

@@ -71,6 +71,7 @@ describe('sticky header state', () => {
       screen.getByRole('navigation').querySelector('[aria-hidden="true"]'),
     ).toHaveStyle({ transform: 'translateX(100%)' })
   })
+
   it('keeps the home route unselected and exposes an Escape-dismissible mobile disclosure', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
@@ -95,6 +96,7 @@ describe('sticky header state', () => {
     expect(toggle).toHaveFocus()
     expect(toggle).toHaveAccessibleName('Menü megnyitása')
   })
+
   it('closes after choosing a game and closes when resized to desktop', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
@@ -127,6 +129,7 @@ describe('sticky header state', () => {
     act(() => window.dispatchEvent(new Event('resize')))
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
   })
+
   it('starts clear at the top and applies its scrolled state after scrolling', () => {
     Object.defineProperty(window, 'scrollY', {
       configurable: true,

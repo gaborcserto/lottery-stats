@@ -7,6 +7,7 @@ function subscribe(listener: () => void) {
   media.addEventListener('change', listener)
   return () => media.removeEventListener('change', listener)
 }
+
 function snapshot() {
   return window.matchMedia(query).matches
 }

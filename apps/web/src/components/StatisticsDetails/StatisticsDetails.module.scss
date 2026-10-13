@@ -46,7 +46,6 @@
   overflow: visible;
   font-size: 0.85rem;
 }
-.yearlyChartSlot,
 .pairsChartSlot {
   margin-block: 0.75rem;
 }
@@ -64,10 +63,6 @@
     display: flex;
     min-height: 0;
     flex-direction: column;
-  }
-  .card .yearlyChartSlot {
-    height: clamp(320px, 11vw, 400px);
-    flex-grow: 1;
   }
   .card .pairsChartSlot {
     height: clamp(340px, 12vw, 460px);

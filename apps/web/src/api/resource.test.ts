@@ -39,6 +39,7 @@ describe('statistics resource cache', () => {
     await expect(resource('a', new AbortController().signal)).resolves.toBe(2)
     expect(load).toHaveBeenCalledTimes(2)
   })
+
   it('deduplicates subscribers and retains a successful result for 30 seconds', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     try {
@@ -57,6 +58,7 @@ describe('statistics resource cache', () => {
       vi.useRealTimers()
     }
   })
+
   it('cancels only after the last subscriber leaves', async () => {
     const result = deferred<number>()
     const load = vi.fn<(key: string, signal: AbortSignal) => Promise<number>>(
@@ -74,6 +76,7 @@ describe('statistics resource cache', () => {
     result.resolve(7)
     await expect(b).resolves.toBe(7)
   })
+
   it('does not cache failures and allows explicit retry invalidation', async () => {
     const load = vi
       .fn(async () => 1)

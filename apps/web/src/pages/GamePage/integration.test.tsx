@@ -55,6 +55,7 @@ function setup(game: GameCode = 'scandinavian', search = '') {
   render(<RouterProvider router={router} />)
   return { router, fetcher }
 }
+
 function filterForm() {
   const form = screen
     .getByLabelText('Statisztikai szűrők')
@@ -62,6 +63,7 @@ function filterForm() {
   if (!form) throw new Error('Missing filters form')
   return within(form)
 }
+
 function frequencyTable() {
   return screen.getByRole('table', { name: /előfordulások és a vizsgált/ })
 }
@@ -257,6 +259,7 @@ describe('statistics user journeys through the typed API client', () => {
     ).not.toBeInTheDocument()
     expect(fetcher).toHaveBeenCalledTimes(count)
   })
+
   it('applies intersected dates/year/week/scope, sorts locally, and restores cached results from history', async () => {
     const { router, fetcher } = setup()
     const pendingSummary = deferred<Response>()

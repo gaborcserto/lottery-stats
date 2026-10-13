@@ -9,6 +9,7 @@ import {
 import { ThemeContext } from './theme-context'
 
 export type ThemeMode = 'light' | 'dark'
+
 export type ResolvedTheme = ThemeMode
 
 const STORAGE_KEY = 'lottery-stats-theme'

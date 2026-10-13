@@ -1,4 +1,10 @@
-import { useEffect, useId, useRef, type CSSProperties } from 'react'
+import {
+  useEffect,
+  useId,
+  useRef,
+  type CSSProperties,
+  type KeyboardEvent,
+} from 'react'
 import { LuCheck, LuX } from 'react-icons/lu'
 import { FaChevronDown } from 'react-icons/fa6'
 import styles from './NumberPicker.module.scss'
@@ -22,6 +28,67 @@ export function NumberPicker({
 }) {
   const disclosure = useRef<HTMLDetailsElement>(null)
   const id = useId()
+
+  function handleDisclosureToggle(details: HTMLDetailsElement) {
+    if (!details.open) return
+
+    const trigger = details.querySelector('summary')?.getBoundingClientRect()
+    const panel = details.querySelector<HTMLDivElement>('[role="group"]')
+    if (!trigger || !panel) return
+
+    const spaceBelow = window.innerHeight - trigger.bottom
+    details.dataset.side =
+      spaceBelow < panel.offsetHeight + 8 && trigger.top > spaceBelow
+        ? 'above'
+        : 'below'
+  }
+
+  function handleOptionKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const inputs = Array.from(
+      event.currentTarget.querySelectorAll<HTMLInputElement>(
+        'input:not(:disabled)',
+      ),
+    )
+    const index = inputs.findIndex((input) => input === event.target)
+    if (index < 0) return
+
+    const steps: Record<string, number> = {
+      ArrowRight: 1,
+      ArrowLeft: -1,
+      ArrowDown: 5,
+      ArrowUp: -5,
+    }
+    let next: number | undefined
+
+    if (event.key === 'Home') {
+      next = 0
+    } else if (event.key === 'End') {
+      next = inputs.length - 1
+    } else if (steps[event.key] !== undefined) {
+      next = Math.max(
+        0,
+        Math.min(inputs.length - 1, index + (steps[event.key] ?? 0)),
+      )
+    }
+
+    if (next === undefined) return
+    event.preventDefault()
+    inputs[next]?.focus()
+  }
+
+  function changeNumber(number: number) {
+    if (numbers.includes(number)) {
+      if (numbers.length <= minimumSelections) return
+      onChange(numbers.filter((value) => value !== number))
+      return
+    }
+
+    if (maximumSelections !== undefined && numbers.length >= maximumSelections)
+      return
+
+    onChange([...numbers, number].sort((a, b) => a - b))
+  }
+
   useEffect(() => {
     function closeOutside(event: PointerEvent) {
       if (
@@ -43,20 +110,7 @@ export function NumberPicker({
       <details
         ref={disclosure}
         className={styles.disclosure}
-        onToggle={(event) => {
-          const details = event.currentTarget
-          if (!details.open) return
-          const trigger = details
-            .querySelector('summary')
-            ?.getBoundingClientRect()
-          const panel = details.querySelector<HTMLDivElement>('[role="group"]')
-          if (!trigger || !panel) return
-          const below = window.innerHeight - trigger.bottom
-          details.dataset.side =
-            below < panel.offsetHeight + 8 && trigger.top > below
-              ? 'above'
-              : 'below'
-        }}
+        onToggle={(event) => handleDisclosureToggle(event.currentTarget)}
         onKeyDown={(event) => {
           if (event.key === 'Escape') {
             event.preventDefault()
@@ -81,34 +135,7 @@ export function NumberPicker({
           className={styles.options}
           role="group"
           aria-labelledby={`${id}-label`}
-          onKeyDown={(event) => {
-            const inputs = Array.from(
-              event.currentTarget.querySelectorAll<HTMLInputElement>(
-                'input:not(:disabled)',
-              ),
-            )
-            const index = inputs.findIndex((input) => input === event.target)
-            if (index < 0) return
-            const steps: Record<string, number> = {
-              ArrowRight: 1,
-              ArrowLeft: -1,
-              ArrowDown: 5,
-              ArrowUp: -5,
-            }
-            const step = steps[event.key]
-            const next =
-              event.key === 'Home'
-                ? 0
-                : event.key === 'End'
-                  ? inputs.length - 1
-                  : step !== undefined
-                    ? Math.max(0, Math.min(inputs.length - 1, index + step))
-                    : undefined
-            if (next !== undefined) {
-              event.preventDefault()
-              inputs[next]?.focus()
-            }
-          }}
+          onKeyDown={handleOptionKeyDown}
         >
           {Array.from({ length: maximum }, (_, index) => index + 1).map(
             (number) => (
@@ -125,19 +152,7 @@ export function NumberPicker({
                       maximumSelections !== undefined &&
                       numbers.length >= maximumSelections)
                   }
-                  onChange={() => {
-                    if (numbers.includes(number)) {
-                      if (numbers.length <= minimumSelections) return
-                      onChange(numbers.filter((value) => value !== number))
-                      return
-                    }
-                    if (
-                      maximumSelections !== undefined &&
-                      numbers.length >= maximumSelections
-                    )
-                      return
-                    onChange([...numbers, number].sort((a, b) => a - b))
-                  }}
+                  onChange={() => changeNumber(number)}
                 />
                 <span>{number}</span>
                 <LuCheck aria-hidden="true" />

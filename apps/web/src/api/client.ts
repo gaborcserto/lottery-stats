@@ -27,6 +27,7 @@ const messages: Record<ApiErrorKind, string> = {
     'Az adatforrás válasza nem értelmezhető. Próbálja meg később.',
   http: 'Az adatok lekérése nem sikerült.',
 }
+
 export class ApiError extends Error {
   readonly kind: ApiErrorKind
   readonly status: number | undefined
@@ -59,6 +60,7 @@ export class ApiError extends Error {
     this.fields = fields
   }
 }
+
 export function parseRetryAfter(
   value: string | null,
   now = Date.now(),
@@ -252,5 +254,7 @@ export function createApiClient(
       ),
   }
 }
+
 export type ApiClient = ReturnType<typeof createApiClient>
+
 export const api = createApiClient()

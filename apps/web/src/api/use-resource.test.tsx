@@ -38,6 +38,7 @@ describe('useResource refresh state', () => {
     result.resolve('loaded data')
     expect(await screen.findByText('loaded data')).toBeInTheDocument()
   })
+
   it('reports a pending retry while retaining the current data', async () => {
     const load = vi
       .fn()
@@ -49,6 +50,7 @@ describe('useResource refresh state', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Loading')
     expect(screen.getByTestId('data')).toHaveTextContent('loaded data')
   })
+
   it('keeps the last result available while refreshing and after a failure', async () => {
     let rejectPending: (reason?: unknown) => void = () => {}
     const pending = new Promise<string>((_resolve, reject) => {

@@ -34,6 +34,7 @@ describe('number picker', () => {
     expect(details).toHaveAttribute('data-side', 'below')
     rect.mockRestore()
   })
+
   it('selects independently, navigates by keyboard and closes with Escape', () => {
     render(<Picker />)
     const trigger = screen.getByLabelText('Éves gyakoriságban vizsgált számok')
@@ -53,6 +54,7 @@ describe('number picker', () => {
     expect(details).not.toHaveAttribute('open')
     expect(trigger).toHaveFocus()
   })
+
   it('colors chips, removes a number and moves focus to the next removal action', () => {
     render(<Picker />)
     const remove = screen.getByRole('button', { name: '1. szám eltávolítása' })
@@ -77,6 +79,7 @@ describe('number picker', () => {
     ).toHaveFocus()
     expect(last).toBeDisabled()
   })
+
   it('dismisses outside the picker and blocks disabled selection', () => {
     const change = vi.fn()
     const { rerender } = render(<Picker />)
@@ -104,6 +107,7 @@ describe('number picker', () => {
     ).toBeDisabled()
     expect(change).not.toHaveBeenCalled()
   })
+
   it('blocks additions at the comparison limit and explains the limit', () => {
     const change = vi.fn()
     render(

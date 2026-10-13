@@ -1,0 +1,10 @@
+.chartSlot {
+  margin-block: 0.75rem;
+}
+
+@media (min-width: 64rem) {
+  .chartSlot {
+    height: clamp(320px, 11vw, 400px);
+    flex-grow: 1;
+  }
+}

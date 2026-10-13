@@ -10,6 +10,7 @@ export { RouteError as ErrorBoundary } from '../components/RouteError'
 export function meta() {
   return gameMeta('scandinavian')
 }
+
 export function shouldRevalidate({
   currentUrl,
   nextUrl,
@@ -20,15 +21,18 @@ export function shouldRevalidate({
     ? false
     : defaultShouldRevalidate
 }
+
 export async function loader() {
   return gameSnapshot('scandinavian')
 }
+
 export async function clientLoader({
   request,
   serverLoader,
 }: Pick<Route.ClientLoaderArgs, 'request' | 'serverLoader'>) {
   return loadGameRoute(api, 'scandinavian', serverLoader, request.signal)
 }
+
 export default function Scandinavian() {
   return <GameRoute game="scandinavian" data={useLoaderData<typeof loader>()} />
 }

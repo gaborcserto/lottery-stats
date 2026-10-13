@@ -20,6 +20,7 @@ describe('PrizeBreakdown', () => {
       'match_4',
     ])
   })
+
   it('preserves exact HUF amounts and reports unknown amounts or currencies', () => {
     render(
       <PrizeBreakdown

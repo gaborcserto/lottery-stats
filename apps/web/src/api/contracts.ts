@@ -10,14 +10,17 @@ export class InvalidResponseError extends Error {
 function invalid(): never {
   throw new InvalidResponseError()
 }
+
 function record(value: unknown): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value))
     return invalid()
   return value as Record<string, unknown>
 }
+
 function text(value: unknown): string {
   return typeof value === 'string' ? value : invalid()
 }
+
 function integer(min = 0, max = Number.MAX_SAFE_INTEGER): Decoder<number> {
   return (value) =>
     typeof value === 'number' &&
@@ -27,6 +30,7 @@ function integer(min = 0, max = Number.MAX_SAFE_INTEGER): Decoder<number> {
       ? value
       : invalid()
 }
+
 function percentage(value: unknown): number {
   return typeof value === 'number' &&
     Number.isFinite(value) &&
@@ -35,17 +39,21 @@ function percentage(value: unknown): number {
     ? value
     : invalid()
 }
+
 function choice<const T extends readonly string[]>(
   values: T,
 ): Decoder<T[number]> {
   return (value) => values.find((item) => item === value) ?? invalid()
 }
+
 function nullable<T>(decode: Decoder<T>): Decoder<T | null> {
   return (value) => (value === null ? null : decode(value))
 }
+
 function array<T>(decode: Decoder<T>): Decoder<T[]> {
   return (value) => (Array.isArray(value) ? value.map(decode) : invalid())
 }
+
 function date(value: unknown): string {
   const result = text(value)
   if (
@@ -56,10 +64,12 @@ function date(value: unknown): string {
     return invalid()
   return result
 }
+
 function amount(value: unknown): string {
   const result = text(value)
   return /^\d+\.\d{2}$/.test(result) ? result : invalid()
 }
+
 const count = integer()
 const year = integer(1, 9999)
 const number = integer(1, 90)
@@ -67,27 +77,33 @@ const gameCode = choice(['five', 'six', 'scandinavian'])
 const scope = choice(['main', 'machine', 'manual', 'combined'])
 export type GameCode = ReturnType<typeof gameCode>
 export type SetScope = ReturnType<typeof scope>
+
 export interface PopulationFilters {
   year?: number
   week?: number
   from_date?: string
   to_date?: string
 }
+
 export interface StatisticsQuery extends PopulationFilters {
   set?: SetScope
 }
+
 export interface HistoryQuery extends PopulationFilters {
   include?: 'details'
   page?: number
   per_page?: number
 }
+
 export interface FrequencyQuery extends StatisticsQuery {
   sort?: 'number' | 'most' | 'least'
   limit?: number
 }
+
 export interface PairQuery extends StatisticsQuery {
   limit?: number
 }
+
 export interface YearlyQuery extends StatisticsQuery {
   number?: number
 }
@@ -96,7 +112,9 @@ export function decodeGame(value: unknown) {
   const v = record(value)
   return { code: gameCode(v.code), name: text(v.name) }
 }
+
 export type Game = ReturnType<typeof decodeGame>
+
 export function decodeDrawingSummary(value: unknown) {
   const v = record(value)
   return {
@@ -106,6 +124,7 @@ export function decodeDrawingSummary(value: unknown) {
     drawn_on: nullable(date)(v.drawn_on),
   }
 }
+
 function decodeSet(value: unknown) {
   const v = record(value)
   const numbers = array(number)(v.numbers)
@@ -120,6 +139,7 @@ function decodeSet(value: unknown) {
     numbers,
   }
 }
+
 function decodePrize(value: unknown) {
   const v = record(value)
   return {
@@ -137,6 +157,7 @@ function decodePrize(value: unknown) {
     currency: nullable(choice(['HUF']))(v.currency),
   }
 }
+
 export function decodeDrawing(value: unknown) {
   const v = record(value)
   return {
@@ -145,7 +166,9 @@ export function decodeDrawing(value: unknown) {
     prizes: array(decodePrize)(v.prizes),
   }
 }
+
 export type Drawing = ReturnType<typeof decodeDrawing>
+
 export function decodeSummary(value: unknown) {
   const v = record(value)
   return {
@@ -158,6 +181,7 @@ export function decodeSummary(value: unknown) {
     undated_drawing_count: count(v.undated_drawing_count),
   }
 }
+
 function decodeFilters(value: unknown): PopulationFilters {
   const v = record(value)
   return {
@@ -167,6 +191,7 @@ function decodeFilters(value: unknown): PopulationFilters {
     ...(v.to_date === undefined ? {} : { to_date: date(v.to_date) }),
   }
 }
+
 function decodeMeta(value: unknown) {
   const v = record(value)
   if (v.percentage_precision !== 2) return invalid()
@@ -179,6 +204,7 @@ function decodeMeta(value: unknown) {
     percentage_precision: 2 as const,
   }
 }
+
 function decodeFrequency(value: unknown) {
   const v = record(value)
   return {
@@ -187,6 +213,7 @@ function decodeFrequency(value: unknown) {
     occurrence_percentage: percentage(v.occurrence_percentage),
   }
 }
+
 function decodePair(value: unknown) {
   const v = record(value)
   const first = number(v.first_number),
@@ -199,6 +226,7 @@ function decodePair(value: unknown) {
     occurrence_percentage: percentage(v.occurrence_percentage),
   }
 }
+
 function decodeShare(value: unknown) {
   const v = record(value)
   return {
@@ -206,6 +234,7 @@ function decodeShare(value: unknown) {
     occurrence_share_percentage: percentage(v.occurrence_share_percentage),
   }
 }
+
 function decodeDistribution(value: unknown) {
   const v = record(value)
   return {
@@ -215,6 +244,7 @@ function decodeDistribution(value: unknown) {
     set_percentage: percentage(v.set_percentage),
   }
 }
+
 function decodeParity(value: unknown) {
   const v = record(value)
   if (
@@ -231,6 +261,7 @@ function decodeParity(value: unknown) {
     distribution: array(decodeDistribution)(v.distribution),
   }
 }
+
 function decodeYearly(value: unknown) {
   const v = record(value)
   return {
@@ -250,9 +281,11 @@ function decodeYearly(value: unknown) {
         }),
   }
 }
+
 export function envelope<T>(decode: Decoder<T>): Decoder<{ data: T }> {
   return (value) => ({ data: decode(record(value).data) })
 }
+
 function statistics<T>(decode: Decoder<T>) {
   return (value: unknown) => {
     const v = record(value)
@@ -279,6 +312,7 @@ export function decodeFrequenciesResponse(value: unknown) {
     },
   }
 }
+
 export function decodePairsResponse(value: unknown) {
   const v = record(value),
     meta = record(v.meta)
@@ -297,6 +331,7 @@ export function decodePairsResponse(value: unknown) {
     },
   }
 }
+
 export function decodeYearlyResponse(value: unknown) {
   const v = record(value),
     meta = record(v.meta)
@@ -323,6 +358,7 @@ export function decodeYearlyResponse(value: unknown) {
     },
   }
 }
+
 function decodePage<T>(value: unknown, decode: Decoder<T>) {
   const v = record(value),
     links = record(v.links),
@@ -362,6 +398,7 @@ function decodePage<T>(value: unknown, decode: Decoder<T>) {
 export function decodeDrawingPage(value: unknown) {
   return decodePage(value, decodeDrawingSummary)
 }
+
 export function decodeDrawingHistory(value: unknown) {
   return decodePage(value, decodeDrawing)
 }

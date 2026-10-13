@@ -59,6 +59,7 @@ describe('game route loading', () => {
     expect(yearly).toHaveBeenCalledTimes(1)
     router.dispose()
   })
+
   it('hydrates a filtered URL from default HTML and keeps the snapshot on filter failure', async () => {
     const data = fixturePageData('scandinavian')
     const summary = vi
@@ -124,6 +125,7 @@ describe('game route loading', () => {
       container.remove()
     }
   })
+
   it('changes visual sorting without a request and fetches only selected yearly data', async () => {
     const data = {
       ...fixturePageData('six'),

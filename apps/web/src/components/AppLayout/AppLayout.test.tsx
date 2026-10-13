@@ -36,6 +36,7 @@ describe('shared layout and navigation', () => {
     ).toHaveAttribute('href', '#main')
     expect(screen.getByRole('main')).toHaveAttribute('id', 'main')
   })
+
   it('navigates between game URLs and updates the active link', () => {
     render(
       <MemoryRouter>
@@ -62,6 +63,7 @@ describe('shared layout and navigation', () => {
       screen.getByRole('heading', { name: 'Kezdőlap' }),
     ).toBeInTheDocument()
   })
+
   it('retains content and accessible busy state without a global loading message', () => {
     render(
       <MemoryRouter>

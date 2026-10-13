@@ -13,6 +13,7 @@ describe('chart motion preferences', () => {
     expect(result.current).toBe(false)
     mock.mockRestore()
   })
+
   it('does not animate a theme update', () => {
     const { result, rerender } = renderHook(
       ({ theme }: { theme: ResolvedTheme }) => useChartMotion(theme),

@@ -3,27 +3,26 @@ import {
   LuCalendarDays,
   LuChartColumn,
   LuChartPie,
-  LuHistory,
   LuLayers,
 } from 'react-icons/lu'
 import { FaTrophy } from 'react-icons/fa6'
 import { useSearchParams } from 'react-router'
-import type { GameCode } from '../../api/contracts'
-import type { GamePageData } from '../../api/page-data'
-import { HistoryPagination } from '../../components/HistoryPagination'
-import { PrizeBreakdown } from '../../components/PrizeBreakdown'
-import { LotteryBall } from '../../components/LotteryBall'
-import { gamePages } from '../../config/games'
-import styles from './GamePage.module.scss'
-import { StatisticsFilters } from '../../components/StatisticsFilters'
-import { StatisticsDetails } from '../../components/StatisticsDetails'
-import { ChartSlot } from '../../components/ChartSlot'
-import { parseFilters } from '../../api/filters'
-import { cachedResource } from '../../api/resource'
-import { useResource } from '../../api/use-resource'
 import { api } from '../../api/client'
-import { loadGame, loadHistory } from '../../api/page-data'
+import { parseFilters } from '../../api/filters'
+import type { GameCode, SetScope } from '../../api/contracts'
+import { loadGame, type GamePageData } from '../../api/page-data'
+import { cachedResource } from '../../api/resource'
 import { useHydrated } from '../../api/use-hydrated'
+import { useResource } from '../../api/use-resource'
+import { ChartSlot } from '../../components/ChartSlot'
+import { LotteryBall } from '../../components/LotteryBall'
+import { PrizeBreakdown } from '../../components/PrizeBreakdown'
+import { StatisticsDetails } from '../../components/StatisticsDetails'
+import { StatisticsFilters } from '../../components/StatisticsFilters'
+import { gamePages } from '../../config/games'
+import { GameHistory } from './GameHistory'
+import { dateLabel, isRelevantSet, setLabels } from './drawing-display'
+import styles from './GamePage.module.scss'
 
 const FrequencyChart = lazy(() =>
   import('../../components/FrequencyChart').then((module) => ({
@@ -42,44 +41,22 @@ const loadFiltered = cachedResource((key, signal) => {
   const filters = parseFilters(new URLSearchParams(query), game)
   return loadGame(api, game, signal, filters.population, filters.statistics.set)
 })
-const loadHistoryPage = cachedResource((key, signal) => {
-  const [game, query] = key.split('?')
-  if (game !== 'five' && game !== 'six' && game !== 'scandinavian')
-    throw new Error('Invalid game')
-  const filters = parseFilters(new URLSearchParams(query), game)
-  return loadHistory(
-    api,
-    game,
-    Promise.resolve(null),
-    signal,
-    filters.population,
-    filters.page,
-    { throwOnError: true },
-  )
-})
-
-const setLabels = {
-  main: 'Főszámok',
-  bonus: 'Pótszámok',
-  machine: 'Gépi számsor',
-  manual: 'Kézi számsor',
-}
-
-function isRelevantSet(game: GameCode, type: keyof typeof setLabels) {
-  if (game === 'five') return type === 'main'
-  if (game === 'six') return type === 'main' || type === 'bonus'
-  return type === 'machine' || type === 'manual'
-}
 
 function count(value: number) {
   return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')
 }
 
-function dateLabel(value: string) {
-  return new Intl.DateTimeFormat('hu-HU', {
-    dateStyle: 'long',
-    timeZone: 'UTC',
-  }).format(new Date(`${value}T00:00:00Z`))
+function setScopeLabel(scope: SetScope) {
+  switch (scope) {
+    case 'combined':
+      return 'gépi és kézi együtt'
+    case 'manual':
+      return 'kézi'
+    case 'machine':
+      return 'gépi'
+    case 'main':
+      return 'főszámok'
+  }
 }
 
 export function GamePage({
@@ -112,30 +89,6 @@ export function GamePage({
     filtered.data ??
     (isFiltered ? filtered.previousData : undefined) ??
     initialData
-  const historyQuery = new URLSearchParams()
-  for (const [key, value] of Object.entries(filters.population))
-    if (value !== undefined) historyQuery.set(key, String(value))
-  historyQuery.set('page', String(filters.page))
-  const historyResult = useResource(
-    hydrated && filters.page > 1 ? `${game}?${historyQuery}` : null,
-    loadHistoryPage,
-  )
-  const history =
-    filters.page > 1
-      ? (historyResult.data?.history ??
-        historyResult.previousData?.history ??
-        data.history)
-      : data.history
-  const historyError =
-    filters.page > 1
-      ? (historyResult.error ?? historyResult.data?.historyError)
-      : data.historyError
-  const pagination =
-    filters.page > 1
-      ? (historyResult.data?.historyPage ??
-        historyResult.previousData?.historyPage ??
-        data.historyPage)
-      : data.historyPage
   const frequencies = useMemo(
     () =>
       data.frequencies.data
@@ -262,14 +215,7 @@ export function GamePage({
       )}
       <p className={styles.caption}>
         Megjelenített statisztikai számsor:{' '}
-        {data.summary.meta.set_scope === 'combined'
-          ? 'gépi és kézi együtt'
-          : data.summary.meta.set_scope === 'manual'
-            ? 'kézi'
-            : data.summary.meta.set_scope === 'machine'
-              ? 'gépi'
-              : 'főszámok'}
-        .
+        {setScopeLabel(data.summary.meta.set_scope)}.
       </p>
 
       <section className={styles.summary} aria-labelledby="summary-heading">
@@ -485,76 +431,13 @@ export function GamePage({
         />
       </div>
 
-      <section className={styles.card} aria-labelledby="history-heading">
-        <h2 id="history-heading">
-          <LuHistory aria-hidden="true" /> Korábbi eredmények
-        </h2>
-        <p className={styles.caption}>
-          Oldalanként legfeljebb öt sorsolás, év és hét szerint csökkenő, stabil
-          sorrendben.
-        </p>
-        {historyError ? (
-          <p role="alert">
-            A sorsolási előzmények nem érhetők el: {historyError}{' '}
-            <button
-              onClick={
-                filters.page > 1
-                  ? historyResult.retry
-                  : isFiltered
-                    ? filtered.retry
-                    : () => window.location.reload()
-              }
-            >
-              Újrapróbálkozás
-            </button>
-          </p>
-        ) : null}
-        {historyResult.loading && (
-          <p aria-live="polite">A sorsolások betöltése…</p>
-        )}
-        {history.length ? (
-          <ol className={styles.historyList}>
-            {history.map((drawing) => (
-              <li key={drawing.id}>
-                <div className={styles.historyMeta}>
-                  <strong>
-                    {drawing.year}. év · {drawing.week}. hét
-                  </strong>
-                  <span>
-                    {drawing.drawn_on
-                      ? dateLabel(drawing.drawn_on)
-                      : 'A dátum nem ismert'}
-                  </span>
-                </div>
-                <div className={styles.historySets}>
-                  {drawing.sets
-                    .filter((set) => isRelevantSet(game, set.type))
-                    .map((set) => (
-                      <p key={set.type}>
-                        <strong>{setLabels[set.type]}:</strong>{' '}
-                        {set.numbers.join(', ')}
-                      </p>
-                    ))}
-                </div>
-              </li>
-            ))}
-          </ol>
-        ) : !historyError && !historyResult.loading ? (
-          <p>Még nincs megjeleníthető sorsolás.</p>
-        ) : null}
-        {pagination && (pagination.last > 1 || pagination.current > 1) && (
-          <HistoryPagination
-            current={historyResult.loading ? filters.page : pagination.current}
-            last={pagination.last}
-            busy={historyResult.loading}
-            onPageChange={(page) => {
-              const next = new URLSearchParams(params)
-              next.set('page', String(page))
-              setParams(next, { preventScrollReset: true })
-            }}
-          />
-        )}
-      </section>
+      <GameHistory
+        game={game}
+        data={data}
+        filters={filters}
+        hydrated={hydrated}
+        retryFirstPage={isFiltered ? filtered.retry : undefined}
+      />
 
       {data.latest && (
         <section className={styles.card} aria-labelledby="prizes-heading">

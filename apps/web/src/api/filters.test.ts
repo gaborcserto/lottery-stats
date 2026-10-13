@@ -32,6 +32,7 @@ describe('URL statistics filters', () => {
       parseFilters(new URLSearchParams(`number=${maximum + 1}`), game).number,
     ).toBe(1)
   })
+
   it('deduplicates yearly numbers and rejects values outside the game range', () => {
     expect(
       parseFilters(
@@ -43,6 +44,7 @@ describe('URL statistics filters', () => {
       parseFilters(new URLSearchParams('number=91&number=-1'), 'five').numbers,
     ).toEqual([1])
   })
+
   it('bounds oversized trend selections while retaining the lowest valid numbers', () => {
     const numbers = Array.from({ length: 90 }, (_, index) => index + 1)
     const filters = parseFilters(
@@ -54,6 +56,7 @@ describe('URL statistics filters', () => {
     expect(filters.numbers).toHaveLength(10)
     expect(filters.numbers).toEqual(numbers.slice(0, 10))
   })
+
   it('validates real dates and ordered bounds without fabricating dates', () => {
     expect(
       parseFilters(

@@ -291,15 +291,26 @@ class LotteryDrawingPersisterTest extends TestCase
      * @param  list<NormalizedNumberSet>|null  $sets
      * @param  list<NormalizedPrizeTier>|null  $prizes
      */
-    private function drawing(string $game = 'five', ?string $date = '2026-10-03', ?array $sets = null, ?array $prizes = null): NormalizedDrawing
-    {
+    private function drawing(
+        string $game = 'five',
+        ?string $date = '2026-10-03',
+        ?array $sets = null,
+        ?array $prizes = null,
+    ): NormalizedDrawing {
         $sets ??= [new NormalizedNumberSet('main', [1, 2, 3, 4, 5])];
-        $identity = implode('|', array_map(static fn (NormalizedNumberSet $set): string => $set->type.':'.implode(',', $set->numbers), $sets));
+        $identity = implode('|', array_map(
+            static fn (NormalizedNumberSet $set): string => $set->type.':'.implode(',', $set->numbers),
+            $sets,
+        ));
 
         return new NormalizedDrawing(
-            $game, $date === null ? 'undated:2026-W40:'.hash('sha256', $identity) : 'date:'.$date,
-            2026, 40, $date === null ? null : new DateTimeImmutable($date), $sets,
-            $prizes ?? [new NormalizedPrizeTier('match_5', 1, '123456789012.00', 'HUF')],
+            gameCode: $game,
+            sourceKey: $date === null ? 'undated:2026-W40:'.hash('sha256', $identity) : 'date:'.$date,
+            year: 2026,
+            week: 40,
+            drawnOn: $date === null ? null : new DateTimeImmutable($date),
+            numberSets: $sets,
+            prizes: $prizes ?? [new NormalizedPrizeTier('match_5', 1, '123456789012.00', 'HUF')],
         );
     }
 

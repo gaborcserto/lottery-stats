@@ -68,15 +68,22 @@ final class LotteryDrawingPersister
 
                 if ($drawing !== null) {
                     $storedSets = $this->storedSets($drawing);
+                    $undatedIdentityChanged = $date === null
+                        && ($drawing->year !== $normalized->year
+                            || $drawing->week !== $normalized->week
+                            || $storedSets !== $sets);
 
                     if ($this->storedDate($drawing) !== $date
-                        || ($date === null && ($drawing->year !== $normalized->year
-                            || $drawing->week !== $normalized->week || $storedSets !== $sets))) {
+                        || $undatedIdentityChanged) {
                         throw new RuntimeException('A stored drawing conflicts with the normalized source identity.');
                     }
 
-                    if ($drawing->year === $normalized->year && $drawing->week === $normalized->week
-                        && $storedSets === $sets && $this->storedPrizes($drawing) === $prizes) {
+                    $hasSameDrawingData = $drawing->year === $normalized->year
+                        && $drawing->week === $normalized->week
+                        && $storedSets === $sets
+                        && $this->storedPrizes($drawing) === $prizes;
+
+                    if ($hasSameDrawingData) {
                         $unchanged++;
 
                         continue;

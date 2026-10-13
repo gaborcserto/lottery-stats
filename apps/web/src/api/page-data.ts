@@ -26,6 +26,7 @@ export interface GamePageData {
   pairsError?: string
   yearlyError?: string
 }
+
 export interface HomePageData {
   latest: { game: GameCode; drawing: Drawing | null }[]
   capturedAt: string
@@ -181,6 +182,7 @@ export async function loadLatest(
     throw error
   }
 }
+
 export async function loadGame(
   client: ApiClient,
   game: GameCode,
@@ -331,6 +333,7 @@ export async function loadHistory(
     return { history: [], historyError: error.message }
   }
 }
+
 export async function loadHome(
   client: ApiClient = api,
   signal?: AbortSignal,

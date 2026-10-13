@@ -39,6 +39,7 @@ export function StatisticsFilters({
     target.focus()
     if (document.activeElement === target) focusAfterRemount.current = null
   }, [formKey, pending])
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const values = new FormData(event.currentTarget)
@@ -66,6 +67,7 @@ export function StatisticsFilters({
       setParams(next, { preventScrollReset: true })
     }
   }
+
   return (
     <section className={styles.panel} aria-label="Statisztikai szűrők">
       <h2>

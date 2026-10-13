@@ -11,6 +11,7 @@ export function meta() {
     { name: 'robots', content: 'noindex' },
   ]
 }
+
 export default function NotFound() {
   return <ErrorPage status={404} />
 }

@@ -30,6 +30,7 @@ class ChartError extends Component<
     )
   }
 }
+
 export function ChartSlot({
   children,
   label,

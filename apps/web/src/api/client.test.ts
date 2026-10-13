@@ -73,6 +73,7 @@ describe('Laravel API client', () => {
       })
     }
   })
+
   it('preserves exact prize strings and required nulls', async () => {
     const fetcher = vi
       .fn<typeof fetch>()
@@ -113,6 +114,7 @@ describe('Laravel API client', () => {
       createApiClient('/api/v1', fetcher).latest('five'),
     ).rejects.toMatchObject({ kind: 'invalid-response' })
   })
+
   it('rejects invalid statistical metadata and optional selected-number fields', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
       json({
@@ -161,6 +163,7 @@ describe('Laravel API client', () => {
       if (status === 422) expect(error).toHaveProperty('fields', ['year'])
     }
   })
+
   it('handles network, non-JSON, and invalid JSON failures', async () => {
     const fetcher = vi
       .fn<typeof fetch>()
@@ -178,6 +181,7 @@ describe('Laravel API client', () => {
       kind: 'invalid-response',
     })
   })
+
   it('propagates AbortSignal and preserves cancellation', async () => {
     const controller = new AbortController()
     const fetcher = vi
@@ -200,6 +204,7 @@ describe('Laravel API client', () => {
     })
     expect(fetcher).toHaveBeenCalledTimes(1)
   })
+
   it('honors Retry-After across requests without automatic retries', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-10-10T12:00:00Z'))
@@ -221,6 +226,7 @@ describe('Laravel API client', () => {
     vi.advanceTimersByTime(30_000)
     await expect(client.games()).resolves.toEqual(fixtureGames)
   })
+
   it('supports HTTP-date Retry-After and rejects invalid headers', () => {
     expect(
       parseRetryAfter(

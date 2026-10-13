@@ -1,0 +1,24 @@
+.historyList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.historyList li {
+  display: grid;
+  gap: 0.6rem;
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.historyMeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  span {
+    color: var(--muted);
+  }
+}
+.historySets p {
+  margin: 0.2rem 0;
+  font-variant-numeric: tabular-nums;
+}

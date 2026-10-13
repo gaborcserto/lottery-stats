@@ -14,10 +14,12 @@ export function meta() {
     },
   ]
 }
+
 export async function loader(_args: Route.LoaderArgs) {
   void _args
   return homeSnapshot()
 }
+
 export default function Home() {
   return <HomePage data={useLoaderData<typeof loader>()} />
 }

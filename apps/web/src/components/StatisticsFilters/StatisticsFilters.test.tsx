@@ -64,6 +64,7 @@ describe('shareable statistics controls', () => {
     )
     router.dispose()
   })
+
   it('restores keyboard focus after filter submission and reset', () => {
     const router = createMemoryRouter([{ path: '/', Component: Filters }], {
       initialEntries: ['/?year=2020'],
@@ -83,6 +84,7 @@ describe('shareable statistics controls', () => {
     expect(screen.getByRole('button', { name: 'Alaphelyzet' })).toHaveFocus()
     router.dispose()
   })
+
   it('does not move focus when the URL changes outside filter controls', async () => {
     const router = createMemoryRouter([{ path: '/', Component: Filters }], {
       initialEntries: ['/?year=2020'],
@@ -95,6 +97,7 @@ describe('shareable statistics controls', () => {
     expect(document.querySelector('[name="year"]')).not.toHaveFocus()
     router.dispose()
   })
+
   it('rejects reversed dates and resets all filters', () => {
     const router = createMemoryRouter([{ path: '/', Component: Filters }], {
       initialEntries: ['/?year=2020'],
@@ -114,6 +117,7 @@ describe('shareable statistics controls', () => {
     expect(screen.getByLabelText('Év')).toHaveValue(null)
     router.dispose()
   })
+
   it('clears draft fields and validity when URL defaults are already active', () => {
     const router = createMemoryRouter([{ path: '/', Component: Filters }], {
       initialEntries: ['/?sort=number&set=machine'],

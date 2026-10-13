@@ -73,6 +73,7 @@ describe('viewport chart loading', () => {
     expect(screen.queryByText('private module URL')).not.toBeInTheDocument()
     expect(caught).toHaveBeenCalledTimes(1)
   })
+
   it('reserves a prerendered slot without importing chart code', () => {
     const load = vi.fn(async () => ({ default: () => <p>Ábra</p> }))
     const Chart = lazy(load)
@@ -85,6 +86,7 @@ describe('viewport chart loading', () => {
     ).toContain('Interaktív ábra')
     expect(load).not.toHaveBeenCalled()
   })
+
   it('keeps component-specific layout hooks on the shared chart slot', () => {
     const { container } = render(
       <ChartSlot className="parityChartSlot" label="Páros diagram">
@@ -93,6 +95,7 @@ describe('viewport chart loading', () => {
     )
     expect(container.firstElementChild).toHaveClass('parityChartSlot')
   })
+
   it('loads only when near the viewport', async () => {
     let enter: (() => void) | undefined
     const disconnect = vi.fn()

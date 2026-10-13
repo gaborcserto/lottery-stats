@@ -16,12 +16,15 @@ The ignored `.notes/` directory contains optional local engineering notes and ma
 - Review the final diff and run relevant checks. Report changed files, commands actually run, checks not run and why, and limitations or unfinished work. Stop at the requested phase.
 - Never create branches, commit, or push without explicit permission. Never bypass hooks with `--no-verify`, force-push as a workaround, or bypass failed quality/security checks. When asked for a commit message, use a one-line Conventional Commit.
 
-## Readability and structure
+## Code Readability & Logical Spacing
 
-- Prefer clarity over cleverness, extreme brevity, or arbitrary function/file size limits. Use descriptive, consistent English names for internal code.
-- Keep functions and components cohesive. Use clear control flow and early returns where helpful; avoid excessive nesting.
-- Separate genuinely different responsibilities without fragmenting simple logic into tiny files, custom hooks, or wrapper functions. Extract shared logic when actual duplication warrants it.
-- Avoid premature abstractions, speculative extensibility, generic boilerplate, excessive logging, and dead code. Comments and PHPDoc should explain non-obvious decisions or useful type information rather than narrate obvious behavior.
+- Use one blank line between distinct logical operations and between separate functions or substantial declarations. Separate setup, calculations, control flow, and returns so each step is easy to scan.
+- Group related state, hooks, variables, and constants. Keep genuinely related statements compact, and use clear boundaries between derived values, handlers, and rendering; do not add blank lines after every statement.
+- Keep functions and components cohesive, with readable control flow and descriptive names. Do not use decorative separator comments; comments and PHPDoc should explain non-obvious decisions or useful type information.
+- Keep small, local types and interfaces near their consumers. Extract substantial or reused types to a suitable feature module, and use shared types and modules only when genuine reuse improves clarity.
+- Prefer clear local code over unnecessary abstractions, wrappers, custom hooks, interfaces, or one-file-per-type structures. Split responsibilities only when it improves navigation or reuse.
+- Apply these rules to all first-party source, including frontend and backend. For PHP, space controllers, services, methods, conditionals, and database queries around logical steps while following Laravel conventions and Pint. Keep frontend code compatible with Prettier and ESLint and backend code with Pint and existing project conventions.
+- Preserve behavior and public contracts during readability changes.
 
 ## Laravel and PHP
 

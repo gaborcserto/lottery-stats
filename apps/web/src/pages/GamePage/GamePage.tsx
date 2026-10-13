@@ -322,7 +322,7 @@ export function GamePage({
                   </li>
                 ))
               ) : (
-                <li>Nincs adat</li>
+                <li>Nincs adat.</li>
               )}
             </ul>
           </div>
@@ -337,7 +337,7 @@ export function GamePage({
                   </li>
                 ))
               ) : (
-                <li>Nincs adat</li>
+                <li>Nincs adat.</li>
               )}
             </ul>
           </div>

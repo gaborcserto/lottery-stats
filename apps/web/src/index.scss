@@ -90,10 +90,23 @@ button {
   background: var(--action-background);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 100ms ease;
+}
+button:hover:not(:disabled) {
+  filter: brightness(1.04);
+}
+button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 button:disabled {
   cursor: wait;
   opacity: 0.65;
+  transition: none;
 }
 :focus-visible {
   outline: 3px solid var(--focus);

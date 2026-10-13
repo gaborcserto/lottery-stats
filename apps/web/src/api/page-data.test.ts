@@ -41,6 +41,32 @@ function fixtureFetcher() {
 }
 
 describe('game page data loading', () => {
+  it('returns no rankings for an empty population and preserves zero-frequency numbers otherwise', async () => {
+    const base = fixtureFetcher()
+    const emptyClient = createApiClient('/api/v1', async (input, init) => {
+      const response = await base(input, init)
+      if (!String(input).includes('/frequencies')) return response
+      const body = await response.json()
+      return Response.json({
+        ...body,
+        meta: { ...body.meta, eligible_set_count: 0 },
+      })
+    })
+    const empty = await loadGame(emptyClient, 'five')
+    expect(empty.mostFrequent.data).toEqual([])
+    expect(empty.leastFrequent.data).toEqual([])
+
+    const nonempty = await loadGame(
+      createApiClient('/api/v1', fixtureFetcher()),
+      'five',
+    )
+    expect(nonempty.leastFrequent.data).toContainEqual({
+      number: 2,
+      count: 0,
+      occurrence_percentage: 0,
+    })
+  })
+
   it('keeps a realistic three-game navigation and history scenario below the shared quota', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     const base = fixtureFetcher()

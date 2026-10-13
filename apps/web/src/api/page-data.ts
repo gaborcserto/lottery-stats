@@ -221,23 +221,29 @@ export async function loadGame(
   const [pairs, yearly] = await chartRequests
   signal?.throwIfAborted()
   const mostFrequent = {
-    data: frequencies.data
-      .slice()
-      .sort(
-        (first, second) =>
-          second.count - first.count || first.number - second.number,
-      )
-      .slice(0, 3),
+    data:
+      frequencies.meta.eligible_set_count === 0
+        ? []
+        : frequencies.data
+            .slice()
+            .sort(
+              (first, second) =>
+                second.count - first.count || first.number - second.number,
+            )
+            .slice(0, 3),
     meta: { ...frequencies.meta, sort: 'most' as const, limit: 3 },
   }
   const leastFrequent = {
-    data: frequencies.data
-      .slice()
-      .sort(
-        (first, second) =>
-          first.count - second.count || first.number - second.number,
-      )
-      .slice(0, 3),
+    data:
+      frequencies.meta.eligible_set_count === 0
+        ? []
+        : frequencies.data
+            .slice()
+            .sort(
+              (first, second) =>
+                first.count - second.count || first.number - second.number,
+            )
+            .slice(0, 3),
     meta: { ...frequencies.meta, sort: 'least' as const, limit: 3 },
   }
   if (

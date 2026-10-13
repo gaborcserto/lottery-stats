@@ -28,6 +28,35 @@ function pageData(game: GameCode): GamePageData {
 }
 
 describe('game statistics pages', () => {
+  it('shows empty rankings when no sets qualify and keeps genuine zero counts', () => {
+    const data = pageData('five')
+    data.frequencies.meta.eligible_set_count = 0
+    data.mostFrequent.data = []
+    data.leastFrequent.data = []
+    const { rerender } = render(
+      <MemoryRouter>
+        <GamePage game="five" data={data} refreshing />
+      </MemoryRouter>,
+    )
+    const most = screen.getByRole('heading', { name: 'Leggyakoribbak' })
+    expect(most.parentElement).toHaveTextContent('Nincs adat.')
+    expect(screen.getByText(/Az adatok frissítése/)).toHaveAttribute(
+      'role',
+      'status',
+    )
+
+    data.frequencies.meta.eligible_set_count = 1
+    data.mostFrequent.data = [data.frequencies.data[0]]
+    data.leastFrequent.data = [data.frequencies.data[1]]
+    rerender(
+      <MemoryRouter>
+        <GamePage game="five" data={data} />
+      </MemoryRouter>,
+    )
+    expect(screen.queryByText('Nincs adat.')).not.toBeInTheDocument()
+    const least = screen.getByRole('heading', { name: 'Legritkábbak' })
+    expect(least.parentElement).toHaveTextContent('(0)')
+  })
   it.each([
     ['five', 'Ötöslottó', '/images/logos/otoslotto.png', '1, 12, 23, 34, 45'],
     [

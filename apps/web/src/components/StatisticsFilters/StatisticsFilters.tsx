@@ -1,6 +1,6 @@
 import { SelectControl } from '../SelectControl'
 import { DateControl } from '../DateControl'
-import { useState, type FormEvent } from 'react'
+import { useLayoutEffect, useRef, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router'
 import { FaFilter } from 'react-icons/fa6'
 import type { GameCode } from '../../api/contracts'
@@ -18,6 +18,27 @@ export function StatisticsFilters({
 }) {
   const [params, setParams] = useSearchParams()
   const [resetKey, setResetKey] = useState(0)
+  const focusAfterRemount = useRef<string | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  const formKey = `${JSON.stringify({ ...filters.statistics, sort: filters.sort })}-${resetKey}`
+  useLayoutEffect(() => {
+    const name = focusAfterRemount.current
+    if (!name) return
+    const target = formRef.current?.querySelector<HTMLElement>(
+      `[name="${name}"]`,
+    )
+    if (!target) return
+    if (target.matches(':disabled')) return
+    if (
+      document.activeElement !== document.body &&
+      document.activeElement !== target
+    ) {
+      focusAfterRemount.current = null
+      return
+    }
+    target.focus()
+    if (document.activeElement === target) focusAfterRemount.current = null
+  }, [formKey, pending])
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const values = new FormData(event.currentTarget)
@@ -36,8 +57,14 @@ export function StatisticsFilters({
       event.currentTarget.reportValidity()
       return
     }
-    if (next.toString() !== params.toString())
+    if (next.toString() !== params.toString()) {
+      const active = document.activeElement
+      focusAfterRemount.current =
+        active instanceof HTMLElement && event.currentTarget.contains(active)
+          ? (active.getAttribute('name') ?? 'submit')
+          : 'submit'
       setParams(next, { preventScrollReset: true })
+    }
   }
   return (
     <section className={styles.panel} aria-label="Statisztikai szűrők">
@@ -45,7 +72,8 @@ export function StatisticsFilters({
         <FaFilter aria-hidden="true" /> Időszak és számsor
       </h2>
       <form
-        key={`${JSON.stringify({ ...filters.statistics, sort: filters.sort })}-${resetKey}`}
+        ref={formRef}
+        key={formKey}
         onSubmit={submit}
         className={styles.form}
         aria-busy={pending}
@@ -122,14 +150,22 @@ export function StatisticsFilters({
             <option value="least">Legritkább elöl</option>
           </SelectControl>
         </label>
-        <button type="submit" disabled={pending}>
+        <button type="submit" name="submit" disabled={pending}>
           {pending && <span className={styles.spinner} aria-hidden="true" />}
           {pending ? 'Szűrés folyamatban…' : 'Szűrés'}
         </button>
         <button
           type="button"
+          name="reset"
           onClick={() => {
-            setResetKey((key) => key + 1)
+            focusAfterRemount.current = 'reset'
+            const defaults = parseFilters(new URLSearchParams(), game)
+            const defaultsKey = JSON.stringify({
+              ...defaults.statistics,
+              sort: defaults.sort,
+            })
+            if (formKey.startsWith(`${defaultsKey}-`))
+              setResetKey((key) => key + 1)
             setParams({}, { preventScrollReset: true })
           }}
         >

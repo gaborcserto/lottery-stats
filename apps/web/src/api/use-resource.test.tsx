@@ -59,7 +59,7 @@ describe('useResource refresh state', () => {
     )
     render(<ResourceView load={load} />)
 
-    expect(await screen.findByTestId('data')).toHaveTextContent('loaded data')
+    expect(await screen.findByText('loaded data')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
     expect(screen.getByRole('status')).toBeInTheDocument()
     expect(screen.getByTestId('previous')).toHaveTextContent('loaded data')

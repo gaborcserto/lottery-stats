@@ -64,6 +64,37 @@ describe('shareable statistics controls', () => {
     )
     router.dispose()
   })
+  it('restores keyboard focus after filter submission and reset', () => {
+    const router = createMemoryRouter([{ path: '/', Component: Filters }], {
+      initialEntries: ['/?year=2020'],
+    })
+    render(<RouterProvider router={router} />)
+    const year = document.querySelector<HTMLInputElement>('[name="year"]')
+    if (!year) throw new Error('Missing year filter')
+    fireEvent.change(year, { target: { value: '2021' } })
+    year.focus()
+    const form = year.closest('form')
+    if (!form) throw new Error('Missing filter form')
+    fireEvent.submit(form)
+    expect(document.querySelector('[name="year"]')).toHaveFocus()
+    const reset = screen.getByRole('button', { name: 'Alaphelyzet' })
+    reset.focus()
+    fireEvent.click(reset)
+    expect(screen.getByRole('button', { name: 'Alaphelyzet' })).toHaveFocus()
+    router.dispose()
+  })
+  it('does not move focus when the URL changes outside filter controls', async () => {
+    const router = createMemoryRouter([{ path: '/', Component: Filters }], {
+      initialEntries: ['/?year=2020'],
+    })
+    render(<RouterProvider router={router} />)
+    const year = document.querySelector<HTMLInputElement>('[name="year"]')
+    if (!year) throw new Error('Missing year filter')
+    year.focus()
+    await act(async () => router.navigate('/?year=2021'))
+    expect(document.querySelector('[name="year"]')).not.toHaveFocus()
+    router.dispose()
+  })
   it('rejects reversed dates and resets all filters', () => {
     const router = createMemoryRouter([{ path: '/', Component: Filters }], {
       initialEntries: ['/?year=2020'],

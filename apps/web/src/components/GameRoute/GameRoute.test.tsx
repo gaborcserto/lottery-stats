@@ -198,63 +198,74 @@ describe('game route loading', () => {
     )
     router.dispose()
   })
-  it('refreshes a stale sorted URL after hydration without clearing results or blocking the router', async () => {
-    const data = fixturePageData('five')
-    const refresh = deferred<GamePageData>()
-    const background = vi
-      .spyOn(pageData, 'loadGameWithFallback')
-      .mockReturnValue(refresh.promise)
-    const loader = vi.fn(async () => data)
-    const router = createMemoryRouter(
-      [
+  it.each([
+    ['success', undefined],
+    ['failure', 'Az adatok átmenetileg nem érhetők el.'],
+  ])(
+    'keeps the stale sorted page visible through a delayed refresh %s',
+    async (_outcome, refreshError) => {
+      const data = fixturePageData('five')
+      const refresh = deferred<GamePageData>()
+      const background = vi
+        .spyOn(pageData, 'loadGameWithFallback')
+        .mockReturnValue(refresh.promise)
+      const loader = vi.fn(async () => data)
+      const router = createMemoryRouter(
+        [
+          {
+            path: '/',
+            Component: Root,
+            children: [
+              { id: 'game', path: 'otoslotto', Component: Five, loader },
+            ],
+          },
+        ],
         {
-          path: '/',
-          Component: Root,
-          children: [
-            { id: 'game', path: 'otoslotto', Component: Five, loader },
-          ],
+          initialEntries: ['/otoslotto?sort=most&number=1'],
+          hydrationData: { loaderData: { game: data } },
         },
-      ],
-      {
-        initialEntries: ['/otoslotto?sort=most&number=1'],
-        hydrationData: { loaderData: { game: data } },
-      },
-    )
-    const container = document.createElement('div')
-    document.body.append(container)
-    container.innerHTML = renderToString(<RouterProvider router={router} />)
-    const heading = container.querySelector('h1')
-    const recovery = vi.fn()
-    const root = hydrateRoot(container, <RouterProvider router={router} />, {
-      onRecoverableError: recovery,
-    })
-    try {
-      await waitFor(() => expect(background).toHaveBeenCalledTimes(1))
-      expect(router.state.revalidation).toBe('idle')
-      expect(screen.getByText(/Az adatok friss/)).toBeInTheDocument()
-      expect(container.querySelector('h1')).toBe(heading)
-      expect(
-        screen.getByRole('heading', { name: 'Számgyakoriság' }),
-      ).toBeInTheDocument()
-      expect(screen.queryByText(/Az oldal betöltése/)).not.toBeInTheDocument()
-      await act(async () =>
-        refresh.resolve({
-          ...data,
-          refreshError: 'Az adatok átmenetileg nem érhetők el.',
-        }),
       )
-      expect(container.querySelector('h1')).toBe(heading)
-      expect(screen.getByText(/A frissítés nem sikerült/)).toHaveTextContent(
-        'Az adatok átmenetileg nem érhetők el.',
-      )
-      expect(recovery).not.toHaveBeenCalled()
-      expect(loader).not.toHaveBeenCalled()
-    } finally {
-      await act(async () => root.unmount())
-      router.dispose()
-      container.remove()
-    }
-  })
+      const container = document.createElement('div')
+      document.body.append(container)
+      container.innerHTML = renderToString(<RouterProvider router={router} />)
+      const heading = container.querySelector('h1')
+      const recovery = vi.fn()
+      const root = hydrateRoot(container, <RouterProvider router={router} />, {
+        onRecoverableError: recovery,
+      })
+      try {
+        await waitFor(() => expect(background).toHaveBeenCalledTimes(1))
+        expect(router.state.revalidation).toBe('idle')
+        expect(screen.getByText(/Az adatok friss/)).toBeInTheDocument()
+        expect(container.querySelector('h1')).toBe(heading)
+        expect(
+          screen.getByRole('heading', { name: 'Számgyakoriság' }),
+        ).toBeInTheDocument()
+        expect(screen.queryByText(/Az oldal betöltése/)).not.toBeInTheDocument()
+        await act(async () =>
+          refresh.resolve({
+            ...data,
+            ...(refreshError ? { refreshError } : {}),
+          }),
+        )
+        expect(container.querySelector('h1')).toBe(heading)
+        if (refreshError)
+          expect(
+            screen.getByText(/A frissítés nem sikerült/),
+          ).toHaveTextContent(refreshError)
+        else
+          expect(
+            screen.queryByText(/Az adatok frissítése/),
+          ).not.toBeInTheDocument()
+        expect(recovery).not.toHaveBeenCalled()
+        expect(loader).not.toHaveBeenCalled()
+      } finally {
+        await act(async () => root.unmount())
+        router.dispose()
+        container.remove()
+      }
+    },
+  )
 
   it('keeps the current page during pending navigation without inserting a loading message', async () => {
     const next = deferred<GamePageData>()

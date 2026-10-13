@@ -6,11 +6,15 @@
   gap: 0.15rem;
   margin-top: var(--space-4);
   button {
+    box-sizing: border-box;
     display: grid;
     place-items: center;
-    min-width: 2.75rem;
-    min-height: 2.75rem;
-    padding: 0.35rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    min-height: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0.45rem;
     background: transparent;
     border-color: transparent;
     color: var(--text);
@@ -18,8 +22,6 @@
     font-weight: 400;
   }
   > button {
-    min-width: 2.5rem;
-    min-height: 2.5rem;
     background: var(--action-background);
     border-color: var(--action-background);
     border-radius: 0.45rem;
@@ -36,9 +38,10 @@
     filter: brightness(1.05);
   }
   button[aria-current='page'] {
-    border-color: transparent;
+    border-color: var(--accent-lime);
+    background: var(--secondary-button);
     color: var(--text);
-    font-weight: 750;
+    font-weight: 650;
   }
   .item button:hover:not(:disabled) {
     color: var(--accent-lime);

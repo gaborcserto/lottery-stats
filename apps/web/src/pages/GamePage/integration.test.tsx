@@ -142,6 +142,54 @@ describe('statistics user journeys through the typed API client', () => {
     expect(within(chips).getAllByRole('listitem')).toHaveLength(2)
     expect(filterForm().getByLabelText('Év')).toHaveValue(2020)
   })
+
+  it.each([false, true])(
+    'restores keyboard submit focus after an uncached filter loads unless focus moved elsewhere (%s)',
+    async (moveFocusDuringLoading) => {
+      const { fetcher, router } = setup('five')
+      const pendingSummary = deferred<Response>()
+      let summaryInput = ''
+      fetcher.mockImplementation(async (input) => {
+        const url = new URL(String(input), 'http://fixture.test')
+        if (
+          url.pathname.endsWith('/summary') &&
+          url.searchParams.get('year') === '2024'
+        ) {
+          summaryInput = String(input)
+          return pendingSummary.promise
+        }
+        return fixtureApiResponse(String(input))
+      })
+
+      fireEvent.change(filterForm().getByLabelText('Év'), {
+        target: { value: '2024' },
+      })
+      const submit = filterForm().getByRole('button', { name: 'Szűrés' })
+      submit.focus()
+      fireEvent.keyDown(submit, { key: 'Enter' })
+      const form = submit.closest('form')
+      if (!form) throw new Error('Missing filters form')
+      form.requestSubmit(submit)
+
+      const loadingSubmit = await screen.findByRole('button', {
+        name: 'Szűrés folyamatban…',
+      })
+      expect(loadingSubmit).toBeDisabled()
+      expect(router.state.location.search).toBe('?year=2024&sort=number')
+      if (moveFocusDuringLoading) filterForm().getByLabelText('Év').focus()
+
+      await act(async () =>
+        pendingSummary.resolve(await fixtureApiResponse(summaryInput)),
+      )
+      const enabledSubmit = await screen.findByRole('button', {
+        name: 'Szűrés',
+      })
+      if (moveFocusDuringLoading)
+        expect(filterForm().getByLabelText('Év')).toHaveFocus()
+      else expect(enabledSubmit).toHaveFocus()
+    },
+  )
+
   it.each(['network', 'invalid-response'] as const)(
     'clears pending feedback and retains safe data on %s failure',
     async (failure) => {
@@ -211,6 +259,15 @@ describe('statistics user journeys through the typed API client', () => {
   })
   it('applies intersected dates/year/week/scope, sorts locally, and restores cached results from history', async () => {
     const { router, fetcher } = setup()
+    const pendingSummary = deferred<Response>()
+    let summaryInput = ''
+    fetcher.mockImplementation(async (input) => {
+      if (String(input).includes('/summary')) {
+        summaryInput = String(input)
+        return pendingSummary.promise
+      }
+      return fixtureApiResponse(String(input))
+    })
     const form = filterForm()
     fireEvent.change(form.getByLabelText('Év'), { target: { value: '2026' } })
     fireEvent.change(form.getByLabelText('Hét'), { target: { value: '40' } })
@@ -228,9 +285,14 @@ describe('statistics user journeys through the typed API client', () => {
     })
     expect(fetcher).not.toHaveBeenCalled()
     fireEvent.click(form.getByRole('button', { name: 'Szűrés' }))
-    expect(
-      filterForm().getByRole('button', { name: 'Szűrés folyamatban…' }),
-    ).toBeDisabled()
+    const loadingSubmit = await screen.findByRole('button', {
+      name: 'Szűrés folyamatban…',
+    })
+    expect(loadingSubmit).toBeDisabled()
+    await waitFor(() => expect(summaryInput).toContain('/summary'))
+    await act(async () =>
+      pendingSummary.resolve(await fixtureApiResponse(summaryInput)),
+    )
     await waitFor(() =>
       expect(
         filterForm().getByRole('button', { name: 'Szűrés' }),

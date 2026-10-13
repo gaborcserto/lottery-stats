@@ -3,40 +3,22 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\DrawingListRequest;
 use App\Http\Resources\Api\V1\DrawingResource;
 use App\Http\Resources\Api\V1\DrawingSummaryResource;
 use App\Lottery\DrawingFilters;
 use App\Models\Drawing;
 use App\Models\Game;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Validator;
 
 class DrawingController extends Controller
 {
-    private const MAX_PAGE = 1_000_000;
-
-    public function index(Request $request, string $game): AnonymousResourceCollection
+    public function index(DrawingListRequest $request): AnonymousResourceCollection
     {
-        $gameModel = $this->findGame($game);
-        $rules = [
-            'page' => ['sometimes', 'integer', 'min:1', 'max:'.self::MAX_PAGE],
-            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
-            'include' => ['sometimes', 'in:details'],
-            ...DrawingFilters::rules(),
-        ];
+        $validated = $request->validated();
 
-        $validator = Validator::make($request->query(), $rules)->after(function ($validator) use ($request): void {
-            foreach (array_diff(array_keys($request->query()), [
-                'page', 'per_page', 'include', 'year', 'week', 'from_date', 'to_date',
-            ]) as $parameter) {
-                $validator->errors()->add($parameter, 'This query parameter is not supported.');
-            }
-        });
-        $validated = $validator->validate();
-
-        $query = $this->orderedDrawings($gameModel);
+        $query = $this->orderedDrawings($request->game());
         DrawingFilters::apply($query, $validated);
 
         $resource = DrawingSummaryResource::class;

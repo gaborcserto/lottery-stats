@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Http\Requests\Api\V1\DrawingListRequest;
 use App\Http\Requests\Api\V1\StatisticsRequest;
-use App\Lottery\DrawingFilters;
 use App\Models\Game;
 use Database\Seeders\GameSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -73,7 +73,7 @@ class OpenApiTest extends TestCase
                     $request->authorize();
                     $rules = $request->rules();
                 } else {
-                    $rules = ['page' => ['integer', 'min:1', 'max:1000000'], 'per_page' => ['integer', 'min:1', 'max:100'], 'include' => ['in:details'], ...DrawingFilters::rules()];
+                    $rules = (new DrawingListRequest)->rules();
                 }
                 $queries = [];
                 foreach ($item['get']['parameters'] as $parameter) {
@@ -83,9 +83,15 @@ class OpenApiTest extends TestCase
                     }
                     $name = $parameter['name'];
                     $queries[] = $name;
+                    $this->assertArrayHasKey($name, $rules);
+                    $this->assertFalse($parameter['required']);
                     foreach ($rules[$name] as $rule) {
                         $rule = (string) $rule;
-                        if (str_starts_with($rule, 'min:')) {
+                        if ($rule === 'integer') {
+                            $this->assertSame('integer', $parameter['schema']['type']);
+                        } elseif ($rule === 'sometimes') {
+                            continue;
+                        } elseif (str_starts_with($rule, 'min:')) {
                             $this->assertSame((int) substr($rule, 4), $parameter['schema']['minimum']);
                         } elseif (str_starts_with($rule, 'max:')) {
                             // OpenAPI has a shared maximum; the description specifies narrower game bounds.
@@ -94,6 +100,7 @@ class OpenApiTest extends TestCase
                             $this->get(str_replace('{game}', $game, $path).'?'.$name.'='.($maximum + 1))
                                 ->assertUnprocessable()->assertJsonValidationErrors($name);
                         } elseif (str_starts_with($rule, 'in:')) {
+                            $this->assertSame('string', $parameter['schema']['type']);
                             $enum = str_getcsv(substr($rule, 3), escape: '\\');
                             if ($name === 'set') {
                                 $this->assertSame($game === 'scandinavian' ? ['machine', 'manual', 'combined'] : ['main'], $enum);
@@ -102,7 +109,11 @@ class OpenApiTest extends TestCase
                                 $this->assertSame($enum, $parameter['schema']['enum']);
                             }
                         } elseif ($rule === 'date_format:Y-m-d') {
+                            $this->assertSame('string', $parameter['schema']['type']);
                             $this->assertSame('date', $parameter['schema']['format']);
+                        } elseif (str_starts_with($rule, 'after_or_equal:')) {
+                            $this->assertSame('to_date', $name);
+                            $this->assertStringContainsString('on or after from_date', $parameter['description']);
                         }
                     }
                 }

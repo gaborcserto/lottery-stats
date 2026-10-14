@@ -5,6 +5,35 @@ export {
   sitemapXml,
 } from './seo-artifacts.mjs'
 import { canonicalUrl as canonicalUrlArtifact } from './seo-artifacts.mjs'
+import { publicRoutePaths } from './seo-artifacts.mjs'
+
+export function pageStructuredData(
+  title: string,
+  description: string,
+  pathname: string,
+  origin: string | null = __PUBLIC_SITE_ORIGIN__,
+) {
+  const canonical = canonicalUrl(pathname, origin)
+  const siteUrl = canonicalUrl('/', origin)
+  const normalizedPath = pathname.split(/[?#]/u)[0].replace(/\/+$/, '') || '/'
+
+  if (!publicRoutePaths.includes(normalizedPath)) return undefined
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    ...(canonical ? { '@id': `${canonical}#webpage`, url: canonical } : {}),
+    name: title,
+    description,
+    inLanguage: 'hu',
+    isPartOf: {
+      '@type': 'WebSite',
+      ...(siteUrl ? { '@id': `${siteUrl}#website`, url: siteUrl } : {}),
+      name: 'Lottery Stats',
+      inLanguage: 'hu',
+    },
+  }
+}
 
 export function canonicalUrl(
   pathname: string,
@@ -22,6 +51,12 @@ export function pageMeta(
   const canonical = canonicalUrl(pathname, origin)
   const socialImage = canonicalUrl(
     '/images/lottery-balls-background.webp',
+    origin,
+  )
+  const structuredData = pageStructuredData(
+    title,
+    description,
+    pathname,
     origin,
   )
 
@@ -46,6 +81,7 @@ export function pageMeta(
           { name: 'twitter:image', content: socialImage },
         ]
       : []),
+    ...(structuredData ? [{ 'script:ld+json': structuredData }] : []),
   ]
 }
 

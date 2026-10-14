@@ -5,8 +5,15 @@ import { HomePage } from '../pages/HomePage'
 import { homePageMeta } from '../config/seo'
 export { RouteError as ErrorBoundary } from '../components/RouteError'
 
-export function meta({ location }: Route.MetaArgs) {
-  return homePageMeta(location.pathname)
+export function meta({
+  location,
+  error,
+}: Pick<Route.MetaArgs, 'location' | 'error'>) {
+  const metadata = homePageMeta(location.pathname)
+
+  return error
+    ? metadata.filter((item) => !('script:ld+json' in item))
+    : metadata
 }
 
 export async function loader(_args: Route.LoaderArgs) {

@@ -78,6 +78,27 @@ export async function verifyBuild(fixture = false) {
       document.querySelectorAll('link[rel="canonical"]').length,
       expectedCanonical ? 1 : 0,
     )
+    const structuredDataScripts = document.querySelectorAll(
+      'script[type="application/ld+json"]',
+    )
+    assert.equal(structuredDataScripts.length, 1)
+    assert.ok(document.head.contains(structuredDataScripts[0]))
+    assert.deepEqual(JSON.parse(structuredDataScripts[0].textContent), {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      ...(expectedCanonical
+        ? { '@id': `${expectedCanonical}#webpage`, url: expectedCanonical }
+        : {}),
+      name: title,
+      description,
+      inLanguage: 'hu',
+      isPartOf: {
+        '@type': 'WebSite',
+        ...(origin ? { '@id': `${origin}/#website`, url: `${origin}/` } : {}),
+        name: 'Lottery Stats',
+        inLanguage: 'hu',
+      },
+    })
     const expectedSocialMetadata = {
       'og:type': 'website',
       'og:title': title,
@@ -262,6 +283,12 @@ export async function verifyBuild(fixture = false) {
   await readFile('build/client/favicon.ico')
   await readFile('build/client/theme-bootstrap.js', 'utf8')
   const fallback = await readFile('build/client/__spa-fallback.html', 'utf8')
+  assert.equal(
+    new JSDOM(fallback).window.document.querySelectorAll(
+      'script[type="application/ld+json"]',
+    ).length,
+    0,
+  )
   assert.ok(!fallback.includes('Legutóbbi elérhető sorsolás'))
   const robotsPath = 'build/client/robots.txt'
   const sitemapPath = 'build/client/sitemap.xml'

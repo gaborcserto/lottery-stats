@@ -1,9 +1,16 @@
 import type { GameCode } from '../api/contracts'
 import { pageMeta } from './seo'
+import publicRoutes from './public-routes.json'
+
+const gameRoutePaths = Object.fromEntries(
+  publicRoutes
+    .filter(({ path }) => path !== '/')
+    .map(({ path, file }) => [file, path]),
+)
 
 export const gamePages = {
   five: {
-    path: '/otoslotto',
+    path: gameRoutePaths.five,
     logo: '/images/logos/otoslotto.png',
     name: 'Ötöslottó',
     description:
@@ -12,7 +19,7 @@ export const gamePages = {
       'Az Ötöslottó sorsolásain öt főszámot húznak ki az 1 és 90 közötti számokból.',
   },
   six: {
-    path: '/hatoslotto',
+    path: gameRoutePaths.six,
     logo: '/images/logos/hatoslotto.png',
     name: 'Hatoslottó',
     description:
@@ -21,7 +28,7 @@ export const gamePages = {
       'A Hatoslottó hat főszámot használ az 1 és 45 közötti tartományból. A történelmi pótszámok külön szerepelnek, és nem részei a főszámok statisztikáinak.',
   },
   scandinavian: {
-    path: '/skandinav-lotto',
+    path: gameRoutePaths.scandinavian,
     logo: '/images/logos/skandinav-lotto.png',
     name: 'Skandináv lottó',
     description:

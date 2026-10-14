@@ -6,7 +6,7 @@
   "packageManager": "npm@11.21.0",
   "scripts": {
     "dev": "react-router dev",
-    "build": "npm run typecheck && react-router build",
+    "build": "npm run typecheck && node scripts/build.mjs",
     "build:fixture": "node scripts/build-fixture.mjs",
     "preview": "vite preview --outDir build/client",
     "test": "vitest run",

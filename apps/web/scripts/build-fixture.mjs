@@ -59,6 +59,8 @@ try {
         shell: process.platform === 'win32',
         env: {
           ...process.env,
+          SEO_BUILD_MODE: 'fixture',
+          PUBLIC_SITE_ORIGIN: '',
           PRERENDER_API_BASE_URL: `http://127.0.0.1:${address.port}/api/v1`,
         },
       },

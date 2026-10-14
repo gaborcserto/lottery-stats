@@ -1,10 +1,53 @@
 import { describe, expect, it } from 'vitest'
-import { canonicalUrl, pageMeta, resolvePublicSiteOrigin } from './seo'
+import {
+  canonicalUrl,
+  pageMeta,
+  publicRoutePaths,
+  resolvePublicSiteOrigin,
+  robotsTxt,
+  sitemapXml,
+} from './seo'
 
 describe('public site SEO configuration', () => {
   it('normalizes a configured HTTPS origin', () => {
     expect(resolvePublicSiteOrigin('https://lottery.example.test/')).toBe(
       'https://lottery.example.test',
+    )
+  })
+
+  it('generates crawlable robots directives with the absolute sitemap location', () => {
+    expect(robotsTxt('https://lottery.example.test')).toBe(
+      'User-agent: *\nAllow: /\nSitemap: https://lottery.example.test/sitemap.xml\n',
+    )
+  })
+
+  it('generates exactly the public canonical routes as XML URLs', () => {
+    const xml = sitemapXml('https://lottery.example.test')
+    const document = new DOMParser().parseFromString(xml, 'application/xml')
+    const locations = Array.from(document.querySelectorAll('loc')).map(
+      (location) => location.textContent,
+    )
+
+    expect(document.querySelector('parsererror')).toBeNull()
+    expect(locations).toEqual([
+      'https://lottery.example.test/',
+      'https://lottery.example.test/otoslotto',
+      'https://lottery.example.test/hatoslotto',
+      'https://lottery.example.test/skandinav-lotto',
+    ])
+    expect(publicRoutePaths).toHaveLength(4)
+    expect(locations.join('\n')).not.toMatch(/[?]|localhost|\/api\//u)
+  })
+
+  it('canonicalizes trailing slashes and URL state and excludes dynamic routes', () => {
+    expect(
+      canonicalUrl(
+        '/otoslotto/?year=2025&utm_source=a&b#results',
+        'https://lottery.example.test',
+      ),
+    ).toBe('https://lottery.example.test/otoslotto')
+    expect(sitemapXml('https://lottery.example.test')).not.toMatch(
+      /year=|page=|set=|about|api/u,
     )
   })
 

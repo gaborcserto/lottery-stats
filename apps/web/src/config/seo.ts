@@ -1,42 +1,16 @@
-export function resolvePublicSiteOrigin(value: string | undefined) {
-  if (!value) return undefined
-
-  try {
-    const url = new URL(value)
-    if (
-      url.protocol !== 'https:' ||
-      !url.hostname ||
-      url.username ||
-      url.password ||
-      !['', '/'].includes(url.pathname) ||
-      url.search ||
-      url.hash
-    ) {
-      return undefined
-    }
-
-    return url.origin
-  } catch {
-    return undefined
-  }
-}
+export {
+  publicRoutePaths,
+  resolvePublicSiteOrigin,
+  robotsTxt,
+  sitemapXml,
+} from './seo-artifacts.mjs'
+import { canonicalUrl as canonicalUrlArtifact } from './seo-artifacts.mjs'
 
 export function canonicalUrl(
   pathname: string,
   origin: string | null = __PUBLIC_SITE_ORIGIN__,
 ) {
-  if (!origin || !pathname.startsWith('/') || pathname.startsWith('//')) {
-    return undefined
-  }
-
-  const url = new URL(pathname, origin)
-  if (url.origin !== origin) return undefined
-
-  url.pathname = url.pathname === '/' ? '/' : url.pathname.replace(/\/+$/, '')
-  url.search = ''
-  url.hash = ''
-
-  return url.toString()
+  return canonicalUrlArtifact(pathname, origin)
 }
 
 export function pageMeta(

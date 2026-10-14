@@ -1,9 +1,11 @@
 import { index, route, type RouteConfig } from '@react-router/dev/routes'
+import publicRoutes from './config/public-routes.json'
 
 export default [
-  index('routes/home.tsx'),
-  route('otoslotto', 'routes/five.tsx'),
-  route('hatoslotto', 'routes/six.tsx'),
-  route('skandinav-lotto', 'routes/scandinavian.tsx'),
+  ...publicRoutes.map(({ path, file }) =>
+    path === '/'
+      ? index(`routes/${file}.tsx`)
+      : route(path.slice(1), `routes/${file}.tsx`),
+  ),
   route('*', 'routes/not-found.tsx'),
 ] satisfies RouteConfig

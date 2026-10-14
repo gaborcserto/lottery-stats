@@ -2,8 +2,15 @@ import { readFile } from 'node:fs/promises'
 import assert from 'node:assert/strict'
 import { fileURLToPath } from 'node:url'
 import { JSDOM } from 'jsdom'
+import {
+  publicRoutePaths,
+  resolvePublicSiteOrigin,
+} from '../src/config/seo-artifacts.mjs'
 
 export async function verifyBuild(fixture = false) {
+  const configuredOrigin = process.env.PUBLIC_SITE_ORIGIN
+  const origin = resolvePublicSiteOrigin(configuredOrigin)
+  assert.ok(!configuredOrigin || origin, 'PUBLIC_SITE_ORIGIN must be valid')
   for (const [path, title, description, heading = title] of [
     [
       '',
@@ -59,8 +66,8 @@ export async function verifyBuild(fixture = false) {
       document.querySelectorAll('meta[name="description"]').length,
       1,
     )
-    const expectedCanonical = process.env.PUBLIC_SITE_ORIGIN
-      ? `${new URL(process.env.PUBLIC_SITE_ORIGIN).origin}${path ? `/${path.replace(/\/+$/, '')}` : '/'}`
+    const expectedCanonical = origin
+      ? `${origin}${path ? `/${path.replace(/\/+$/, '')}` : '/'}`
       : null
     assert.equal(
       document.querySelector('link[rel="canonical"]')?.getAttribute('href') ??
@@ -92,13 +99,13 @@ export async function verifyBuild(fixture = false) {
       [
         'og:image',
         expectedCanonical
-          ? `${new URL(process.env.PUBLIC_SITE_ORIGIN).origin}/images/lottery-balls-background.webp`
+          ? `${origin}/images/lottery-balls-background.webp`
           : null,
       ],
       [
         'twitter:image',
         expectedCanonical
-          ? `${new URL(process.env.PUBLIC_SITE_ORIGIN).origin}/images/lottery-balls-background.webp`
+          ? `${origin}/images/lottery-balls-background.webp`
           : null,
       ],
     ]) {
@@ -256,5 +263,44 @@ export async function verifyBuild(fixture = false) {
   await readFile('build/client/theme-bootstrap.js', 'utf8')
   const fallback = await readFile('build/client/__spa-fallback.html', 'utf8')
   assert.ok(!fallback.includes('Legutóbbi elérhető sorsolás'))
+  const robotsPath = 'build/client/robots.txt'
+  const sitemapPath = 'build/client/sitemap.xml'
+  if (fixture || !origin) {
+    await assert.rejects(readFile(robotsPath))
+    await assert.rejects(readFile(sitemapPath))
+  } else {
+    const robots = await readFile(robotsPath, 'utf8')
+    const sitemap = await readFile(sitemapPath, 'utf8')
+    assert.match(
+      robots,
+      /^User-agent: \*\nAllow: \/\nSitemap: (.+)\/sitemap\.xml\n$/u,
+    )
+    assert.doesNotMatch(robots, /^Disallow:/mu)
+    assert.equal(
+      robots.match(/^Sitemap: (.+)$/mu)?.[1],
+      `${origin}/sitemap.xml`,
+    )
+    const dom = new JSDOM('')
+    const xml = new dom.window.DOMParser().parseFromString(
+      sitemap,
+      'application/xml',
+    )
+    assert.equal(xml.querySelector('parsererror'), null)
+    const locations = [...xml.querySelectorAll('urlset > url > loc')].map(
+      (location) => location.textContent,
+    )
+    assert.equal(locations.length, 4)
+    assert.equal(new Set(locations).size, 4)
+    assert.deepEqual(
+      locations,
+      publicRoutePaths.map((pathname) => `${origin}${pathname}`),
+    )
+    for (const location of locations) {
+      assert.ok(location?.startsWith('https://'))
+      assert.ok(!/[?]|localhost|127\.0\.0\.1|\/api\//u.test(location ?? ''))
+    }
+    assert.ok(!sitemap.includes('<lastmod>'))
+    console.log('Verified robots.txt and four canonical sitemap URLs')
+  }
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) await verifyBuild()

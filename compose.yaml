@@ -44,6 +44,7 @@ services:
     environment:
       VITE_API_PROXY_TARGET: http://api:8000
       PRERENDER_API_BASE_URL: http://api:8000/api/v1
+      PUBLIC_SITE_ORIGIN: ${PUBLIC_SITE_ORIGIN:-}
     command: >-
       sh -c 'if [ ! -x node_modules/.bin/react-router ]; then npm ci; fi;
       exec npm run dev -- --host 0.0.0.0'

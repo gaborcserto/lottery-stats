@@ -14,7 +14,10 @@ import Five, * as five from './five'
 import Six, * as six from './six'
 import Scandinavian, * as scandinavian from './scandinavian'
 import NotFound from './not-found'
+import * as notFound from './not-found'
 import { ApiError } from '../api/client'
+import { canonicalUrl, homePageMeta } from '../config/seo'
+import { gameMeta } from '../config/games'
 import {
   fixtureApiResponse,
   fixtureResponses,
@@ -124,6 +127,90 @@ function renderRoute(path: string) {
   return router
 }
 describe('explicit route modules', () => {
+  it('selects route metadata across navigation and browser history', async () => {
+    const router = renderRoute('/?utm_source=campaign')
+    const routes = [
+      [
+        '/',
+        'Lottóeredmények és nyerőszámok | Lottery Stats',
+        'Ötöslottó, Hatoslottó és Skandináv lottó sorsolási eredményei, valamint történelmi statisztikái egy helyen.',
+      ],
+      [
+        '/otoslotto',
+        'Ötöslottó – eredmények és statisztikák | Lottery Stats',
+        'Korábbi Ötöslottó-sorsolások nyerőszámai és gyakorisági statisztikái, áttekinthetően.',
+      ],
+      [
+        '/hatoslotto',
+        'Hatoslottó – eredmények és statisztikák | Lottery Stats',
+        'Hatoslottó-eredmények és történelmi statisztikák, a korábbi pótszámok külön bemutatásával.',
+      ],
+      [
+        '/skandinav-lotto',
+        'Skandináv lottó – eredmények és statisztikák | Lottery Stats',
+        'Skandináv lottó-eredmények a gépi és kézi számsorokkal, valamint történelmi statisztikákkal.',
+      ],
+    ] as const
+
+    async function expectMetadata(
+      path: (typeof routes)[number][0],
+      title: string,
+      description: string,
+    ) {
+      await waitFor(() => expect(router.state.location.pathname).toBe(path))
+      const metadata =
+        path === '/'
+          ? homePageMeta(router.state.location.pathname)
+          : gameMeta(
+              path === '/otoslotto'
+                ? 'five'
+                : path === '/hatoslotto'
+                  ? 'six'
+                  : 'scandinavian',
+              router.state.location.pathname,
+            )
+      expect(metadata.find((item) => 'title' in item)).toEqual({ title })
+      expect(
+        metadata.find((item) => 'name' in item && item.name === 'description'),
+      ).toEqual({
+        name: 'description',
+        content: description,
+      })
+      const canonical = metadata.find(
+        (item) => 'rel' in item && item.rel === 'canonical',
+      )
+      const expectedCanonical = canonicalUrl(path)
+      expect(
+        canonical && 'href' in canonical ? canonical.href : undefined,
+      ).toBe(expectedCanonical)
+      expect(metadata.filter((item) => 'title' in item)).toHaveLength(1)
+      expect(
+        metadata.filter(
+          (item) => 'name' in item && item.name === 'description',
+        ),
+      ).toHaveLength(1)
+    }
+
+    await expectMetadata(...routes[0])
+    await act(async () =>
+      router.navigate('/otoslotto?year=2025&utm_source=campaign'),
+    )
+    await expectMetadata(...routes[1])
+    await act(async () => router.navigate('/hatoslotto'))
+    await expectMetadata(...routes[2])
+    await act(() => router.navigate(-1))
+    await expectMetadata(...routes[1])
+    await act(() => router.navigate(1))
+    await expectMetadata(...routes[2])
+    await act(async () => router.navigate('/skandinav-lotto'))
+    await expectMetadata(...routes[3])
+    await act(async () => router.navigate('/unknown'))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/unknown'))
+    expect(
+      notFound.meta().some((item) => 'rel' in item && item.rel === 'canonical'),
+    ).toBe(false)
+  })
+
   it.each([
     ['/otoslotto', 'Ötöslottó', '1, 12, 23, 34, 45'],
     ['/hatoslotto', 'Hatoslottó', '1, 12, 23, 34, 44, 45'],

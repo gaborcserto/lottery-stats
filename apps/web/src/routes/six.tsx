@@ -7,8 +7,8 @@ import { gameMeta } from '../config/games'
 import { GameRoute } from '../components/GameRoute'
 export { RouteError as ErrorBoundary } from '../components/RouteError'
 
-export function meta() {
-  return gameMeta('six')
+export function meta({ location }: Route.MetaArgs) {
+  return gameMeta('six', location.pathname)
 }
 
 export function shouldRevalidate({

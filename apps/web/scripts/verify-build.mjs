@@ -4,11 +4,31 @@ import { fileURLToPath } from 'node:url'
 import { JSDOM } from 'jsdom'
 
 export async function verifyBuild(fixture = false) {
-  for (const [path, title, heading = title] of [
-    ['', 'Lottóeredmények és statisztikák', 'A számok mögött.'],
-    ['otoslotto/', 'Ötöslottó'],
-    ['hatoslotto/', 'Hatoslottó'],
-    ['skandinav-lotto/', 'Skandináv lottó'],
+  for (const [path, title, description, heading = title] of [
+    [
+      '',
+      'Lottóeredmények és nyerőszámok | Lottery Stats',
+      'Ötöslottó, Hatoslottó és Skandináv lottó sorsolási eredményei, valamint történelmi statisztikái egy helyen.',
+      'A számok mögött.',
+    ],
+    [
+      'otoslotto/',
+      'Ötöslottó – eredmények és statisztikák | Lottery Stats',
+      'Korábbi Ötöslottó-sorsolások nyerőszámai és gyakorisági statisztikái, áttekinthetően.',
+      'Ötöslottó',
+    ],
+    [
+      'hatoslotto/',
+      'Hatoslottó – eredmények és statisztikák | Lottery Stats',
+      'Hatoslottó-eredmények és történelmi statisztikák, a korábbi pótszámok külön bemutatásával.',
+      'Hatoslottó',
+    ],
+    [
+      'skandinav-lotto/',
+      'Skandináv lottó – eredmények és statisztikák | Lottery Stats',
+      'Skandináv lottó-eredmények a gépi és kézi számsorokkal, valamint történelmi statisztikákkal.',
+      'Skandináv lottó',
+    ],
   ]) {
     const html = await readFile(`build/client/${path}index.html`, 'utf8')
     // Scripts are never executed: assertions inspect the actual initial HTML.
@@ -29,9 +49,27 @@ export async function verifyBuild(fixture = false) {
       document.querySelectorAll('header [role="group"] button').length,
       2,
     )
-    assert.ok(document.title.includes(title))
-    assert.ok(
-      document.querySelector('meta[name="description"]')?.content.length > 30,
+    assert.equal(document.title, title)
+    assert.equal(
+      document.querySelector('meta[name="description"]')?.content,
+      description,
+    )
+    assert.equal(document.querySelectorAll('title').length, 1)
+    assert.equal(
+      document.querySelectorAll('meta[name="description"]').length,
+      1,
+    )
+    const expectedCanonical = process.env.PUBLIC_SITE_ORIGIN
+      ? `${new URL(process.env.PUBLIC_SITE_ORIGIN).origin}${path ? `/${path.replace(/\/+$/, '')}` : '/'}`
+      : null
+    assert.equal(
+      document.querySelector('link[rel="canonical"]')?.getAttribute('href') ??
+        null,
+      expectedCanonical,
+    )
+    assert.equal(
+      document.querySelectorAll('link[rel="canonical"]').length,
+      expectedCanonical ? 1 : 0,
     )
     assert.ok(document.querySelector('main h1')?.textContent.includes(heading))
     assert.equal(document.querySelectorAll('main h1').length, 1)
@@ -86,7 +124,7 @@ export async function verifyBuild(fixture = false) {
     assert.equal(document.querySelector('footer a')?.getAttribute('href'), '/')
     if (path)
       assert.ok(
-        document.querySelector('table caption')?.textContent.includes(title),
+        document.querySelector('table caption')?.textContent.includes(heading),
       )
     if (fixture && path) {
       const expectedLogo =
@@ -117,7 +155,7 @@ export async function verifyBuild(fixture = false) {
         ),
       )
       assert.ok(
-        document.querySelector('table caption')?.textContent.includes(title),
+        document.querySelector('table caption')?.textContent.includes(heading),
       )
       assert.ok(document.querySelector('#parity-heading'))
       assert.ok(

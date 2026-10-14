@@ -1,4 +1,5 @@
 import type { GameCode } from '../api/contracts'
+import { pageMeta } from './seo'
 
 export const gamePages = {
   five: {
@@ -6,7 +7,7 @@ export const gamePages = {
     logo: '/images/logos/otoslotto.png',
     name: 'Ötöslottó',
     description:
-      'Ötöslottó eredmények és alapvető statisztikák a rendelkezésre álló történelmi sorsolásokból.',
+      'Korábbi Ötöslottó-sorsolások nyerőszámai és gyakorisági statisztikái, áttekinthetően.',
     introduction:
       'Az Ötöslottó sorsolásain öt főszámot húznak ki az 1 és 90 közötti számokból.',
   },
@@ -15,7 +16,7 @@ export const gamePages = {
     logo: '/images/logos/hatoslotto.png',
     name: 'Hatoslottó',
     description:
-      'Hatoslottó eredmények és történelmi statisztikák. A korábbi pótszámokat külön mutatjuk.',
+      'Hatoslottó-eredmények és történelmi statisztikák, a korábbi pótszámok külön bemutatásával.',
     introduction:
       'A Hatoslottó hat főszámot használ az 1 és 45 közötti tartományból. A történelmi pótszámok külön szerepelnek, és nem részei a főszámok statisztikáinak.',
   },
@@ -24,7 +25,7 @@ export const gamePages = {
     logo: '/images/logos/skandinav-lotto.png',
     name: 'Skandináv lottó',
     description:
-      'Skandináv lottó eredmények külön gépi és kézi számsorral, valamint alapvető történelmi statisztikákkal.',
+      'Skandináv lottó-eredmények a gépi és kézi számsorokkal, valamint történelmi statisztikákkal.',
     introduction:
       'A Skandináv lottóban hét számot húznak ki az 1 és 35 közötti számokból. A gépi és a kézi számsort külön őrizzük meg; az alapstatisztikák a gépi számsorokra vonatkoznak.',
   },
@@ -41,10 +42,11 @@ export const gamePages = {
 
 export const gameCodes = ['five', 'six', 'scandinavian'] as const
 
-export function gameMeta(game: GameCode) {
+export function gameMeta(game: GameCode, pathname: string) {
   const page = gamePages[game]
-  return [
-    { title: `${page.name} eredmények és statisztikák | Lottery Stats` },
-    { name: 'description', content: page.description },
-  ]
+  return pageMeta(
+    `${page.name} – eredmények és statisztikák | Lottery Stats`,
+    page.description,
+    pathname,
+  )
 }

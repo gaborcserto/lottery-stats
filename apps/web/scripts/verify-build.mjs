@@ -57,6 +57,7 @@ export async function verifyBuild(fixture = false) {
       2,
     )
     assert.equal(document.title, title)
+    assert.equal(document.querySelectorAll('meta[name="robots"]').length, 0)
     assert.equal(
       document.querySelector('meta[name="description"]')?.content,
       description,
@@ -283,10 +284,26 @@ export async function verifyBuild(fixture = false) {
   await readFile('build/client/favicon.ico')
   await readFile('build/client/theme-bootstrap.js', 'utf8')
   const fallback = await readFile('build/client/__spa-fallback.html', 'utf8')
+  const fallbackDocument = new JSDOM(fallback).window.document
+  assert.deepEqual(
+    [...fallbackDocument.querySelectorAll('meta[name="robots"]')].map(
+      (element) => element.content,
+    ),
+    ['noindex'],
+  )
   assert.equal(
-    new JSDOM(fallback).window.document.querySelectorAll(
-      'script[type="application/ld+json"]',
+    fallbackDocument.querySelectorAll('link[rel="canonical"]').length,
+    0,
+  )
+  assert.equal(
+    fallbackDocument.querySelectorAll(
+      'meta[property^="og:"], meta[name^="twitter:"]',
     ).length,
+    0,
+  )
+  assert.equal(
+    fallbackDocument.querySelectorAll('script[type="application/ld+json"]')
+      .length,
     0,
   )
   assert.ok(!fallback.includes('Legutóbbi elérhető sorsolás'))

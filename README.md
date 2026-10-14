@@ -2,6 +2,13 @@
 
 Lottery Stats presents historical results and statistics for Hungary's official lottery games. A Laravel API serves data stored in SQLite, and a React frontend displays results and interactive statistics.
 
+## Screenshots
+
+- [Home – Light mode](docs/home.png)
+- [Home – Dark mode](docs/home_dark.png)
+- [Statistics](docs/subpage.png)
+- [Mobile view](docs/mobile.png)
+
 ## Features
 
 - Browse Ötöslottó, Hatoslottó, and Skandináv lottó results and drawing history.

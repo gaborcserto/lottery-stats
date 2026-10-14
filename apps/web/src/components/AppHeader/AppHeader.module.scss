@@ -4,6 +4,8 @@
   z-index: 20;
   overflow: visible;
   background: var(--surface);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   border-bottom: 1px solid var(--border);
   padding-inline: var(--space-4);
   transition:
@@ -203,11 +205,6 @@
 @supports (
   (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
 ) {
-  .header {
-    background: color-mix(in srgb, var(--surface) 72%, transparent);
-    -webkit-backdrop-filter: blur(16px) saturate(130%);
-    backdrop-filter: blur(16px) saturate(130%);
-  }
   .header.scrolled {
     background: var(--header-scrolled-background);
     -webkit-backdrop-filter: blur(18px) saturate(135%);

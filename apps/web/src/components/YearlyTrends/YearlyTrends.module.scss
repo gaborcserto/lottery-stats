@@ -45,7 +45,11 @@
 
 .yearlyCards {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  grid-template-columns: repeat(
+    min(var(--yearly-column-count), 1),
+    minmax(0, 1fr)
+  );
   align-items: start;
   gap: var(--space-3);
   margin-top: var(--space-3);
@@ -53,19 +57,19 @@
 
 @container (min-width: 42rem) {
   .yearlyCards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(
+      min(var(--yearly-column-count), 2),
+      minmax(0, 1fr)
+    );
   }
 }
 
 @container (min-width: 60rem) {
   .yearlyCards {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@container (min-width: 84rem) {
-  .yearlyCards {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(
+      min(var(--yearly-column-count), 4),
+      minmax(0, 1fr)
+    );
   }
 }
 

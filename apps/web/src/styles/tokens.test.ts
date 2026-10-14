@@ -108,9 +108,10 @@ describe('responsive navigation and yearly table layouts', () => {
 
     expect(css).toContain('@container (min-width: 42rem)')
     expect(css).toContain('@container (min-width: 60rem)')
-    expect(css).toContain('@container (min-width: 84rem)')
-    expect(css).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));')
-    expect(css).not.toContain('repeat(5,')
+    expect(css).toContain('--yearly-column-count')
+    expect(css).toContain('repeat(min(var(--yearly-column-count), 1),')
+    expect(css).toContain('repeat(min(var(--yearly-column-count), 2),')
+    expect(css).toContain('repeat(min(var(--yearly-column-count), 4),')
     expect(css).toContain('max-height: 22rem;')
   })
 })

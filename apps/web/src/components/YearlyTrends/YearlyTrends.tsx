@@ -252,7 +252,17 @@ export function YearlyTrends({
                 <span>Részletes éves adatok megjelenítése</span>
                 <FaChevronDown className={styles.caret} aria-hidden="true" />
               </summary>
-              <div className={styles.yearlyCards}>
+              <div
+                className={styles.yearlyCards}
+                style={
+                  {
+                    '--yearly-column-count': Math.min(
+                      filters.numbers.length,
+                      4,
+                    ),
+                  } as CSSProperties
+                }
+              >
                 {trendData.map((result, index) => {
                   const number =
                     result.meta.selected_number ??

@@ -71,6 +71,43 @@ export async function verifyBuild(fixture = false) {
       document.querySelectorAll('link[rel="canonical"]').length,
       expectedCanonical ? 1 : 0,
     )
+    const expectedSocialMetadata = {
+      'og:type': 'website',
+      'og:title': title,
+      'og:description': description,
+      'og:site_name': 'Lottery Stats',
+      'og:locale': 'hu_HU',
+      'twitter:card': 'summary_large_image',
+      'twitter:title': title,
+      'twitter:description': description,
+    }
+    for (const [name, content] of Object.entries(expectedSocialMetadata)) {
+      const attribute = name.startsWith('og:') ? 'property' : 'name'
+      const matches = document.querySelectorAll(`meta[${attribute}="${name}"]`)
+      assert.equal(matches.length, 1, `Expected one ${name} value at /${path}`)
+      assert.equal(matches[0]?.getAttribute('content'), content)
+    }
+    for (const [name, content] of [
+      ['og:url', expectedCanonical],
+      [
+        'og:image',
+        expectedCanonical
+          ? `${new URL(process.env.PUBLIC_SITE_ORIGIN).origin}/images/lottery-balls-background.webp`
+          : null,
+      ],
+      [
+        'twitter:image',
+        expectedCanonical
+          ? `${new URL(process.env.PUBLIC_SITE_ORIGIN).origin}/images/lottery-balls-background.webp`
+          : null,
+      ],
+    ]) {
+      const attribute = name.startsWith('og:') ? 'property' : 'name'
+      const matches = document.querySelectorAll(`meta[${attribute}="${name}"]`)
+      assert.equal(matches.length, content ? 1 : 0)
+      assert.equal(matches[0]?.getAttribute('content') ?? null, content)
+    }
+    assert.ok(!document.head.innerHTML.includes('localhost'))
     assert.ok(document.querySelector('main h1')?.textContent.includes(heading))
     assert.equal(document.querySelectorAll('main h1').length, 1)
     assert.ok(
@@ -214,6 +251,7 @@ export async function verifyBuild(fixture = false) {
     console.log(`Verified initial Hungarian HTML without JavaScript: /${path}`)
   }
   await readFile('build/client/images/logo.png')
+  await readFile('build/client/images/lottery-balls-background.webp')
   await readFile('build/client/favicon.ico')
   await readFile('build/client/theme-bootstrap.js', 'utf8')
   const fallback = await readFile('build/client/__spa-fallback.html', 'utf8')

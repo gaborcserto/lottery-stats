@@ -189,6 +189,70 @@ describe('explicit route modules', () => {
           (item) => 'name' in item && item.name === 'description',
         ),
       ).toHaveLength(1)
+      const metaValue = (key: string) =>
+        metadata.find(
+          (item) =>
+            ('name' in item && item.name === key) ||
+            ('property' in item && item.property === key),
+        )
+      expect(metaValue('og:type')).toMatchObject({ content: 'website' })
+      expect(metaValue('og:title')).toMatchObject({ content: title })
+      expect(metaValue('og:description')).toMatchObject({
+        content: description,
+      })
+      expect(metaValue('og:site_name')).toMatchObject({
+        content: 'Lottery Stats',
+      })
+      expect(metaValue('og:locale')).toMatchObject({ content: 'hu_HU' })
+      expect(metaValue('twitter:card')).toMatchObject({
+        content: 'summary_large_image',
+      })
+      expect(metaValue('twitter:title')).toMatchObject({ content: title })
+      expect(metaValue('twitter:description')).toMatchObject({
+        content: description,
+      })
+      if (expectedCanonical) {
+        expect(metaValue('og:url')).toMatchObject({
+          content: expectedCanonical,
+        })
+        expect(metaValue('og:image')).toMatchObject({
+          content: canonicalUrl('/images/lottery-balls-background.webp'),
+        })
+        expect(metaValue('twitter:image')).toMatchObject({
+          content: canonicalUrl('/images/lottery-balls-background.webp'),
+        })
+      } else {
+        expect(metaValue('og:url')).toBeUndefined()
+        expect(metaValue('og:image')).toBeUndefined()
+        expect(metaValue('twitter:image')).toBeUndefined()
+      }
+      for (const key of [
+        'og:type',
+        'og:title',
+        'og:description',
+        'og:site_name',
+        'og:locale',
+        'og:url',
+        'og:image',
+        'twitter:card',
+        'twitter:title',
+        'twitter:description',
+        'twitter:image',
+      ]) {
+        expect(
+          metadata.filter(
+            (item) =>
+              ('name' in item && item.name === key) ||
+              ('property' in item && item.property === key),
+          ),
+        ).toHaveLength(
+          ['og:url', 'og:image', 'twitter:image'].includes(key)
+            ? canonicalUrl(path)
+              ? 1
+              : 0
+            : 1,
+        )
+      }
     }
 
     await expectMetadata(...routes[0])
@@ -208,6 +272,19 @@ describe('explicit route modules', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/unknown'))
     expect(
       notFound.meta().some((item) => 'rel' in item && item.rel === 'canonical'),
+    ).toBe(false)
+    expect(
+      notFound
+        .meta()
+        .some(
+          (item) =>
+            ('property' in item &&
+              typeof item.property === 'string' &&
+              item.property.startsWith('og:')) ||
+            ('name' in item &&
+              typeof item.name === 'string' &&
+              item.name.startsWith('twitter:')),
+        ),
     ).toBe(false)
   })
 

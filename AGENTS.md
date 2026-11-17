@@ -16,6 +16,12 @@ The ignored `.notes/` directory contains optional local engineering notes and ma
 - Review the final diff and run relevant checks. Report changed files, commands actually run, checks not run and why, and limitations or unfinished work. Stop at the requested phase.
 - Never create branches, commit, or push without explicit permission. Never bypass hooks with `--no-verify`, force-push as a workaround, or bypass failed quality/security checks. When asked for a commit message, use a one-line Conventional Commit.
 
+## Refactoring decisions
+
+Apply DRY to duplicated knowledge or behavior that must change together, not merely similar syntax. Prefer direct implementations (KISS), current requirements (YAGNI), and cohesive responsibilities (SOLID); interfaces, layers, and inheritance changes need a concrete benefit.
+
+Before refactoring, identify the existing problem, affected callers, smallest correction, verification case, and any new coupling. Leave good code unchanged when the benefit is unclear. Separate confirmed defects from maintenance risks and optional preferences; do not infer severity from file size or a convention violation alone.
+
 ## Code Readability & Logical Spacing
 
 - Use one blank line between distinct logical operations and between separate functions or substantial declarations. Separate setup, calculations, control flow, and returns so each step is easy to scan.
@@ -49,14 +55,14 @@ The ignored `.notes/` directory contains optional local engineering notes and ma
 
 ## Lottery data and API contracts
 
-These are requirements for future implementation, not a reason to create a data model or API ahead of the requested phase.
+These invariants apply to the implemented importer, SQLite schema, statistics, and API. Preserve them when extending the application.
 
 - SQLite is the persistent source of truth. Validate and normalize external data before persistence; calculate statistics from normalized SQLite records.
 - Use stable drawing identifiers grounded in source data and historical rules. Do not assume year/week alone is unique when multiple drawings can occur in a week.
 - Keep imports transactional and idempotent. Preserve valid historical records on remote failures, invalid input, or incomplete feeds; never automatically delete historical drawings.
 - Handle missing historical dates explicitly as missing, never as fabricated dates. Preserve historical rule changes instead of applying current rules to every drawing.
 - Keep Hatos bonus numbers separate from main numbers and Scandinavian machine/manual sets distinct. Store drawing prizes at the drawing-record level, not on each number.
-- Keep planned game identifiers consistent across configuration, database, and API. Official feed filenames do not by themselves define internal domain naming; verify agreed identifiers before implementation.
+- Keep game identifiers consistent across configuration, database, and API. Official feed filenames do not by themselves define internal domain naming; verify agreed identifiers before implementation.
 - State each statistical percentage denominator, including eligible drawings/sets and filters. Define empty-denominator behavior explicitly.
 - Keep read-only REST endpoints under `/api/v1`. Validate query input and return consistent status/error contracts without internal details. Keep OpenAPI documentation and frontend types aligned with implemented contracts, reusing models rather than duplicating them.
 
@@ -65,7 +71,7 @@ These are requirements for future implementation, not a reason to create a data 
 - Treat external JSON, query parameters, and HTTP input as untrusted; validate at appropriate boundaries. Never silently swallow errors or expose secrets, credentials, tokens, database paths, stack traces, raw payloads, or internal errors to clients/logs.
 - Keep real environment files and secrets outside Git. Treat `VITE_*` values as public. The committed `.env.testing` key is for tests only; production requires a unique secret `APP_KEY` and `APP_DEBUG=false`.
 - Serve Laravel only from `apps/api/public/`. Keep SQLite and its journals outside public storage, with persistent storage and access limited to the application user. Compose bind mounts and development servers are for local use only.
-- Read future source URLs through Laravel configuration backed by environment variables. Allowlist HTTPS on `bet.szerencsejatek.hu` with exactly `/cmsfiles/otos.json`, `/cmsfiles/hatos.json`, and `/cmsfiles/skandi.json`. Never accept public URL input; disable redirects or validate every redirect destination to prevent SSRF.
+- Read source URLs through Laravel configuration backed by environment variables. Allowlist HTTPS on `bet.szerencsejatek.hu` with exactly `/cmsfiles/otos.json`, `/cmsfiles/hatos.json`, and `/cmsfiles/skandi.json`. Never accept public URL input; disable redirects or validate every redirect destination to prevent SSRF.
 - Bound connection/read timeouts, retries, and downloaded bytes. Validate JSON structure, numeric ranges, real dates when present, and historical drawing rules before transactional writes; remote failures must preserve records.
 - Keep GitHub Actions permissions minimal, pin actions to full commit SHAs, disable checkout credential persistence, and never execute untrusted pull requests with privileged tokens or secrets.
 - Do not introduce authentication/authorization infrastructure for the public read-only API without a concrete requirement.

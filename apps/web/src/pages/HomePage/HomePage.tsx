@@ -15,6 +15,8 @@ export function HomePage({ data }: { data: HomePageData }) {
     const timeout = window.setTimeout(() => {
       void loadHome(undefined, controller.signal)
         .then((result) => {
+          if (controller.signal.aborted) return
+
           setLatest((current) =>
             result.latest.map((item) => ({
               ...item,

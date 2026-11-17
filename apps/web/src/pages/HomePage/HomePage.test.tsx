@@ -2,7 +2,8 @@ import { act, render, screen } from '@testing-library/react'
 import { StrictMode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fixtureResponses } from '../../test/fixtures'
+import { deferred, fixtureResponses } from '../../test/fixtures'
+import type { HomePageData } from '../../api/page-data'
 import { loadHome } from '../../api/page-data'
 import { HomePage } from './HomePage'
 
@@ -18,6 +19,61 @@ afterEach(() => {
 })
 
 describe('HomePage', () => {
+  it('ignores a late successful refresh after newer data starts a refresh', async () => {
+    vi.useFakeTimers()
+    const stale = deferred<HomePageData>()
+    const current = deferred<HomePageData>()
+    vi.mocked(loadHome)
+      .mockReturnValueOnce(stale.promise)
+      .mockReturnValueOnce(current.promise)
+    const drawing = fixtureResponses('five').drawing.data
+    const data: HomePageData = {
+      latest: [{ game: 'five', drawing }],
+      capturedAt: '2026-10-10T00:00:00.000Z',
+    }
+    const view = render(
+      <MemoryRouter>
+        <HomePage data={data} />
+      </MemoryRouter>,
+    )
+
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    const oldSignal = vi.mocked(loadHome).mock.calls[0][1]
+    view.rerender(
+      <MemoryRouter>
+        <HomePage data={{ ...data, capturedAt: '2026-10-11T00:00:00.000Z' }} />
+      </MemoryRouter>,
+    )
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(oldSignal?.aborted).toBe(true)
+
+    await act(async () => {
+      current.resolve({
+        ...data,
+        latest: [
+          { game: 'five', drawing: { ...drawing, drawn_on: '2026-10-11' } },
+        ],
+      })
+    })
+    expect(view.container.querySelector('time')).toHaveAttribute(
+      'dateTime',
+      '2026-10-11',
+    )
+
+    await act(async () => {
+      stale.resolve({
+        ...data,
+        latest: [
+          { game: 'five', drawing: { ...drawing, drawn_on: '2026-10-09' } },
+        ],
+      })
+    })
+    expect(view.container.querySelector('time')).toHaveAttribute(
+      'dateTime',
+      '2026-10-11',
+    )
+  })
+
   it('renders all three data-backed lottery cards', () => {
     render(
       <MemoryRouter>

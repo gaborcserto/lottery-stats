@@ -71,4 +71,8 @@ Return these sections, omitting empty optional suggestions:
 
 ## Targeted refactoring
 
-Confirm the selected finding still applies to the current code. Implement the smallest cohesive correction using existing capabilities, preserve behavior outside the identified defect, and update focused tests when behavior changes. Avoid bundling preferences or unrelated cleanup. Use the repository's verification procedure for affected code, review the final diff, and report which finding IDs are resolved with supporting evidence.
+Use existing task authorization for implementation; do not request approval again when the task already authorizes fixes. Confirm the selected finding still applies to the current code. For each change, state the concrete problem, affected consumers, expected benefit, verification case, and any new coupling. Leave the code unchanged when that benefit is unclear.
+
+Implement the smallest cohesive correction using existing capabilities, preserve behavior outside the identified defect, and update focused tests when behavior changes. Avoid bundling preferences or unrelated cleanup. For asynchronous defects, reproduce request ordering with controlled promises and cancellation with explicit signals; avoid timing sleeps. Check both late success and late failure paths.
+
+Use the repository's verification procedure for affected code, review the final diff, and report which finding IDs are resolved with supporting evidence.
